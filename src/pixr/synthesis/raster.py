@@ -23,17 +23,17 @@ def euler_to_rot(yaw=0., pitch=0., roll=0.):
     tensor_1 = torch.ones(1)
     RX = torch.stack([
         torch.stack([tensor_1, tensor_0, tensor_0]),
-        torch.stack([tensor_0, torch.cos(roll), -torch.sin(roll)]),
-        torch.stack([tensor_0, torch.sin(roll), torch.cos(roll)])]).reshape(3, 3)
+        torch.stack([tensor_0, torch.cos(pitch), -torch.sin(pitch)]),
+        torch.stack([tensor_0, torch.sin(pitch), torch.cos(pitch)])]).reshape(3, 3)
 
     RY = torch.stack([
-        torch.stack([torch.cos(pitch), tensor_0, torch.sin(pitch)]),
+        torch.stack([torch.cos(yaw), tensor_0, torch.sin(yaw)]),
         torch.stack([tensor_0, tensor_1, tensor_0]),
-        torch.stack([-torch.sin(pitch), tensor_0, torch.cos(pitch)])]).reshape(3, 3)
+        torch.stack([-torch.sin(yaw), tensor_0, torch.cos(yaw)])]).reshape(3, 3)
 
     RZ = torch.stack([
-        torch.stack([torch.cos(yaw), -torch.sin(yaw), tensor_0]),
-        torch.stack([torch.sin(yaw), torch.cos(yaw), tensor_0]),
+        torch.stack([torch.cos(roll), -torch.sin(roll), tensor_0]),
+        torch.stack([torch.sin(roll), torch.cos(roll), tensor_0]),
         torch.stack([tensor_0, tensor_0, tensor_1])]).reshape(3, 3)
     R = torch.mm(torch.mm(RZ, RY), RX)
     return R
