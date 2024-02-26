@@ -1,11 +1,7 @@
 import torch
-from typing import List, Tuple
-from interactive_pipe import interactive, interactive_pipeline
-from interactive_pipe.data_objects.curves import Curve, SingleCurve
 
 
 def get_camera_intrinsics(w: int = 640, h: int = 480) -> torch.Tensor:
-
     cx, cy = w / 2., h / 2.
     focal_length = 1000.
     fx, fy = focal_length, focal_length
@@ -50,5 +46,4 @@ def project_3d_to_2d(wc_triangles: torch.Tensor, camera_intrinsics: torch.Tensor
     cc_triangles[:, 1, :] *= -1.  # flip y axis to get a image-like coordinate system
     cc_triangles = torch.matmul(camera_intrinsics, cc_triangles)
     cc_triangles /= cc_triangles[:, -1:, :]  # pinhole model! normalize by distance
-    cc_triangles = cc_triangles.numpy()
     return cc_triangles

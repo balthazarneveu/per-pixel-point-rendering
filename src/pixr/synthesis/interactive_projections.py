@@ -50,6 +50,7 @@ def generate_3d_scene(z=5, delta_z=0.):
 
 
 def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
+    cc_triangles = cc_triangles.numpy()
     t1 = SingleCurve(
         x=[cc_triangles[0, 0, idx] for idx in [0, 1, 2, 0]],
         y=[cc_triangles[0, 1, idx] for idx in [0, 1, 2, 0]],
@@ -84,6 +85,7 @@ def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
 
 @interactive_pipeline(gui="mpl", size=(10, 10))
 def projection_pipeline():
+
     wc_triangles = generate_3d_scene()
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
