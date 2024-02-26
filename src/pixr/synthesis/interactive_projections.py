@@ -3,10 +3,10 @@ from typing import List, Tuple
 from interactive_pipe import interactive, interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 
-from pixr.synthesis.raster import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
+from pixr.synthesis.forward_project import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
 
 
-def set_camera_parameters(yaw_deg=0., pitch_deg=0., roll_deg=0., trans_x=0., trans_y=0., trans_z=0.) -> torch.Tensor:
+def set_camera_parameters(yaw_deg=0., pitch_deg=0., roll_deg=0., trans_x=0., trans_y=0., trans_z=0.) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     yaw = torch.deg2rad(torch.Tensor([yaw_deg]))
     pitch = torch.deg2rad(torch.Tensor([pitch_deg]))
     roll = torch.deg2rad(torch.Tensor([roll_deg]))

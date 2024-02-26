@@ -1,7 +1,8 @@
 import torch
+from typing import Tuple
 
 
-def get_camera_intrinsics(w: int = 640, h: int = 480) -> torch.Tensor:
+def get_camera_intrinsics(w: int = 640, h: int = 480) -> Tuple[torch.Tensor, int, int]:
     cx, cy = w / 2., h / 2.
     focal_length = 1000.
     fx, fy = focal_length, focal_length
