@@ -34,7 +34,7 @@ def main():
 
 def forward_chain(yaw, pitch, roll, cam_pos):
     cam_int, w, h = get_camera_intrinsics()
-    point_cloud = generate_3d_scene(delta_z=1.)
+    point_cloud, colors = generate_3d_scene(delta_z=1.)
     point_cloud.requires_grad = False
     cam_ext = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
     proj_point_cloud = project_3d_to_2d(point_cloud, cam_int, cam_ext)
