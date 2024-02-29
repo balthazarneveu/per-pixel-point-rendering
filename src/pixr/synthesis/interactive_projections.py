@@ -149,6 +149,63 @@ def barycentric_coords(p, a, b, c):
     return u, v, w
 
 
+def barycentric_coord_broadcast(p, a, b, c):
+    """
+    Compute barycentric coordinates of point p with respect to triangle (a, b, c).
+    """
+    # Expand a, b, c to match the shape of p for broadcasting
+    a = a.unsqueeze(0).unsqueeze(0)  # Shape becomes [1, 1, 2]
+    b = b.unsqueeze(0).unsqueeze(0)
+    c = c.unsqueeze(0).unsqueeze(0)
+
+    v0 = b - a
+    v1 = c - a
+    v2 = p - a
+    print(v0.shape, v1.shape, v2.shape)
+
+    # Compute dot products using einsum for batched operations
+    d00 = torch.einsum('ijk,ijk->ij', v0, v0)
+    d01 = torch.einsum('ijk,ijk->ij', v0, v1)
+    d11 = torch.einsum('ijk,ijk->ij', v1, v1)
+    d20 = torch.einsum('ijk,ijk->ij', v2, v0)
+    d21 = torch.einsum('ijk,ijk->ij', v2, v1)
+
+    denom = d00 * d11 - d01 * d01
+    v = (d11 * d20 - d01 * d21) / denom
+    w = (d00 * d21 - d01 * d20) / denom
+    u = 1.0 - v - w
+
+    return u, v, w
+
+# def barycentric_coords(p, a, b, c):
+#     """
+#     Compute barycentric coordinates of point p with respect to triangle (a, b, c).
+#     """
+
+#     v0 = b - a
+#     v1 = c - a
+#     v2 = p - a
+#     print(v0.shape, v1.shape, v2.shape)
+#     # Reshape v0 and v1 for matrix multiplication
+#     v0 = v0.permute(2, 0, 1)  # Shape: [2, 1, 1]
+#     v1 = v1.permute(2, 0, 1)  # Shape: [2, 1, 1]
+
+#     # Use matmul for dot products, handling broadcasting
+#     # Flatten v2 for matmul, then reshape to original grid shape for further calculations
+#     d00 = torch.matmul(v0.permute(1, 2, 0), v0).squeeze()
+#     d01 = torch.matmul(v0.permute(1, 2, 0), v1).squeeze()
+#     d11 = torch.matmul(v1.permute(1, 2, 0), v1).squeeze()
+#     d20 = torch.matmul(v2, v0).squeeze(-1)
+#     d21 = torch.matmul(v2, v1).squeeze(-1)
+
+#     denom = d00 * d11 - d01 * d01
+#     v = (d11 * d20 - d01 * d21) / denom
+#     w = (d00 * d21 - d01 * d20) / denom
+#     u = 1.0 - v - w
+
+#     return u, v, w
+
+
 def fill_triangle(image, vertices, color):
     """
     Fill a triangle in the image with the given color.
@@ -173,9 +230,12 @@ def fill_triangle(image, vertices, color):
                     image[y, x] = interpolated_color
 
 
-def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, width: int, heigth: int) -> np.ndarray:
+@interactive(
+    slow_loop_flag=(False,)
+)
+def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, width: int, height: int, slow_loop_flag: bool = False) -> np.ndarray:
     # Create an empty image with shape (h, w, 3)
-    image = torch.zeros((heigth, width, 3))
+    image = torch.zeros((height, width, 3))
     # Get the number of vertices
     num_vertices = cc_triangles.shape[1]
     # Extract the colors at the vertices
@@ -186,14 +246,42 @@ def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, width: int
         color = vertex_colors[batch_idx]
         (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
         (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
-        for x in range(int(bb_x_min), int(bb_x_max) + 1):
-            for y in range(int(bb_y_min), int(bb_y_max) + 1):
-                if 0 <= x < width and 0 <= y < heigth:
-                    p = torch.tensor([x, y], dtype=torch.float32)
-                    u, v, w = barycentric_coords(p, triangle[:,  0], triangle[:, 1], triangle[:, 2])
-                    if u >= 0 and v >= 0 and w >= 0:  # Point is inside the triangle
-                        interpolated_color = u * color[0] + v * color[1] + w * color[2]
-                        image[..., y, x, :] = interpolated_color  # color[0]
+        if not slow_loop_flag:
+            bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
+            bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
+
+            # Clamp values to be within image dimensions
+            bb_x_min, bb_y_min = max(bb_x_min, 0), max(bb_y_min, 0)
+            bb_x_max, bb_y_max = min(bb_x_max, width - 1), min(bb_y_max, height - 1)
+
+            # Create a grid for the bounding box
+            x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
+            y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
+            grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
+            grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
+
+            # Compute barycentric coordinates for the grid points
+            tr = triangle  # Shape: [1, 1, 2, 3]
+            u, v, w = barycentric_coord_broadcast(grid_points, tr[..., 0], tr[..., 1], tr[..., 2])
+
+            # # Find mask where points are inside the triangle
+            mask = (u >= 0) & (v >= 0) & (w >= 0)
+
+            # # Interpolate color for each point in the grid
+            interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]
+
+            # # Apply color to image where mask is True, considering the offset of the bounding box
+            image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][mask] = interpolated_color[mask]
+
+        else:
+            for x in range(int(bb_x_min), int(bb_x_max) + 1):
+                for y in range(int(bb_y_min), int(bb_y_max) + 1):
+                    if 0 <= x < width and 0 <= y < height:
+                        p = torch.tensor([x, y], dtype=torch.float32)
+                        u, v, w = barycentric_coords(p, triangle[:,  0], triangle[:, 1], triangle[:, 2])
+                        if u >= 0 and v >= 0 and w >= 0:  # Point is inside the triangle
+                            interpolated_color = u * color[0] + v * color[1] + w * color[2]
+                            image[..., y, x, :] = interpolated_color  # color[0]
     return image
 
 
