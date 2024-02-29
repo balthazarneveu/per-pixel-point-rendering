@@ -4,7 +4,7 @@ from interactive_pipe import interactive, interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 import numpy as np
 from pixr.synthesis.forward_project import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
-
+from pixr.camera.camera import linear_rgb_to_srgb
 
 def set_camera_parameters(yaw_deg=0., pitch_deg=0., roll_deg=0., trans_x=0., trans_y=0., trans_z=0.) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     yaw = torch.deg2rad(torch.Tensor([yaw_deg]))
@@ -51,7 +51,8 @@ def generate_3d_scene(z=5, delta_z=0.):
             [
                 [0., 0.1, 1.],
                 [0.1, 0., 1.],
-                [0., 0.3, 1.]
+                # [0., 0.3, 1.]
+                [1., 1., 2.]
             ],
             [
                 [1., 1., 0.],
@@ -297,6 +298,7 @@ def projection_pipeline():
     cc_triangles, depths = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics)
     # Screen space triangles.
     rendered_image = render_textures(cc_triangles, colors, depths, w, h)
+    rendered_image = linear_rgb_to_srgb(rendered_image)
     rendered_image = tensor_to_image(rendered_image)
     # Let's splat the triangle nodes
     splatted_image = splat_points(cc_triangles, colors, w, h)
