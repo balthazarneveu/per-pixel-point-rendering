@@ -1,4 +1,5 @@
-from pixr.synthesis.forward_project import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
+from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
+from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.synthesis.interactive_projections import set_camera_parameters, generate_3d_scene, splat_points
 
 import torch

@@ -1,9 +1,9 @@
 import torch
-from typing import Tuple
 from interactive_pipe import interactive, interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 import numpy as np
-from pixr.synthesis.forward_project import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
+from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
+from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.synthesis.shader import shade_screen_space
 
