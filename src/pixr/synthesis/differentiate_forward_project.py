@@ -41,7 +41,7 @@ def forward_chain(yaw, pitch, roll, cam_pos):
     point_cloud, colors = generate_3d_scene(delta_z=1.)
     point_cloud.requires_grad = False
     cam_ext = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
-    proj_point_cloud = project_3d_to_2d(point_cloud, cam_int, cam_ext)
+    proj_point_cloud, _depth = project_3d_to_2d(point_cloud, cam_int, cam_ext)
     img = splat_points(proj_point_cloud, colors, w, h)
     return proj_point_cloud, img
 

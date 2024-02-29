@@ -290,7 +290,7 @@ def projection_pipeline():
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
     camera_intrinsics, w, h = get_camera_intrinsics()
-    cc_triangles = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics)
+    cc_triangles, depths = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics)
     # Screen space triangles.
     rendered_image = render_textures(cc_triangles, colors, w, h)
     rendered_image = tensor_to_image(rendered_image)
