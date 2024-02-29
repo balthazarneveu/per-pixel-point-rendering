@@ -231,9 +231,9 @@ def fill_triangle(image, vertices, color):
 
 
 @interactive(
-    slow_loop_flag=(False,)
+    show_depth=(False,)
 )
-def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, depths: torch.Tensor, width: int, height: int, slow_loop_flag: bool = False) -> np.ndarray:
+def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, depths: torch.Tensor, width: int, height: int, show_depth: bool = False) -> np.ndarray:
     # Create an empty image with shape (h, w, 3)
     image = torch.zeros((height, width, 3))
     depth_buffer = torch.full((height, width), float('inf'), dtype=torch.float32)
@@ -244,58 +244,48 @@ def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, depths: to
     # Perform splatting of vertex colors
     for batch_idx in range(cc_triangles.shape[0]):
         depth_values = depths[batch_idx, 0, :]
-        print(depth_values.shape, depths.shape)
         triangle = cc_triangles[batch_idx][:2, :]
         color = vertex_colors[batch_idx]
         (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
         (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
-        if not slow_loop_flag:
-            bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
-            bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
+        bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
+        bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
 
-            # Clamp values to be within image dimensions
-            bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
-            bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
-            print("x", bb_x_min, bb_x_max)
-            print("y", bb_y_min, bb_y_max)
-            # Create a grid for the bounding box
-            x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
-            y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
+        # Clamp values to be within image dimensions
+        bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
+        bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
+        print("x", bb_x_min, bb_x_max)
+        print("y", bb_y_min, bb_y_max)
+        # Create a grid for the bounding box
+        x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
+        y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
 
-            grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
-            grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
+        grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
+        grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
 
-            # Compute barycentric coordinates for the grid points
-            tr = triangle  # Shape: [1, 1, 2, 3]
-            u, v, w = barycentric_coord_broadcast(grid_points, tr[..., 0], tr[..., 1], tr[..., 2])
-            # Interpolate depth for each point in the grid
-            interpolated_depth = u * depth_values[0] + v * depth_values[1] + w * depth_values[2]
+        # Compute barycentric coordinates for the grid points
+        tr = triangle  # Shape: [1, 1, 2, 3]
+        u, v, w = barycentric_coord_broadcast(grid_points, tr[..., 0], tr[..., 1], tr[..., 2])
+        # Interpolate depth for each point in the grid
+        interpolated_depth = u * depth_values[0] + v * depth_values[1] + w * depth_values[2]
 
-            # # Find mask where points are inside the triangle
-            mask = (u >= 0) & (v >= 0) & (w >= 0)
+        # # Find mask where points are inside the triangle
+        mask = (u >= 0) & (v >= 0) & (w >= 0)
 
-            # # Interpolate color for each point in the grid
-            interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]
+        # # Interpolate color for each point in the grid
+        interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]
 
-            # Debug : visualize the depth
-            # image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][mask] = 1/interpolated_depth[mask].unsqueeze(-1)
-            # # Apply color to image where mask is True, considering the offset of the bounding box
-            # image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][mask] = interpolated_color[mask]
-
-            closer_depth_mask = (interpolated_depth < depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1]) & mask
+        # # Apply color to image where mask is True, considering the offset of the bounding box
+        closer_depth_mask = (interpolated_depth < depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1]) & mask
+        if not show_depth:
             image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = interpolated_color[closer_depth_mask]
-            depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = interpolated_depth[closer_depth_mask]
-
-
         else:
-            for x in range(int(bb_x_min), int(bb_x_max) + 1):
-                for y in range(int(bb_y_min), int(bb_y_max) + 1):
-                    if 0 <= x < width and 0 <= y < height:
-                        p = torch.tensor([x, y], dtype=torch.float32)
-                        u, v, w = barycentric_coords(p, triangle[:,  0], triangle[:, 1], triangle[:, 2])
-                        if u >= 0 and v >= 0 and w >= 0:  # Point is inside the triangle
-                            interpolated_color = u * color[0] + v * color[1] + w * color[2]
-                            image[..., y, x, :] = interpolated_color  # color[0]
+            # Debug : visualize inverse depth
+            image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = 5. / \
+                interpolated_depth[closer_depth_mask].unsqueeze(-1)
+        depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max +
+                     1][closer_depth_mask] = interpolated_depth[closer_depth_mask]
+
     return image
 
 
@@ -318,7 +308,7 @@ def projection_pipeline():
 def main():
     interactive(
         z=(10., (2., 100.)),
-        delta_z=(0., (-5., 5.))
+        delta_z=(0.01, (-5., 5.))
     )(generate_3d_scene)
     interactive(
         yaw_deg=(0., (-180., 180.)),
