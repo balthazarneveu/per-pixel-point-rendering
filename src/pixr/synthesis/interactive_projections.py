@@ -98,7 +98,7 @@ def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
     return img_scene
 
 
-def splat(cc_triangles: torch.Tensor, colors: torch.Tensor, w: int, h: int, debug=False) -> np.ndarray:
+def splat_points(cc_triangles: torch.Tensor, colors: torch.Tensor, w: int, h: int, debug=True) -> np.ndarray:
     # Create an empty image with shape (h, w, 3)
     image = torch.zeros((h, w, 3))
     # Get the number of vertices
@@ -130,16 +130,87 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
     return image
 
 
+def barycentric_coords(p, a, b, c):
+    """
+    Compute barycentric coordinates of point p with respect to triangle (a, b, c).
+    """
+    v0 = b - a
+    v1 = c - a
+    v2 = p - a
+    d00 = torch.dot(v0, v0)
+    d01 = torch.dot(v0, v1)
+    d11 = torch.dot(v1, v1)
+    d20 = torch.dot(v2, v0)
+    d21 = torch.dot(v2, v1)
+    denom = d00 * d11 - d01 * d01
+    v = (d11 * d20 - d01 * d21) / denom
+    w = (d00 * d21 - d01 * d20) / denom
+    u = 1.0 - v - w
+    return u, v, w
+
+
+def fill_triangle(image, vertices, color):
+    """
+    Fill a triangle in the image with the given color.
+    vertices: Coordinates of the triangle's vertices.
+    color: Color to fill the triangle.
+    """
+    # Extract vertices
+    a, b, c = vertices
+    # Compute bounding box of the triangle
+    x_min, y_min = torch.min(vertices, dim=-1)
+    x_max, y_max = torch.max(vertices, dim=-1)
+    print(x_min, y_min, x_max, y_max)
+    # Iterate over the bounding box
+    for x in range(int(x_min), int(x_max) + 1):
+        for y in range(int(y_min), int(y_max) + 1):
+            p = torch.tensor([x, y], dtype=torch.float32)
+            u, v, w = barycentric_coords(p, a, b, c)
+            if u >= 0 and v >= 0 and w >= 0:  # Point is inside the triangle
+                # Interpolate color
+                interpolated_color = u * color[0] + v * color[1] + w * color[2]
+                if 0 <= x < image.shape[1] and 0 <= y < image.shape[0]:
+                    image[y, x] = interpolated_color
+
+
+def render_textures(cc_triangles: torch.Tensor, colors: torch.Tensor, width: int, heigth: int) -> np.ndarray:
+    # Create an empty image with shape (h, w, 3)
+    image = torch.zeros((heigth, width, 3))
+    # Get the number of vertices
+    num_vertices = cc_triangles.shape[1]
+    # Extract the colors at the vertices
+    vertex_colors = colors[:, :num_vertices, :]
+    # Perform splatting of vertex colors
+    for batch_idx in range(cc_triangles.shape[0]):
+        triangle = cc_triangles[batch_idx][:2, :]
+        color = vertex_colors[batch_idx]
+        (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
+        (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
+        for x in range(int(bb_x_min), int(bb_x_max) + 1):
+            for y in range(int(bb_y_min), int(bb_y_max) + 1):
+                if 0 <= x < width and 0 <= y < heigth:
+                    p = torch.tensor([x, y], dtype=torch.float32)
+                    u, v, w = barycentric_coords(p, triangle[:,  0], triangle[:, 1], triangle[:, 2])
+                    if u >= 0 and v >= 0 and w >= 0:  # Point is inside the triangle
+                        interpolated_color = u * color[0] + v * color[1] + w * color[2]
+                        image[..., y, x, :] = interpolated_color  # color[0]
+    return image
+
+
 def projection_pipeline():
     wc_triangles, colors = generate_3d_scene()
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
     camera_intrinsics, w, h = get_camera_intrinsics()
     cc_triangles = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics)
-    splatted_image = splat(cc_triangles, colors, w, h)
+    # Screen space triangles.
+    rendered_image = render_textures(cc_triangles, colors, w, h)
+    rendered_image = tensor_to_image(rendered_image)
+    # Let's splat the triangle nodes
+    splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
     img_scene = visualize_2d_scene(cc_triangles, w, h)
-    return img_scene, splatted_image
+    return img_scene, splatted_image, rendered_image
 
 
 def main():
