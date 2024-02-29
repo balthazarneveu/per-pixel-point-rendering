@@ -1,5 +1,5 @@
 from pixr.synthesis.forward_project import get_camera_intrinsics, get_camera_extrinsics, project_3d_to_2d
-from pixr.synthesis.interactive_projections import set_camera_parameters, generate_3d_scene, splat
+from pixr.synthesis.interactive_projections import set_camera_parameters, generate_3d_scene, splat_points
 
 import torch
 
@@ -27,8 +27,8 @@ def main():
         for step in range(4000):
             optimizer.zero_grad()
             proj_point_cloud, img = forward_chain(yaw, pitch, roll, cam_pos)
-            # loss = torch.nn.functional.mse_loss(proj_point_cloud, proj_point_cloud_gt)
-            loss = torch.nn.functional.mse_loss(img, splat_image_gt)
+            loss = torch.nn.functional.mse_loss(proj_point_cloud, proj_point_cloud_gt)
+            # loss = torch.nn.functional.mse_loss(img, splat_image_gt) # this is not working!
             loss.backward()
             optimizer.step()
             if step % 10 == 0:
@@ -42,7 +42,7 @@ def forward_chain(yaw, pitch, roll, cam_pos):
     point_cloud.requires_grad = False
     cam_ext = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
     proj_point_cloud = project_3d_to_2d(point_cloud, cam_int, cam_ext)
-    img = splat(proj_point_cloud, colors, w, h)
+    img = splat_points(proj_point_cloud, colors, w, h)
     return proj_point_cloud, img
 
 
