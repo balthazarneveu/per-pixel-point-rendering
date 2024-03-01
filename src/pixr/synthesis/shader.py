@@ -33,58 +33,61 @@ def barycentric_coord_broadcast(p, a, b, c):
 def shade_screen_space(
         cc_triangles: torch.Tensor, colors: torch.Tensor, depths: torch.Tensor,
         width: int, height: int,
-        show_depth: bool = False
+        show_depth: bool = False,
+        no_grad: bool = True,
 ) -> torch.Tensor:
-    # Create an empty image with shape (h, w, 3)
-    image = torch.zeros((height, width, 3))
-    depth_buffer = torch.full((height, width), float('inf'), dtype=torch.float32)
-    # Get the number of vertices
-    num_vertices = cc_triangles.shape[1]
-    # Extract the colors at the vertices
-    vertex_colors = colors[:, :num_vertices, :]
-    # Perform splatting of vertex colors
-    for batch_idx in range(cc_triangles.shape[0]):
-        depth_values = depths[batch_idx, 0, :]
-        triangle = cc_triangles[batch_idx][:2, :]
-        color = vertex_colors[batch_idx]
-        (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
-        (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
-        bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
-        bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
+    with torch.no_grad() if no_grad else torch.enable_grad():
+        # Create an empty image with shape (h, w, 3)
+        image = torch.zeros((height, width, 3))
+        depth_buffer = torch.full((height, width), float('inf'), dtype=torch.float32)
+        # Get the number of vertices
+        num_vertices = cc_triangles.shape[1]
+        # Extract the colors at the vertices
+        vertex_colors = colors[:, :num_vertices, :]
+        # Perform splatting of vertex colors
+        for batch_idx in range(cc_triangles.shape[0]):
+            depth_values = depths[batch_idx, 0, :]
+            triangle = cc_triangles[batch_idx][:2, :]
+            color = vertex_colors[batch_idx]
+            (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
+            (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
+            bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
+            bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
 
-        # Clamp values to be within image dimensions
-        bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
-        bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
-        print("x", bb_x_min, bb_x_max)
-        print("y", bb_y_min, bb_y_max)
-        # Create a grid for the bounding box
-        x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
-        y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
+            # Clamp values to be within image dimensions
+            bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
+            bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
+            print("x", bb_x_min, bb_x_max)
+            print("y", bb_y_min, bb_y_max)
+            # Create a grid for the bounding box
+            x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
+            y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
 
-        grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
-        grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
+            grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
+            grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
 
-        # Compute barycentric coordinates for the grid points
-        tr = triangle  # Shape: [1, 1, 2, 3]
-        u, v, w = barycentric_coord_broadcast(grid_points, tr[..., 0], tr[..., 1], tr[..., 2])
-        # Interpolate depth for each point in the grid
-        interpolated_depth = u * depth_values[0] + v * depth_values[1] + w * depth_values[2]
+            # Compute barycentric coordinates for the grid points
+            tr = triangle  # Shape: [1, 1, 2, 3]
+            u, v, w = barycentric_coord_broadcast(grid_points, tr[..., 0], tr[..., 1], tr[..., 2])
+            # Interpolate depth for each point in the grid
+            interpolated_depth = u * depth_values[0] + v * depth_values[1] + w * depth_values[2]
 
-        # # Find mask where points are inside the triangle
-        mask = (u >= 0) & (v >= 0) & (w >= 0)
+            # # Find mask where points are inside the triangle
+            mask = (u >= 0) & (v >= 0) & (w >= 0)
 
-        # # Interpolate color for each point in the grid
-        interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]
+            # # Interpolate color for each point in the grid
+            interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]
 
-        # # Apply color to image where mask is True, considering the offset of the bounding box
-        closer_depth_mask = (interpolated_depth < depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1]) & mask
-        if not show_depth:
-            image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = interpolated_color[closer_depth_mask]
-        else:
-            # Debug : visualize inverse depth
-            image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = 5. / \
-                interpolated_depth[closer_depth_mask].unsqueeze(-1)
-        depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max +
-                     1][closer_depth_mask] = interpolated_depth[closer_depth_mask]
+            # # Apply color to image where mask is True, considering the offset of the bounding box
+            closer_depth_mask = (interpolated_depth < depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1]) & mask
+            if not show_depth:
+                image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = interpolated_color[
+                    closer_depth_mask]
+            else:
+                # Debug : visualize inverse depth
+                image[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max+1][closer_depth_mask] = 5. / \
+                    interpolated_depth[closer_depth_mask].unsqueeze(-1)
+            depth_buffer[bb_y_min:bb_y_max+1, bb_x_min:bb_x_max +
+                         1][closer_depth_mask] = interpolated_depth[closer_depth_mask]
 
     return image
