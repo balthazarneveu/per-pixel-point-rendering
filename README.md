@@ -9,3 +9,15 @@ Local install of `pixr`
 ```bash
 pip install -e .
 ```
+
+
+#### Code structure
+- rendering:
+  - [per pixel splatting](src/pixr/rendering/splatting.py)
+  - [differentiability check](src/pixr/rendering/differentiate_forward_project.py)
+
+- synthesis:
+  - [world definition with triangle primitives](src/pixr/synthesis/world_simulation.py)
+  - [view synthesis of a scene rasterizer]
+  - interactive visualization
+  - 

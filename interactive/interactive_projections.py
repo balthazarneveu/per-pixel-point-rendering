@@ -6,62 +6,15 @@ from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrin
 from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.synthesis.shader import shade_screen_space
-
 from pixr.camera.camera_geometry import set_camera_parameters
+from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
 
 
-def generate_3d_scene(z=5, delta_z=0.):
-    # [N, 3, xyz1]
-    wc_triangles = torch.Tensor(
-        [
-            [
-                [0., 0., z, 1.],
-                [0., 1., z, 1.],
-                [1., 1., z, 1.]
-            ],
-            [
-                [-1., 0., z+delta_z, 1.],
-                [2., 0., z+delta_z, 1.],
-                [2., 1., z+delta_z, 1.]
-            ]
-        ]
-
-    )
-    wc_triangles = wc_triangles.permute(0, 2, 1)
-    # colors_nodes = torch.Tensor(
-    #     [
-    #         [
-    #             [1., 0., 0.],
-    #             [0., 1., 0.],
-    #             [0., 0., 1.]
-    #         ],
-    #         [
-    #             [1., 1., 0.],
-    #             [0., 1., 1.],
-    #             [1., 0., 1.]
-    #         ]
-    #     ]
-    # )
-    colors_nodes = torch.Tensor(
-        [
-            [
-                [0., 0.1, 1.],
-                [0.1, 0., 1.],
-                # [0., 0.3, 1.]
-                [1., 1., 2.]
-            ],
-            [
-                [1., 1., 0.],
-                [1., 0., 0.],
-                [1., 0.5, 0.3]
-            ]
-        ]
-    )
-
-    return wc_triangles, colors_nodes
-
-
-def pick_point_cloud_from_triangles(wc_triangles: torch.Tensor, colors: torch.Tensor, num_samples: int = 100) -> torch.Tensor:
+def pick_point_cloud_from_triangles(
+        wc_triangles: torch.Tensor,
+        colors: torch.Tensor,
+        num_samples: int = 100
+) -> torch.Tensor:
     """Pick m samples from the triangles in the 3D scene.
 
     Args:
@@ -182,7 +135,7 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
 
 
 def projection_pipeline():
-    wc_triangles, colors = generate_3d_scene()
+    wc_triangles, colors = generate_3d_scene_sample_triangles()
     wc_points, points_colors = pick_point_cloud_from_triangles(wc_triangles, colors)
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
@@ -207,7 +160,7 @@ def main():
     interactive(
         z=(10., (2., 100.)),
         delta_z=(0.01, (-5., 5.))
-    )(generate_3d_scene)
+    )(generate_3d_scene_sample_triangles)
     interactive(
         yaw_deg=(0., (-180., 180.)),
         pitch_deg=(0., (-180., 180.)),
