@@ -32,16 +32,17 @@ def pick_point_cloud_from_triangles(
     sampled_indices = torch.multinomial(probabilities, num_samples, replacement=True)
 
     # Sample points within the selected triangles
-    sampled_points = torch.zeros(num_samples, 4, 1)  # Initialize tensor for sampled points
-    sampled_colors = torch.zeros(num_samples, 1, 3)  # Initialize tensor for sampled colors
+    sampled_points = torch.zeros(num_samples, 4, 1, device=wc_triangles.device)  # Initialize tensor for sampled points
+    sampled_colors = torch.zeros(num_samples, 1, 3, device=wc_triangles.device)  # Initialize tensor for sampled colors
     for i, idx in enumerate(sampled_indices):
         # Barycentric coordinates for a random point within a triangle
         r1, r2 = torch.sqrt(torch.rand(1)), torch.rand(1)
-        barycentric = torch.tensor([1 - r1, r1 * (1 - r2), r1 * r2])
+        barycentric = torch.tensor([1 - r1, r1 * (1 - r2), r1 * r2], device=wc_triangles.device)
 
         # Convert barycentric coordinates to Cartesian coordinates
         point = torch.matmul(wc_triangles[idx, :3, :], barycentric.unsqueeze(1))
-        point_homogeneous = torch.cat((point, torch.tensor([[1.0]])))  # Convert to homogeneous coordinates
+        # Convert to homogeneous coordinates
+        point_homogeneous = torch.cat((point, torch.tensor([[1.0]], device=wc_triangles.device)))
 
         sampled_points[i] = point_homogeneous
 

@@ -33,5 +33,6 @@ def define_default_sliders():
     )(generate_3d_scene_sample_from_mesh)
     interactive(
         show_depth=(False,),
-        for_loop=(False,),
+        for_loop=(True,),
+        limit=(-1, [-1, 10000]),
     )(shade_screen_space)

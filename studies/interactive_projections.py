@@ -8,13 +8,14 @@ from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.synthesis.shader import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
+from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
 
 
 def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
-    cc_triangles = cc_triangles.numpy()
+    cc_triangles = cc_triangles.cpu().numpy()
     t1 = SingleCurve(
         x=[cc_triangles[0, 0, idx] for idx in [0, 1, 2, 0]],
         y=[cc_triangles[0, 1, idx] for idx in [0, 1, 2, 0]],
@@ -48,12 +49,13 @@ def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
 
 
 def tensor_to_image(image: torch.Tensor) -> np.ndarray:
-    image = image.numpy()
+    image = image.cpu().numpy()
     return image
 
 
 def projection_pipeline():
-    wc_triangles, colors = generate_3d_scene_sample_triangles()
+    # wc_triangles, colors = generate_3d_scene_sample_triangles()
+    wc_triangles, colors = generate_3d_scene_sample_from_mesh()
     wc_points, points_colors = pick_point_cloud_from_triangles(wc_triangles, colors)
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
@@ -68,15 +70,18 @@ def projection_pipeline():
     splatted_image = splat_points(cc_points, points_colors, w, h)
     # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
-    img_scene = visualize_2d_scene(cc_triangles, w, h)
-    return img_scene, splatted_image, rendered_image
+
+    # img_scene = visualize_2d_scene(cc_triangles, w, h)
+    # return img_scene, splatted_image, rendered_image
+
+    return splatted_image, rendered_image
 
 
 def main():
     import logging
     logging.basicConfig(level=logging.INFO)
     define_default_sliders()
-    
+
     interactive_pipeline(
         gui="qt", cache=True,
         safe_input_buffer_deepcopy=False,

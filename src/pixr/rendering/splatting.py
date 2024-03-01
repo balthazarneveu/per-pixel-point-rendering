@@ -36,7 +36,7 @@ def splat_points(
     w: int,
     h: int,
     debug: Optional[bool] = False,
-    no_grad: Optional[bool] = False
+    no_grad: Optional[bool] = True
 ) -> torch.Tensor:
     """
     Splat the colors of the vertices onto an image.

@@ -11,7 +11,7 @@ def generate_3d_scene_sample_from_mesh(
         z: float = 5,
         device: str = DEVICE) -> Tuple[torch.Tensor, torch.Tensor]:
     # Load the mesh
-    mesh = trimesh.load((MESH_PATH/mesh_name).with_suffix(".obj"), force='mesh')
+    mesh = trimesh.load((mesh_path/mesh_name).with_suffix(".obj"), force='mesh')
 
     # Ensure the mesh is a Trimesh object
     if not isinstance(mesh, trimesh.Trimesh):
@@ -23,6 +23,20 @@ def generate_3d_scene_sample_from_mesh(
 
     # Convert vertices to PyTorch tensor and add z-coordinate and homogenous coordinate
     vertices_tensor = torch.tensor(vertices, dtype=torch.float32)
+
+    # # Rotate the mesh
+    # # theta = torch.Tensor([-30.])
+    # theta = torch.Tensor([-90.])
+    # theta = torch.deg2rad(theta)
+    # cos_theta, sin_theta = torch.cos(theta), torch.sin(theta)
+    # # Rotation matrix around Y-axis
+    # rotation_matrix = torch.tensor([
+    #     [cos_theta, 0, sin_theta],
+    #     [0, 1, 0],
+    #     [-sin_theta, 0, cos_theta]
+    # ], dtype=torch.float32)
+    # vertices_tensor = torch.matmul(vertices_tensor, rotation_matrix)
+
     vertices_tensor = torch.cat([vertices_tensor, torch.full((vertices_tensor.shape[0], 1), z)], dim=1)
     # vertices_tensor = torch.cat([vertices_tensor, torch.ones((vertices_tensor.shape[0], 1))],
     #                             dim=1)  # Add homogenous coordinate
@@ -37,9 +51,8 @@ def generate_3d_scene_sample_from_mesh(
     center[..., -1, :] = 0.
     wc_triangles -= center
     scale = wc_triangles[..., :3, :].std(dim=(0, 1, 2), keepdim=True)
-    # print("center", center)
-    # print("scale", scale)
     wc_triangles *= 0.3/scale  # 30 cm size
+
     wc_triangles[..., 2, :] += z
     wc_triangles = wc_triangles.to(device)
     colors_nodes = colors_nodes.to(device)

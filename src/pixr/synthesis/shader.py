@@ -75,12 +75,13 @@ def shade_screen_space(
         show_depth: bool = False,
         no_grad: bool = True,
         debug: bool = False,
-        for_loop: bool = False
+        for_loop: bool = True,
+        limit: int = -1
 ) -> torch.Tensor:
     if for_loop:
-        return shade_screen_space_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug)
+        return shade_screen_space_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug, limit=limit)
     else:
-        return shade_screen_space_no_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug)
+        return shade_screen_space_no_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug, limit=limit)
 
 
 def shade_screen_space_no_for_loop(
@@ -90,7 +91,8 @@ def shade_screen_space_no_for_loop(
         width: int, height: int,
         show_depth: bool = False,
         no_grad: bool = True,
-        debug: bool = False
+        debug: bool = False,
+        limit: int = -1
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Create an empty image with shape (h, w, 3)
@@ -110,6 +112,8 @@ def shade_screen_space_no_for_loop(
         grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
         grid_points = grid_points.view(-1, 2)
         for batch_idx in tqdm(range(num_batches)):
+            if limit > 0 and batch_idx*batch_size > limit:
+                break
             # Compute start and end indices for the current batch
             start_idx = batch_idx * batch_size
             end_idx = min((batch_idx + 1) * batch_size, cc_triangles.shape[0])
@@ -157,7 +161,8 @@ def shade_screen_space_no_for_loop(
                 interpolated_color = interpolated_color.squeeze(1)
                 if debug:
                     print("interpolated_color!", interpolated_color.shape, closer_mask.shape)
-                interpolated_color *= closer_mask
+                # interpolated_color *= closer_mask
+                interpolated_color[~closer_mask.expand(-1, 3)] = 0.
 
                 image += interpolated_color.view(image.shape)
 
@@ -188,7 +193,8 @@ def shade_screen_space_for_loop(
         width: int, height: int,
         show_depth: bool = False,
         no_grad: bool = True,
-        debug: bool = False
+        debug: bool = False,
+        limit: int = -1
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Create an empty image with shape (h, w, 3)
@@ -200,6 +206,8 @@ def shade_screen_space_for_loop(
         vertex_colors = colors[:, :num_vertices, :]
 
         for batch_idx in tqdm(range(cc_triangles.shape[0])):
+            if limit > 0 and batch_idx > limit:
+                break
             depth_values = depths[batch_idx, 0, :]
             triangle = cc_triangles[batch_idx][:2, :]
             color = vertex_colors[batch_idx]
