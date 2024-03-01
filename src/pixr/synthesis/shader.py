@@ -14,7 +14,6 @@ def barycentric_coord_broadcast(p, a, b, c):
     v0 = b - a
     v1 = c - a
     v2 = p - a
-    # print(v0.shape, v1.shape, v2.shape)
 
     # Compute dot products using einsum for batched operations
     d00 = torch.einsum('ijk,ijk->ij', v0, v0)
@@ -32,7 +31,9 @@ def barycentric_coord_broadcast(p, a, b, c):
 
 
 def shade_screen_space(
-        cc_triangles: torch.Tensor, colors: torch.Tensor, depths: torch.Tensor,
+        cc_triangles: torch.Tensor,
+        colors: torch.Tensor,
+        depths: torch.Tensor,
         width: int, height: int,
         show_depth: bool = False,
         no_grad: bool = True,
@@ -40,8 +41,8 @@ def shade_screen_space(
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Create an empty image with shape (h, w, 3)
-        image = torch.zeros((height, width, 3))
-        depth_buffer = torch.full((height, width), float('inf'), dtype=torch.float32)
+        image = torch.zeros((height, width, 3), device=cc_triangles.device)
+        depth_buffer = torch.full((height, width), float('inf'), device=cc_triangles.device, dtype=torch.float32)
         # Get the number of vertices
         num_vertices = cc_triangles.shape[1]
         # Extract the colors at the vertices
@@ -68,10 +69,10 @@ def shade_screen_space(
                     print("y", bb_y_min, bb_y_max, triangle)
                 continue  # Skip may be due ton infinity values
             # Create a grid for the bounding box
-            x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
-            y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)
+            x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32, device=cc_triangles.device)
+            y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32, device=cc_triangles.device)
 
-            grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy')
+            grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy', )
             grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
 
             # Compute barycentric coordinates for the grid points

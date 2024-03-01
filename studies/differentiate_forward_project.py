@@ -7,8 +7,7 @@ from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 import torch
 from matplotlib import pyplot as plt
 from typing import Optional
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# DEVICE = torch.device("cpu")
+from pixr.properties import DEVICE
 
 
 def generate_world(

@@ -2,13 +2,16 @@ import torch
 import trimesh
 from pathlib import Path
 from typing import Tuple
+from pixr.properties import DEVICE, MESH_PATH
 
-MESH_PATH = trimesh.load(Path("__data")/"teapot.obj")
 
-
-def generate_3d_scene_sample_from_mesh(mesh_path: Path = MESH_PATH, z: float = 5) -> Tuple[torch.Tensor, torch.Tensor]:
+def generate_3d_scene_sample_from_mesh(
+        mesh_name: str = "teapot",
+        mesh_path: Path = MESH_PATH,
+        z: float = 5,
+        device: str = DEVICE) -> Tuple[torch.Tensor, torch.Tensor]:
     # Load the mesh
-    mesh = trimesh.load(mesh_path, force='mesh')
+    mesh = trimesh.load((MESH_PATH/mesh_name).with_suffix(".obj"), force='mesh')
 
     # Ensure the mesh is a Trimesh object
     if not isinstance(mesh, trimesh.Trimesh):
@@ -38,4 +41,6 @@ def generate_3d_scene_sample_from_mesh(mesh_path: Path = MESH_PATH, z: float = 5
     # print("scale", scale)
     wc_triangles *= 0.3/scale  # 30 cm size
     wc_triangles[..., 2, :] += z
+    wc_triangles = wc_triangles.to(device)
+    colors_nodes = colors_nodes.to(device)
     return wc_triangles, colors_nodes

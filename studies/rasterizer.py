@@ -11,7 +11,7 @@ from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 
 
 def tensor_to_image(image: torch.Tensor) -> np.ndarray:
-    image = image.numpy()
+    image = image.cpu().numpy()
     return image
 
 
