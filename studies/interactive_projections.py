@@ -54,8 +54,8 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
 
 
 def projection_pipeline():
-    # wc_triangles, colors = generate_3d_scene_sample_triangles()
-    wc_triangles, colors = generate_3d_scene_sample_from_mesh()
+    wc_triangles, colors = generate_3d_scene_sample_triangles()
+    # wc_triangles, colors = generate_3d_scene_sample_from_mesh()
     wc_points, points_colors = pick_point_cloud_from_triangles(wc_triangles, colors)
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)

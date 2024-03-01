@@ -30,15 +30,16 @@ def barycentric_coord_broadcast(p, a, b, c):
     return u, v, w
 
 
+# @torch.compile()
 def shade_screen_space_sequential(
-        cc_triangles: torch.Tensor,
-        colors: torch.Tensor,
-        depths: torch.Tensor,
-        width: int, height: int,
-        show_depth: bool = False,
-        no_grad: bool = True,
-        debug: bool = False,
-        limit: int = -1
+    cc_triangles: torch.Tensor,
+    colors: torch.Tensor,
+    depths: torch.Tensor,
+    width: int, height: int,
+    show_depth: bool = False,
+    no_grad: bool = True,
+    debug: bool = False,
+    limit: int = -1
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Create an empty image with shape (h, w, 3)
@@ -54,6 +55,29 @@ def shade_screen_space_sequential(
                 break
             depth_values = depths[batch_idx, 0, :]
             triangle = cc_triangles[batch_idx][:2, :]
+
+            # Normal culling would require 3D points... we have already projected them in 2D
+            # # Calculate triangle normal
+            # edge1 = triangle[:, 1] - triangle[:, 0]
+            # edge2 = triangle[:, 2] - triangle[:, 0]
+            # normal = torch.cross(edge1, edge2)
+            # normal /= torch.linalg.norm(normal)
+
+            # # Backface culling
+            # viewing_direction = triangle.mean(axis=1)
+            # if torch.dot(normal, viewing_direction) <= 0:
+            #     continue  # Skip this triangle if it's facing away or parallel to the camera
+
+            # Calculate the signed area of the triangle for normal culling
+            x0, y0 = triangle[:, 0]
+            x1, y1 = triangle[:, 1]
+            x2, y2 = triangle[:, 2]
+            signed_area = 0.5 * ((x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0))
+
+            # Skip rendering if the triangle is not counterclockwise (facing away)
+            if signed_area <= 0:
+                continue
+
             color = vertex_colors[batch_idx]
             (bb_x_min, bb_y_min), _ = torch.min(triangle, axis=-1)
             (bb_x_max, bb_y_max), _ = torch.max(triangle, axis=-1)
@@ -63,9 +87,6 @@ def shade_screen_space_sequential(
             # Clamp values to be within image dimensions
             bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
             bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
-            # if debug:
-            #     print("x", bb_x_min, bb_x_max)
-            #     print("y", bb_y_min, bb_y_max)
             if bb_x_min >= bb_x_max or bb_y_min >= bb_y_max:
                 if debug:
                     print("x", bb_x_min, bb_x_max, triangle)
@@ -85,7 +106,7 @@ def shade_screen_space_sequential(
             interpolated_depth = u * depth_values[0] + v * depth_values[1] + w * depth_values[2]
 
             # # Find mask where points are inside the triangle
-            mask = (u >= 0) & (v >= 0) & (w >= 0)
+            mask = (u >= 0) & (v >= 0) & (w >= 0) & (interpolated_depth > 0)
 
             # # Interpolate color for each point in the grid
             interpolated_color = u.unsqueeze(-1) * color[0] + v.unsqueeze(-1) * color[1] + w.unsqueeze(-1) * color[2]

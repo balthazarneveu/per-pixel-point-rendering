@@ -25,7 +25,7 @@ def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0.) -> Tup
                 [-1., 0., z+delta_z, 1.],
                 [2., 0., z+delta_z, 1.],
                 [2., 1., z+delta_z, 1.]
-            ],
+            ][::-1],
             [
                 [0.5, 0., -z, 1.],
                 [0.5, 1., -z, 1.],
@@ -48,7 +48,7 @@ def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0.) -> Tup
                 [1., 1., 0.],
                 [1., 0., 0.],
                 [1., 0.5, 0.3]
-            ],
+            ][::-1],
             [
                 [1., 1., 1.],
                 [1., 1., 1.],
