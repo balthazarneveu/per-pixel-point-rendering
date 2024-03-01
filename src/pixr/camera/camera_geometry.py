@@ -10,10 +10,20 @@ def set_camera_parameters(yaw_deg=0., pitch_deg=0., roll_deg=0., trans_x=0., tra
     return yaw, pitch, roll, cam_pos
 
 
-def get_camera_intrinsics(w: int = 640, h: int = 480) -> Tuple[torch.Tensor, int, int]:
+def get_camera_intrinsics(w: int = 640, h: int = 480, focal_length_pix: float = 1000.) -> Tuple[torch.Tensor, int, int]:
+    """
+    Get camera intrinsics matrix and image dimensions.
+
+    Args:
+        w (int): Width of the image in pixels. Default is 640.
+        h (int): Height of the image in pixels. Default is 480.
+        focal_length_pix (float): Focal length of the camera in pixels. Default is 1000.
+
+    Returns:
+        Tuple[torch.Tensor, int, int]: A tuple containing the camera intrinsics matrix, width, and height of the image.
+    """
     cx, cy = w / 2., h / 2.
-    focal_length = 1000.
-    fx, fy = focal_length, focal_length
+    fx, fy = focal_length_pix, focal_length_pix
     return torch.Tensor(
         [
             [fx, 0, cx],
@@ -23,7 +33,23 @@ def get_camera_intrinsics(w: int = 640, h: int = 480) -> Tuple[torch.Tensor, int
     ), w, h
 
 
-def euler_to_rot(yaw=0., pitch=0., roll=0.):
+def euler_to_rot(
+    yaw: torch.Tensor,
+    pitch: torch.Tensor,
+    roll: torch.Tensor
+) -> torch.Tensor:
+    """
+    Converts Euler angles to a rotation matrix.
+
+    Args:
+        yaw (torch.Tensor): Yaw angle in radians.
+        pitch (torch.Tensor): Pitch angle in radians.
+        roll (torch.Tensor): Roll angle in radians.
+
+    Returns:
+        torch.Tensor: Rotation matrix.
+
+    """
     tensor_0 = torch.zeros(1)
     tensor_1 = torch.ones(1)
     RX = torch.stack([
@@ -44,7 +70,12 @@ def euler_to_rot(yaw=0., pitch=0., roll=0.):
     return R
 
 
-def get_camera_extrinsics(yaw: torch.Tensor, pitch: torch.Tensor, roll: torch.Tensor, cam_pos: torch.Tensor) -> torch.Tensor:
+def get_camera_extrinsics(
+    yaw: torch.Tensor,
+    pitch: torch.Tensor,
+    roll: torch.Tensor,
+    cam_pos: torch.Tensor  # translation
+) -> torch.Tensor:
     cam_rot = euler_to_rot(yaw, pitch, roll)
     camera_ext = torch.cat([cam_rot, cam_pos], dim=1)
     return camera_ext
