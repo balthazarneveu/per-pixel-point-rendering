@@ -3,16 +3,22 @@ from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.rendering.splatting import splat_points
+from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 import torch
 from matplotlib import pyplot as plt
-
+from typing import Optional
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DEVICE = torch.device("cpu")
 
 
-def generate_world(device=DEVICE):
+def generate_world(
+    num_samples: Optional[int] = None,
+    device=DEVICE
+):
     with torch.no_grad():
         point_cloud, colors = generate_3d_scene_sample_triangles(delta_z=1.)
+        if num_samples is not None:
+            point_cloud, colors = pick_point_cloud_from_triangles(point_cloud, colors, num_samples=num_samples)
         point_cloud.requires_grad = False
         point_cloud = point_cloud.to(device)
         colors = colors.to(device)
@@ -33,7 +39,7 @@ def generate_scene(
             'h': 64,
             'focal_length_pix': 200.
         },
-        device=DEVICE
+        device=DEVICE,
 ):
     with torch.no_grad():
         cam_int_gt, w, h = get_camera_intrinsics(
@@ -58,15 +64,18 @@ def generate_scene(
             splat_image_gt.requires_grad = False
     return proj_point_cloud_gt, yaw_gt, pitch_gt, roll_gt, cam_pos_gt, w, h, cam_int_gt, splat_image_gt
 
-# Perform on CPU
 
-
-def check_gradient_descent_on_camera_coordinates(splat_flag=False, show=False, device=DEVICE):
-    # NO SPLATTING INVOLVED !
+def check_gradient_descent_on_camera_coordinates(
+    splat_flag=False,
+    show=False,
+    device=DEVICE,
+    num_samples: Optional[int] = None
+):
+    # NO BACKPROP ALONG SPLATTING INVOLVED !
     # Fit camera parameters from 2D projections and known 3D scene (fixed point cloud)
-    point_cloud_3d, colors = generate_world()
+    point_cloud_3d, colors = generate_world(num_samples=num_samples, device=device)
     proj_point_cloud_gt, yaw_gt, pitch_gt, roll_gt, cam_pos_gt, w, h, cam_int_gt, splat_image_gt = generate_scene(
-        point_cloud_3d, colors=colors)
+        point_cloud_3d, colors=colors, device=device)
     proj_point_cloud_gt = proj_point_cloud_gt.to(device)
     if splat_image_gt is not None:
         splat_image_gt = splat_image_gt.clip(0., 1.)
@@ -82,20 +91,17 @@ def check_gradient_descent_on_camera_coordinates(splat_flag=False, show=False, d
         pitch = torch.nn.Parameter(pitch)
         roll = torch.nn.Parameter(roll)
         cam_pos = torch.nn.Parameter(cam_pos)
-        # yaw = yaw.to(device)
-        # pitch = pitch.to(device)
-        # roll = roll.to(device)
-        # cam_pos = cam_pos.to(device)
-        optimizer = torch.optim.Adam([yaw, pitch, roll, cam_pos], lr=0.01)
+        optimizer = torch.optim.Adam([yaw, pitch, roll, cam_pos], lr=0.5)
         cam_int_gt.requires_grad = False  # freeze the camera intrinsics
-        for step in range(1000):
+        for step in range(200+1):
+            plot_step_flag = step % 100 == 0
             optimizer.zero_grad()
             proj_point_cloud, img_pred = forward_chain(
                 point_cloud_3d, yaw, pitch, roll,
                 cam_pos,
                 cam_int_gt,
                 w=w, h=h,
-                colors=colors if splat_flag else None
+                colors=colors if (splat_flag and plot_step_flag) else None
             )
             loss = torch.nn.functional.mse_loss(proj_point_cloud, proj_point_cloud_gt)
             # loss = torch.nn.functional.mse_loss(img, splat_image_gt) # this is not working!
@@ -109,7 +115,7 @@ def check_gradient_descent_on_camera_coordinates(splat_flag=False, show=False, d
                     f"\tRoll {torch.rad2deg(roll).item():.3f}"
                 )
 
-            if splat_flag and step % 100 == 0 and show:
+            if splat_flag and plot_step_flag and show:
                 plt.figure()
                 plt.subplot(1, 2, 1)
                 plt.title("Groundtruth")
@@ -118,11 +124,6 @@ def check_gradient_descent_on_camera_coordinates(splat_flag=False, show=False, d
                 plt.imshow(img_pred.clip(0., 1.).detach().numpy())
                 plt.title(f"Step {step}")
                 plt.show()
-
-
-def main():
-    check_gradient_descent_on_camera_coordinates(device=DEVICE)
-    check_gradient_descent_on_camera_coordinates(splat_flag=True, show=True, device=DEVICE)
 
 
 def forward_chain(
@@ -142,5 +143,16 @@ def forward_chain(
     return proj_point_cloud, img
 
 
+def main(visualize=False):
+    if visualize:
+        check_gradient_descent_on_camera_coordinates(splat_flag=True, show=True, device=DEVICE, num_samples=1000)
+    else:
+        check_gradient_descent_on_camera_coordinates(device=DEVICE)
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--visualize", action="store_true", default=False)
+    args = parser.parse_args()
+    main(visualize=args.visualize)
