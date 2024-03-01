@@ -29,6 +29,6 @@ def define_default_sliders():
         num_samples=(100, [100, 10000])
     )(pick_point_cloud_from_triangles)
     interactive(
-        mesh_name=("teapot", [pth.stem for pth in MESH_PATH.glob("*.obj")]),
+        mesh_name=("shuttle", [pth.stem for pth in MESH_PATH.glob("*.obj")]),
     )(generate_3d_scene_sample_from_mesh)
     interactive(show_depth=(False,))(shade_screen_space)
