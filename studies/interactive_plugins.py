@@ -3,7 +3,7 @@ from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
-from pixr.synthesis.shader import shade_screen_space
+from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 from pixr.properties import MESH_PATH
 

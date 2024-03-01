@@ -4,7 +4,7 @@ import numpy as np
 from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
 from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.camera.camera import linear_rgb_to_srgb
-from pixr.synthesis.shader import shade_screen_space
+from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters
 from interactive_plugins import define_default_sliders
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
