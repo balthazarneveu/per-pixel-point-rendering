@@ -31,4 +31,7 @@ def define_default_sliders():
     interactive(
         mesh_name=("shuttle", [pth.stem for pth in MESH_PATH.glob("*.obj")]),
     )(generate_3d_scene_sample_from_mesh)
-    interactive(show_depth=(False,))(shade_screen_space)
+    interactive(
+        show_depth=(False,),
+        for_loop=(False,),
+    )(shade_screen_space)

@@ -67,6 +67,22 @@ def barycentric_coord_broadcast(p, a, b, c):
     return u, v, w
 
 
+def shade_screen_space(
+        cc_triangles: torch.Tensor,
+        colors: torch.Tensor,
+        depths: torch.Tensor,
+        width: int, height: int,
+        show_depth: bool = False,
+        no_grad: bool = True,
+        debug: bool = False,
+        for_loop: bool = False
+) -> torch.Tensor:
+    if for_loop:
+        return shade_screen_space_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug)
+    else:
+        return shade_screen_space_no_for_loop(cc_triangles, colors, depths, width, height, show_depth, no_grad, debug)
+
+
 def shade_screen_space_no_for_loop(
         cc_triangles: torch.Tensor,
         colors: torch.Tensor,
@@ -80,6 +96,7 @@ def shade_screen_space_no_for_loop(
         # Create an empty image with shape (h, w, 3)
         image = torch.zeros((height, width, 3), device=cc_triangles.device)
         depth_buffer = torch.full((height, width), float('inf'), device=cc_triangles.device, dtype=torch.float32)
+        depth_buffer = depth_buffer.view(-1, 1)
         # Get the number of vertices
         num_vertices = cc_triangles.shape[1]
         # Extract the colors at the vertices
@@ -93,7 +110,6 @@ def shade_screen_space_no_for_loop(
         grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
         grid_points = grid_points.view(-1, 2)
         for batch_idx in tqdm(range(num_batches)):
-        # for batch_idx in [10]:
             # Compute start and end indices for the current batch
             start_idx = batch_idx * batch_size
             end_idx = min((batch_idx + 1) * batch_size, cc_triangles.shape[0])
@@ -120,16 +136,52 @@ def shade_screen_space_no_for_loop(
                 print(u.shape, batch_vertex_colors.shape)
             interpolated_color = u.unsqueeze(-1) * batch_vertex_colors[:, 0] + v.unsqueeze(-1) * \
                 batch_vertex_colors[:, 1] + w.unsqueeze(-1) * batch_vertex_colors[:, 2]
-            interpolated_color[~mask] = 0.
-            interpolated_color = interpolated_color.sum(axis=1)
-            if debug:
-                print(interpolated_color.shape, mask.shape)
-            image += interpolated_color.view(image.shape)
 
+            if True:
+                if debug:
+                    print("triangle depth", batch_depths.shape)
+                interpolated_depth = u.unsqueeze(-1) * batch_depths[..., 0] + v.unsqueeze(-1) * \
+                    batch_depths[..., 1] + w.unsqueeze(-1) * batch_depths[..., 2]
+                print("interpolated depth", interpolated_depth.shape)
+                interpolated_depth[~mask] = float('inf')
+                closest_depth, closest_depth_idx = torch.min(interpolated_depth, dim=1)
+                closer_mask = closest_depth < depth_buffer
+
+                depth_buffer[closer_mask] = closest_depth[closer_mask]
+                interpolated_color[~mask] = 0.
+                if debug:
+                    print("interpolated_color", interpolated_color.shape, "closest_depth_idx", closest_depth_idx.shape)
+
+                closest_depth_idx = closest_depth_idx.unsqueeze(-1).expand(-1, -1, 3)
+                interpolated_color = torch.gather(interpolated_color, 1, closest_depth_idx)
+                interpolated_color = interpolated_color.squeeze(1)
+                if debug:
+                    print("interpolated_color!", interpolated_color.shape, closer_mask.shape)
+                interpolated_color *= closer_mask
+
+                image += interpolated_color.view(image.shape)
+
+                if False:
+                    # visualize inverse depth
+                    image += (0.1/closest_depth).repeat(1, 3).view(image.shape)
+
+            else:
+
+                interpolated_color[~mask] = 0.
+                interpolated_color = interpolated_color.sum(axis=1)
+                if debug:
+                    print(interpolated_color.shape, mask.shape)
+                image += interpolated_color.view(image.shape)
+            # No Z buffer!
+    # if show_depth:
+    # Debug : visualize inverse depth
+    if show_depth:
+        image = 0.5 / depth_buffer.repeat(1, 3).view(image.shape)
+        image = (image - image.min()) / (image.max() - image.min())
     return image
 
 
-def shade_screen_space(
+def shade_screen_space_for_loop(
         cc_triangles: torch.Tensor,
         colors: torch.Tensor,
         depths: torch.Tensor,
