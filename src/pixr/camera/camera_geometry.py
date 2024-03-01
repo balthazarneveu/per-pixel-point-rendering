@@ -2,7 +2,11 @@ import torch
 from typing import Tuple
 
 
-def set_camera_parameters(yaw_deg=0., pitch_deg=0., roll_deg=0., trans_x=0., trans_y=0., trans_z=0.) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def set_camera_parameters(
+    yaw_deg: float = 0., pitch_deg: float = 0., roll_deg: float = 0.,
+    trans_x: float = 0., trans_y: float = 0., trans_z: float = 0.,
+    **_kwargs
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     yaw = torch.deg2rad(torch.Tensor([yaw_deg]))
     pitch = torch.deg2rad(torch.Tensor([pitch_deg]))
     roll = torch.deg2rad(torch.Tensor([roll_deg]))
@@ -50,8 +54,8 @@ def euler_to_rot(
         torch.Tensor: Rotation matrix.
 
     """
-    tensor_0 = torch.zeros(1)
-    tensor_1 = torch.ones(1)
+    tensor_0 = torch.zeros(1, device=yaw.device)
+    tensor_1 = torch.ones(1, device=yaw.device)
     RX = torch.stack([
         torch.stack([tensor_1, tensor_0, tensor_0]),
         torch.stack([tensor_0, torch.cos(pitch), -torch.sin(pitch)]),

@@ -2,7 +2,11 @@ import torch
 from typing import Tuple
 
 
-def project_3d_to_2d(wc_triangles: torch.Tensor, camera_intrinsics: torch.Tensor, camera_extrinsics: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+def project_3d_to_2d(
+    wc_triangles: torch.Tensor,
+    camera_intrinsics: torch.Tensor,
+    camera_extrinsics: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
     cc_triangles = torch.matmul(camera_extrinsics, wc_triangles)
     cc_triangles[:, 1, :] *= -1.  # flip y axis to get a image-like coordinate system
     cc_triangles = torch.matmul(camera_intrinsics, cc_triangles)

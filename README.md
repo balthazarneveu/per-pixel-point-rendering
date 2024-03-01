@@ -14,10 +14,12 @@ pip install -e .
 #### Code structure
 - rendering:
   - [per pixel splatting](src/pixr/rendering/splatting.py)
-  - [differentiability check](src/pixr/rendering/differentiate_forward_project.py)
+  
 
 - synthesis:
   - [world definition with triangle primitives](src/pixr/synthesis/world_simulation.py)
-  - [view synthesis of a scene rasterizer]
-  - interactive visualization
-  - 
+  - [view synthesis of a scene rasterizer](src/pixr/synthesis/shader.py)
+
+- studies: 
+  - [interactive visualization](studies/interactive_projections.py)
+  - [differentiability check of splatting](studies/differentiate_forward_project.py)
