@@ -16,10 +16,11 @@ pip install -e .
   - [per pixel splatting](src/pixr/rendering/splatting.py)
   
 
-- synthesis:
-  - [world definition with triangle primitives](src/pixr/synthesis/world_simulation.py)
-  - [view synthesis of a scene rasterizer](src/pixr/synthesis/shader.py)
+- synthesis / rasterizer:
+  - world definition [with triangle primitives](src/pixr/synthesis/world_simulation.py) or [meshes](src/pixr/synthesis/world_from_mesh.py)
+  - [view synthesis of a scene rasterizer](src/pixr/rasterizer/rasterizer_sequential.py)
 
 - studies: 
   - [interactive visualization](studies/interactive_projections.py)
-  - [differentiability check of splatting](studies/differentiate_forward_project.py)
+  - [rasterizer check](studies/interactive_rasterizer.py)
+  - [differentiability check of splatting](studies/differentiate_forward_project.py) . :warning: so far splatting is not differentiable with regard to camera.

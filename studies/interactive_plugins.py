@@ -14,16 +14,17 @@ def define_default_sliders():
         gamma=(2.2, [1., 4.]),
     )(linear_rgb_to_srgb)
     interactive(
-        z=(10., (2., 100.)),
-        delta_z=(0.01, (-5., 5.))
+        z=(10., [2., 100.]),
+        delta_z=(0.01, [-5., 5.]),
+        scene_mode=("test_triangles", ["test_triangles", "staircase"]),
     )(generate_3d_scene_sample_triangles)
     interactive(
-        yaw_deg=(0., (-180., 180.)),
-        pitch_deg=(0., (-180., 180.)),
-        roll_deg=(0., (-180., 180.)),
-        trans_x=(0., (-10., 10.)),
-        trans_y=(0., (-10., 10.)),
-        trans_z=(0., (-10., 10.))
+        yaw_deg=(0., [-180., 180.]),
+        pitch_deg=(0., [-180., 180.]),
+        roll_deg=(0., [-180., 180.]),
+        trans_x=(0., [-10., 10.]),
+        trans_y=(0., [-10., 10.]),
+        trans_z=(0., [-10., 10.])
     )(set_camera_parameters)
     interactive(
         num_samples=(100, [100, 10000])

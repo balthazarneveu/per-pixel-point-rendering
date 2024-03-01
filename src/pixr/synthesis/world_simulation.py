@@ -2,7 +2,15 @@ import torch
 from typing import Tuple
 
 
-def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
+def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0., scene_mode="test_triangles") -> Tuple[torch.Tensor, torch.Tensor]:
+    if scene_mode == "test_triangles":
+        wc_triangles, colors_nodes = generate_3d_scene_sample_test_triangles(z=z, delta_z=delta_z)
+    elif scene_mode == "staircase":
+        wc_triangles, colors_nodes = generate_3d_staircase_scene(z=z)
+    return wc_triangles, colors_nodes
+
+
+def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Generate a 3D scene with N triangles in world coordinates and their colors.
 
@@ -57,5 +65,60 @@ def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0.) -> Tup
         ]
     )
     # [N, 3 triangle, 3=rgb]
+
+    return wc_triangles, colors_nodes
+
+
+def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, float, float] = (0.5, 5, 0.5), z: float = 5.) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Generate a 3D scene with a staircase made of rectangles (each represented by two triangles)
+    in world coordinates and their colors.
+
+    Args:
+        num_steps (int, optional): Number of steps in the staircase.
+        step_size (Tuple[float, float, float], optional): Size of each step in x, y, and z directions.
+        z (float, optional): The starting z-coordinate of the staircase.
+
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor]: A tuple containing
+        - world-coordinate triangles of the staircase
+        - vertices colors.
+    """
+    step_x, step_y, delta_z = step_size
+    wc_triangles = []
+    colors_nodes = []
+
+    for i in range(num_steps):
+        z = z + i * delta_z
+        # Each step is represented by two triangles forming a rectangle
+        wc_triangles.extend([
+            [
+                [i * step_x, -step_y/2., z, 1.],
+                [i * step_x + step_x, -step_y/2., z, 1.],
+                [i * step_x, step_y-step_y/2., z, 1.]
+            ][::-1],
+            [
+                [i * step_x + step_x, -step_y/2., z, 1.],
+                [i * step_x + step_x, step_y-step_y/2., z, 1.],
+                [i * step_x, step_y-step_y/2., z, 1.]
+            ][::-1]
+        ])
+        # Assign a color, gradually changing to visualize the steps distinctly
+        colors_nodes.extend([
+            [
+                [i / num_steps, 0., 1. - i / num_steps],
+                [i / num_steps, 0., 1. - i / num_steps],
+                [i / num_steps, 0., 1. - i / num_steps]
+            ],
+            [
+                [i / num_steps, 0., 1. - i / num_steps],
+                [i / num_steps, 0., 1. - i / num_steps],
+                [i / num_steps, 0., 1. - i / num_steps]
+            ]
+        ])
+
+    wc_triangles = torch.Tensor(wc_triangles)
+    wc_triangles = wc_triangles.permute(0, 2, 1)
+    colors_nodes = torch.Tensor(colors_nodes)
 
     return wc_triangles, colors_nodes
