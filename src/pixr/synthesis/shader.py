@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 
 def barycentric_coord_broadcast(p, a, b, c):
@@ -13,7 +14,7 @@ def barycentric_coord_broadcast(p, a, b, c):
     v0 = b - a
     v1 = c - a
     v2 = p - a
-    print(v0.shape, v1.shape, v2.shape)
+    # print(v0.shape, v1.shape, v2.shape)
 
     # Compute dot products using einsum for batched operations
     d00 = torch.einsum('ijk,ijk->ij', v0, v0)
@@ -35,6 +36,7 @@ def shade_screen_space(
         width: int, height: int,
         show_depth: bool = False,
         no_grad: bool = True,
+        debug: bool = False
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Create an empty image with shape (h, w, 3)
@@ -45,7 +47,7 @@ def shade_screen_space(
         # Extract the colors at the vertices
         vertex_colors = colors[:, :num_vertices, :]
         # Perform splatting of vertex colors
-        for batch_idx in range(cc_triangles.shape[0]):
+        for batch_idx in tqdm(range(cc_triangles.shape[0])):
             depth_values = depths[batch_idx, 0, :]
             triangle = cc_triangles[batch_idx][:2, :]
             color = vertex_colors[batch_idx]
@@ -57,8 +59,14 @@ def shade_screen_space(
             # Clamp values to be within image dimensions
             bb_x_min, bb_y_min = max(min(bb_x_min, width - 1), 0), max(min(bb_y_min, height - 1), 0)
             bb_x_max, bb_y_max = max(min(bb_x_max, width - 1), 0), max(min(bb_y_max, height - 1), 0)
-            print("x", bb_x_min, bb_x_max)
-            print("y", bb_y_min, bb_y_max)
+            # if debug:
+            #     print("x", bb_x_min, bb_x_max)
+            #     print("y", bb_y_min, bb_y_max)
+            if bb_x_min >= bb_x_max or bb_y_min >= bb_y_max:
+                if debug:
+                    print("x", bb_x_min, bb_x_max, triangle)
+                    print("y", bb_y_min, bb_y_max, triangle)
+                continue  # Skip may be due ton infinity values
             # Create a grid for the bounding box
             x_range = torch.arange(bb_x_min, bb_x_max + 1, dtype=torch.float32)
             y_range = torch.arange(bb_y_min, bb_y_max + 1, dtype=torch.float32)

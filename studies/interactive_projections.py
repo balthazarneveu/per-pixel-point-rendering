@@ -1,5 +1,5 @@
 import torch
-from interactive_pipe import interactive, interactive_pipeline
+from interactive_pipe import interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 import numpy as np
 from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
@@ -9,6 +9,7 @@ from pixr.synthesis.shader import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
+from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
 
 
@@ -74,19 +75,8 @@ def projection_pipeline():
 def main():
     import logging
     logging.basicConfig(level=logging.INFO)
-    interactive(
-        z=(10., (2., 100.)),
-        delta_z=(0.01, (-5., 5.))
-    )(generate_3d_scene_sample_triangles)
-    interactive(
-        yaw_deg=(0., (-180., 180.)),
-        pitch_deg=(0., (-180., 180.)),
-        roll_deg=(0., (-180., 180.)),
-        trans_x=(0., (-10., 10.)),
-        trans_y=(0., (-10., 10.)),
-        trans_z=(0., (-10., 10.))
-    )(set_camera_parameters)
-    interactive(show_depth=(False,))(shade_screen_space)
+    define_default_sliders()
+    
     interactive_pipeline(
         gui="qt", cache=True,
         safe_input_buffer_deepcopy=False,

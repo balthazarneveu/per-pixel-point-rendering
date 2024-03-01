@@ -1,15 +1,10 @@
 import torch
-from interactive_pipe import interactive
 
 
-@interactive(
-    exposure=(1., [0., 5.]),
-    gamma=(2.2, [1., 4.]),
-)
 def linear_rgb_to_srgb(
     img: torch.Tensor,
-    exposure: float = 1.,
-    gamma: float = 2.2,
+    exposure: float = 1.,  # (1., [0., 5.]),
+    gamma: float = 2.2,  # (2.2, [1., 4.]),
     no_grad: bool = True
 ) -> torch.Tensor:
     with torch.no_grad() if no_grad else torch.enable_grad():
