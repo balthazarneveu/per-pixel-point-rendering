@@ -2,6 +2,43 @@ import torch
 from tqdm import tqdm
 
 
+def batched_barycentric_coord(p: torch.Tensor, triangles):
+    """_summary_
+
+    Args:
+        p (torch.Tensor): _description_
+        triangles (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    triangles = triangles.unsqueeze(0)  # .repeat(p.shape[0], 1, 1, 1)
+    p = p.squeeze(-1)
+    p = p.unsqueeze(1)
+    print("triangles", triangles.shape, "points", p.shape)
+    a = triangles[..., 0]
+    b = triangles[..., 1]
+    c = triangles[..., 2]
+    print("triangle edge", a.shape, "points", p.shape)
+    v0 = b - a
+    v1 = c - a
+    v2 = p - a
+
+    # Compute dot products using einsum for batched operations
+    d00 = torch.einsum('ijk,ijk->ij', v0, v0)
+    d01 = torch.einsum('ijk,ijk->ij', v0, v1)
+    d11 = torch.einsum('ijk,ijk->ij', v1, v1)
+    d20 = torch.einsum('ijk,ijk->ij', v2, v0)
+    d21 = torch.einsum('ijk,ijk->ij', v2, v1)
+
+    denom = d00 * d11 - d01 * d01
+    v = (d11 * d20 - d01 * d21) / denom
+    w = (d00 * d21 - d01 * d20) / denom
+    u = 1.0 - v - w
+
+    return u, v, w
+
+
 def barycentric_coord_broadcast(p, a, b, c):
     """
     Compute barycentric coordinates of point p with respect to triangle (a, b, c).
@@ -30,6 +67,68 @@ def barycentric_coord_broadcast(p, a, b, c):
     return u, v, w
 
 
+def shade_screen_space_no_for_loop(
+        cc_triangles: torch.Tensor,
+        colors: torch.Tensor,
+        depths: torch.Tensor,
+        width: int, height: int,
+        show_depth: bool = False,
+        no_grad: bool = True,
+        debug: bool = False
+) -> torch.Tensor:
+    with torch.no_grad() if no_grad else torch.enable_grad():
+        # Create an empty image with shape (h, w, 3)
+        image = torch.zeros((height, width, 3), device=cc_triangles.device)
+        depth_buffer = torch.full((height, width), float('inf'), device=cc_triangles.device, dtype=torch.float32)
+        # Get the number of vertices
+        num_vertices = cc_triangles.shape[1]
+        # Extract the colors at the vertices
+        vertex_colors = colors[:, :num_vertices, :]
+
+        batch_size = 64
+        num_batches = (cc_triangles.shape[0] + batch_size - 1) // batch_size
+        x_range = torch.arange(0, image.shape[1], dtype=torch.float32, device=cc_triangles.device)
+        y_range = torch.arange(0, image.shape[0], dtype=torch.float32, device=cc_triangles.device)
+        grid_x, grid_y = torch.meshgrid(x_range, y_range, indexing='xy', )
+        grid_points = torch.stack([grid_x, grid_y], dim=-1)  # Shape: [num_rows, num_cols, 2]
+        grid_points = grid_points.view(-1, 2)
+        for batch_idx in tqdm(range(num_batches)):
+        # for batch_idx in [10]:
+            # Compute start and end indices for the current batch
+            start_idx = batch_idx * batch_size
+            end_idx = min((batch_idx + 1) * batch_size, cc_triangles.shape[0])
+
+            # Select the current batch of triangles, depths, and colors
+            batch_triangles = cc_triangles[start_idx:end_idx, :2, :]
+            batch_depths = depths[start_idx:end_idx]
+            batch_vertex_colors = vertex_colors[start_idx:end_idx]
+            if debug:
+                print(batch_triangles.shape, batch_depths.shape, batch_vertex_colors.shape)
+            bb_min, _ = torch.min(batch_triangles, axis=-1)
+            bb_max, _ = torch.max(batch_triangles, axis=-1)
+            bb_x_min, bb_y_min = bb_min[..., 0, ...], bb_min[..., 1, ...]
+            bb_x_max, bb_y_max = bb_max[..., 0, ...], bb_max[..., 1, ...]
+            bb_x_min, bb_y_min = torch.floor(bb_x_min).int(), torch.floor(bb_y_min).int()
+            bb_x_max, bb_y_max = torch.ceil(bb_x_max).int(), torch.ceil(bb_y_max).int()
+            if debug:
+                print(grid_points.shape, batch_triangles.shape)
+            u, v, w = batched_barycentric_coord(grid_points, batch_triangles)
+            if debug:
+                print(u.shape, v.shape, w.shape)
+            mask = (u >= 0) & (v >= 0) & (w >= 0)
+            if debug:
+                print(u.shape, batch_vertex_colors.shape)
+            interpolated_color = u.unsqueeze(-1) * batch_vertex_colors[:, 0] + v.unsqueeze(-1) * \
+                batch_vertex_colors[:, 1] + w.unsqueeze(-1) * batch_vertex_colors[:, 2]
+            interpolated_color[~mask] = 0.
+            interpolated_color = interpolated_color.sum(axis=1)
+            if debug:
+                print(interpolated_color.shape, mask.shape)
+            image += interpolated_color.view(image.shape)
+
+    return image
+
+
 def shade_screen_space(
         cc_triangles: torch.Tensor,
         colors: torch.Tensor,
@@ -47,7 +146,7 @@ def shade_screen_space(
         num_vertices = cc_triangles.shape[1]
         # Extract the colors at the vertices
         vertex_colors = colors[:, :num_vertices, :]
-        # Perform splatting of vertex colors
+
         for batch_idx in tqdm(range(cc_triangles.shape[0])):
             depth_values = depths[batch_idx, 0, :]
             triangle = cc_triangles[batch_idx][:2, :]
