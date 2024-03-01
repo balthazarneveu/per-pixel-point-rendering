@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from typing import Tuple
 
 
@@ -88,37 +89,51 @@ def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, floa
     wc_triangles = []
     colors_nodes = []
 
+    # Function to generate rainbow colors
+    def rainbow_color(step, total_steps):
+        return [np.sin(0.3 * step + 0), np.sin(0.3 * step + 2 * np.pi / 3), np.sin(0.3 * step + 4 * np.pi / 3)]
+
+    current_z = z
     for i in range(num_steps):
-        z = z + i * delta_z
-        # Each step is represented by two triangles forming a rectangle
+        # Original step
+        x_stair_end = i * step_x + step_x
         wc_triangles.extend([
             [
-                [i * step_x, -step_y/2., z, 1.],
-                [i * step_x + step_x, -step_y/2., z, 1.],
-                [i * step_x, step_y-step_y/2., z, 1.]
+                [i * step_x, -step_y/2., current_z, 1.],
+                [x_stair_end, -step_y/2., current_z, 1.],
+                [i * step_x, step_y/2., current_z, 1.]
             ][::-1],
             [
-                [i * step_x + step_x, -step_y/2., z, 1.],
-                [i * step_x + step_x, step_y-step_y/2., z, 1.],
-                [i * step_x, step_y-step_y/2., z, 1.]
+                [x_stair_end, -step_y/2., current_z, 1.],
+                [x_stair_end, step_y/2., current_z, 1.],
+                [i * step_x, step_y/2., current_z, 1.]
             ][::-1]
         ])
-        # Assign a color, gradually changing to visualize the steps distinctly
-        colors_nodes.extend([
+
+        # Perpendicular step
+        wc_triangles.extend([
             [
-                [i / num_steps, 0., 1. - i / num_steps],
-                [i / num_steps, 0., 1. - i / num_steps],
-                [i / num_steps, 0., 1. - i / num_steps]
-            ],
+                [x_stair_end, -step_y/2., current_z + delta_z, 1.],
+                [x_stair_end, -step_y/2., current_z, 1.],
+                [x_stair_end, step_y/2., current_z + delta_z, 1.]
+            ],  # [::-1],
             [
-                [i / num_steps, 0., 1. - i / num_steps],
-                [i / num_steps, 0., 1. - i / num_steps],
-                [i / num_steps, 0., 1. - i / num_steps]
-            ]
+                [x_stair_end, -step_y/2., current_z, 1.],
+                [x_stair_end, step_y/2., current_z, 1.],
+                [x_stair_end, step_y/2., current_z + delta_z, 1.]
+            ]  # [::-1]
         ])
 
+        color = np.array(rainbow_color(i, num_steps))
+        for _ in range(2):  # Add the same color for the four triangles that form a step
+            colors_nodes.append([color, color, color])
+        for _ in range(2):
+            colors_nodes.append([1.-color/2., 1.-color/2., 1.-color/2.])
+
+        current_z += delta_z
+
     wc_triangles = torch.Tensor(wc_triangles)
-    wc_triangles = wc_triangles.permute(0, 2, 1)
+    wc_triangles = wc_triangles.permute(0, 2, 1)  # Adjusting dimensions to match your format
     colors_nodes = torch.Tensor(colors_nodes)
 
     return wc_triangles, colors_nodes
