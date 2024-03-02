@@ -61,7 +61,6 @@ def generate_scene(
         yaw_gt = yaw_gt.to(device)
         pitch_gt = pitch_gt.to(device)
         roll_gt = roll_gt.to(device)
-        
         proj_point_cloud_gt, splat_image_gt, cc_normals = forward_chain(
             point_cloud_3d,
             wc_normals,

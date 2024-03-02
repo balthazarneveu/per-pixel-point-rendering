@@ -3,7 +3,11 @@ import numpy as np
 from typing import Tuple
 
 
-def generate_3d_scene_sample_triangles(z: float = 5, delta_z: float = 0., scene_mode="test_triangles") -> Tuple[torch.Tensor, torch.Tensor]:
+def generate_3d_scene_sample_triangles(
+    z: float = 5,
+    delta_z: float = 0.,
+    scene_mode="test_triangles"
+) -> Tuple[torch.Tensor, torch.Tensor]:
     if scene_mode == "test_triangles":
         wc_triangles, colors_nodes = generate_3d_scene_sample_test_triangles(z=z, delta_z=delta_z)
     elif scene_mode == "staircase":
@@ -80,7 +84,11 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
     return wc_triangles, colors_nodes
 
 
-def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, float, float] = (0.5, 5, 0.5), z: float = 5.) -> Tuple[torch.Tensor, torch.Tensor]:
+def generate_3d_staircase_scene(
+    num_steps: int = 5,
+    step_size: Tuple[float, float, float] = (0.5, 5, 0.5),
+    z: float = 5.
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Generate a 3D scene with a staircase made of rectangles (each represented by two triangles)
     in world coordinates and their colors.
@@ -121,7 +129,7 @@ def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, floa
                     [i * step_x, step_y/2., current_z, 1.]
                 ][::-1]
             ])
-            
+
             for _ in range(2):  # Add the same color for the four triangles that form a step
                 colors_nodes.append([color, color, color])
 

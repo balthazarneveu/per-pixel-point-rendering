@@ -49,7 +49,7 @@ def splat_points(
         cc_points (torch.Tensor): Tensor of shape (batch_size, num_vertices, 2)
         representing the point cloud projected in camera space.
         colors (torch.Tensor): Tensor of shape (batch_size, num_vertices, 3) representing the colors at the vertices.
-        depths (torch.Tensor): Tensor of shape (batch_size, 1, prim, ) representing the depths of the triangles. 
+        depths (torch.Tensor): Tensor of shape (batch_size, 1, prim, ) representing the depths of the triangles.
         w (int): Width of the output image.
         h (int): Height of the output image.
         debug (Optional[bool], optional): If True, visualize the splatting process with larger points.
