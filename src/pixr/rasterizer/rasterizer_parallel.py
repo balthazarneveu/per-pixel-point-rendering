@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 
 def batched_barycentric_coord(p: torch.Tensor, triangles):
