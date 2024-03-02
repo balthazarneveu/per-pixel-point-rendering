@@ -7,6 +7,7 @@ from pixr.synthesis.forward_project import project_3d_to_2d
 from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters
+from pixr.synthesis.normals import extract_normals
 from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
@@ -56,18 +57,20 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
 def projection_pipeline():
     wc_triangles, colors = generate_3d_scene_sample_triangles()
     # wc_triangles, colors = generate_3d_scene_sample_from_mesh()
-    wc_points, points_colors = pick_point_cloud_from_triangles(wc_triangles, colors)
+    wc_normals = extract_normals(wc_triangles)
+    wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(wc_triangles, colors, wc_normals)
     yaw, pitch, roll, cam_pos = set_camera_parameters()
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
     camera_intrinsics, w, h = get_camera_intrinsics()
-    cc_points, points_depths = project_3d_to_2d(wc_points, camera_intrinsics, camera_extrinsics)
-    cc_triangles, triangles_depths = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics)
+    cc_points, points_depths, cc_normals = project_3d_to_2d(
+        wc_points, camera_intrinsics, camera_extrinsics, wc_normals)
+    cc_triangles, triangles_depths, _ = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics, None)
     # Screen space triangles.
     rendered_image = shade_screen_space(cc_triangles, colors, triangles_depths, w, h)
     rendered_image = linear_rgb_to_srgb(rendered_image)
     rendered_image = tensor_to_image(rendered_image)
     # Let's splat the triangle nodes
-    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h)
+    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, cc_normals)
     # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
 

@@ -44,7 +44,7 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
                 [0.5, 0., -z, 1.],
                 [0.5, 1., -z, 1.],
                 [1.5, 1., -z, 1.]
-            ]  # BEHIND CAMERA!
+            ],  # BEHIND CAMERA!
         ]
     )
     # [N, xyz1, 3=triangle]
@@ -105,20 +105,25 @@ def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, floa
 
     current_z = z
     for i in range(num_steps):
-        # Original step
+        color = np.array(rainbow_color(i, num_steps))
         x_stair_end = i * step_x + step_x
-        wc_triangles.extend([
-            [
-                [i * step_x, -step_y/2., current_z, 1.],
-                [x_stair_end, -step_y/2., current_z, 1.],
-                [i * step_x, step_y/2., current_z, 1.]
-            ][::-1],
-            [
-                [x_stair_end, -step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z, 1.],
-                [i * step_x, step_y/2., current_z, 1.]
-            ][::-1]
-        ])
+        if True:
+            # Original step
+            wc_triangles.extend([
+                [
+                    [i * step_x, -step_y/2., current_z, 1.],
+                    [x_stair_end, -step_y/2., current_z, 1.],
+                    [i * step_x, step_y/2., current_z, 1.]
+                ][::-1],
+                [
+                    [x_stair_end, -step_y/2., current_z, 1.],
+                    [x_stair_end, step_y/2., current_z, 1.],
+                    [i * step_x, step_y/2., current_z, 1.]
+                ][::-1]
+            ])
+            
+            for _ in range(2):  # Add the same color for the four triangles that form a step
+                colors_nodes.append([color, color, color])
 
         # Perpendicular step
         wc_triangles.extend([
@@ -133,10 +138,6 @@ def generate_3d_staircase_scene(num_steps: int = 5, step_size: Tuple[float, floa
                 [x_stair_end, step_y/2., current_z + delta_z, 1.]
             ]  # [::-1]
         ])
-
-        color = np.array(rainbow_color(i, num_steps))
-        for _ in range(2):  # Add the same color for the four triangles that form a step
-            colors_nodes.append([color, color, color])
         for _ in range(2):
             colors_nodes.append([1.-color/2., 1.-color/2., 1.-color/2.])
 

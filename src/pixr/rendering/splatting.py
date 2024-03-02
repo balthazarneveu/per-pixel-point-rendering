@@ -38,6 +38,7 @@ def splat_points(
     depths: torch.Tensor,
     w: int,
     h: int,
+    cc_normals: Optional[torch.Tensor],
     debug: Optional[bool] = False,
     no_grad: Optional[bool] = True
 ) -> torch.Tensor:
@@ -71,21 +72,35 @@ def splat_points(
         for batch_idx in range(cc_points.shape[0]):
             triangle = cc_points[batch_idx]  # Not triangles!
             color = vertex_colors[batch_idx]
+            normal = cc_normals[batch_idx] if cc_normals is not None else None
             for node_idx in range(triangle.shape[1]):  # We shall not loop over this dimension!
                 x, y = torch.round(triangle[0, node_idx]).long(), torch.round(triangle[1, node_idx]).long()
-                depth = depths[batch_idx, :, node_idx]
-                # -- Normal culling!
                 # -- Bounds Test --
-                # Check if the point is inside the image
-                if depth < 0:
+                if not (0 <= x < w and 0 <= y < h):
                     continue
-                if 0 <= x < w and 0 <= y < h:
+
+                # -- In front of camera --
+                depth = depths[batch_idx, :, node_idx]
+
+                if depth < 0:
                     if debug:
-                        # DEBUG!
-                        for u in range(-4, 4):
-                            for v in range(-4, 4):
-                                if 0 <= x+u < w and 0 <= y+v < h:
-                                    image[y+v, x+u] = color[node_idx]
-                    image[y, x] = color[node_idx]
+                        image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
+                    continue
+
+                # -- Normal culling! --
+                if normal is not None and normal[-1] >= 0:
+                    if debug:
+                        image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
+                    continue
+                image[y, x] = color[node_idx]
+
+                # if 0 <= x < w and 0 <= y < h:
+                #     if debug:
+                #         # DEBUG!
+                #         for u in range(-4, 4):
+                #             for v in range(-4, 4):
+                #                 if 0 <= x+u < w and 0 <= y+v < h:
+                #                     image[y+v, x+u] = color[node_idx]
+                #     image[y, x] = color[node_idx]
     # Return the splatted image
     return image

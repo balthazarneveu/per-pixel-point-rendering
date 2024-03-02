@@ -4,12 +4,14 @@ import torch
 def pick_point_cloud_from_triangles(
         wc_triangles: torch.Tensor,
         colors: torch.Tensor,
+        wc_normals: torch.Tensor,
         num_samples: int = 100
 ) -> torch.Tensor:
     """Pick m samples from the triangles in the 3D scene.
 
     Args:
         wc_triangles (torch.Tensor): [N, 4=xyz1, 3] triangles
+        wc_normals (torch.Tensor): [N, 3] normals at the vertices
         colors (torch.Tensor): [N, 3, 3=rgb] colors at the vertices
         num_samples (int, optional): number of samples to pick. Defaults to 100.
 
@@ -34,6 +36,7 @@ def pick_point_cloud_from_triangles(
     # Sample points within the selected triangles
     sampled_points = torch.zeros(num_samples, 4, 1, device=wc_triangles.device)  # Initialize tensor for sampled points
     sampled_colors = torch.zeros(num_samples, 1, 3, device=wc_triangles.device)  # Initialize tensor for sampled colors
+    sampled_normals = torch.zeros(num_samples, 3, device=wc_triangles.device)  # Initialize tensor for sampled normals
     for i, idx in enumerate(sampled_indices):
         # Barycentric coordinates for a random point within a triangle
         r1, r2 = torch.sqrt(torch.rand(1)), torch.rand(1)
@@ -47,8 +50,9 @@ def pick_point_cloud_from_triangles(
         sampled_points[i] = point_homogeneous
 
         # Interpolate colors based on barycentric coordinates
-        # color = torch.einsum('ij,j->i', colors[idx], barycentric)  # Efficient matrix-vector multiplication
         color = torch.einsum('ij,j->i', colors[idx].T, barycentric)  # Efficient matrix-vector multiplication
+        normal = wc_normals[idx]
         sampled_colors[i, 0, :] = color
-
-    return sampled_points, sampled_colors
+        sampled_normals[i, :] = normal
+    # print("sampled_colors", sampled_colors.shape, "!!!")
+    return sampled_points, sampled_colors, sampled_normals
