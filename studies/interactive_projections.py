@@ -8,8 +8,7 @@ from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.synthesis.normals import extract_normals
-from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
-from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
+from pixr.synthesis.world_simulation import generate_simulated_world
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
@@ -55,7 +54,7 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
 
 
 def projection_pipeline():
-    wc_triangles, colors = generate_3d_scene_sample_triangles()
+    wc_triangles, colors = generate_simulated_world()
     # wc_triangles, colors = generate_3d_scene_sample_from_mesh()
     wc_normals = extract_normals(wc_triangles)
     wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(wc_triangles, colors, wc_normals)
