@@ -131,10 +131,11 @@ def forward_chain(
     colors=None, w=640, h=480
 ):
     cam_ext = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
-    proj_point_cloud, _depth = project_3d_to_2d(point_cloud, cam_int, cam_ext, no_grad=False)
+    proj_point_cloud, depth = project_3d_to_2d(point_cloud, cam_int, cam_ext, no_grad=False)
     if colors is not None:
         img = splat_points(
-            proj_point_cloud, colors, w, h,
+            proj_point_cloud, colors, depth,
+            w, h,
             no_grad=False,
             # debug=True
         )  # Optional here until this is differentiable

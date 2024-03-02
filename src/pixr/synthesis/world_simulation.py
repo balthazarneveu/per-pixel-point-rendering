@@ -36,10 +36,15 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
                 [2., 1., z+delta_z, 1.]
             ][::-1],
             [
+                [-1., 1., z+delta_z, 1.],
+                [-1., 0., z+delta_z, 1.],
+                [2., 1., z+delta_z, 1.]
+            ],  # BACKFACING THE CAMERA!
+            [
                 [0.5, 0., -z, 1.],
                 [0.5, 1., -z, 1.],
                 [1.5, 1., -z, 1.]
-            ],
+            ]  # BEHIND CAMERA!
         ]
     )
     # [N, xyz1, 3=triangle]
@@ -53,6 +58,11 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
                 [0.1, 0., 1.],
                 [1., 1., 2.]
             ],
+            [
+                [1., 1., 0.],
+                [1., 0., 0.],
+                [1., 0.5, 0.3]
+            ][::-1],
             [
                 [1., 1., 0.],
                 [1., 0., 0.],

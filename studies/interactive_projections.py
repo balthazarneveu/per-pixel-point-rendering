@@ -67,7 +67,7 @@ def projection_pipeline():
     rendered_image = linear_rgb_to_srgb(rendered_image)
     rendered_image = tensor_to_image(rendered_image)
     # Let's splat the triangle nodes
-    splatted_image = splat_points(cc_points, points_colors, w, h)
+    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h)
     # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
 

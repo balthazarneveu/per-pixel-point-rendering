@@ -24,3 +24,21 @@ pip install -e .
   - [interactive visualization](studies/interactive_projections.py)
   - [rasterizer check](studies/interactive_rasterizer.py)
   - [differentiability check of splatting](studies/differentiate_forward_project.py) . :warning: so far splatting is not differentiable with regard to camera.
+
+
+#### Tensor convention
+##### Images
+ `[N, C, H, W]`.
+- Image tensors
+  - N = number of images in a batch = batch size. ($N<=n$) 
+  - C = number of channels (1=luma/depth , 3=rgb or more)
+  - H, W spatial dimension
+- $n$ is the number of views 
+
+##### Geometry
+`[M, p, d]`
+- Geometry tensor
+  - A primitive is a list of points of size p, p=1 points, p=3 triangles.
+  - d=1 for depth d=3 for xyz, 4 xyz1 for homogeneous coordinates
+  - M is the number of primitives in a batch. 
+- $m$ is the total amount of points.
