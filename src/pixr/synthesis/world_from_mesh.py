@@ -25,9 +25,8 @@ def generate_3d_scene_sample_from_mesh(
     # Convert vertices to PyTorch tensor and add z-coordinate and homogenous coordinate
     vertices_tensor = torch.tensor(vertices, dtype=torch.float32)
 
-    vertices_tensor = torch.cat([vertices_tensor, torch.full((vertices_tensor.shape[0], 1), z)], dim=1)
-    # vertices_tensor = torch.cat([vertices_tensor, torch.ones((vertices_tensor.shape[0], 1))],
-    #                             dim=1)  # Add homogenous coordinate
+    vertices_tensor = torch.cat([vertices_tensor, torch.ones((vertices_tensor.shape[0], 1))],
+                                dim=1)  # Add homogenous coordinate
 
     # Create tensor for triangle vertices in world coordinates
     wc_triangles = torch.stack([vertices_tensor[faces[:, i]] for i in range(3)], dim=1)
@@ -35,14 +34,12 @@ def generate_3d_scene_sample_from_mesh(
     # Generate random colors for each triangle
     colors_nodes = torch.rand(faces.shape[0], 3, 3)  # Each vertex of each triangle gets a color (RGB)
     wc_triangles = wc_triangles.permute(0, 2, 1)
-    
     if normalize:
         center = wc_triangles.mean(dim=(0, -1), keepdim=True)
         center[..., -1, :] = 0.
         wc_triangles -= center
         scale = wc_triangles[..., :3, :].std(dim=(0, 1, 2), keepdim=True)
         wc_triangles *= 0.3/scale  # 30 cm size
-
     wc_triangles[..., 2, :] += z
     wc_triangles = wc_triangles.to(device)
     colors_nodes = colors_nodes.to(device)
