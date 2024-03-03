@@ -2,6 +2,44 @@ import torch
 from typing import Tuple
 import numpy as np
 
+# Function to generate rainbow colors
+
+
+def rainbow_color(step):
+    return [np.sin(0.3 * step + 0), np.sin(0.3 * step + 2 * np.pi / 3), np.sin(0.3 * step + 4 * np.pi / 3)]
+
+
+def generate_rect(
+    z: float = 5.,
+    delta_z: float = 0.,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    wc_triangles = []
+    colors_nodes = []
+
+    current_z = z
+    wc_triangles.extend([
+        [
+            [-1, -1, current_z+delta_z, 1.],
+            [1, -1, current_z+delta_z, 1.],
+            [1, 1, current_z+delta_z, 1.]
+            # ],
+        ][::-1],
+        [
+            [1, 1, current_z, 1.],
+            [-1, 1, current_z, 1.],
+            [-1, -1, current_z, 1.]
+        ][::-1]
+    ])
+
+    for shft in range(2):  # Add the same color for the four triangles that form a step
+        colors_nodes.append([rainbow_color(1+3*shft), rainbow_color(2+3*shft), rainbow_color(3+3*shft)])
+
+    wc_triangles = torch.Tensor(wc_triangles)
+    wc_triangles = wc_triangles.permute(0, 2, 1)  # Adjusting dimensions to match your format
+    colors_nodes = torch.Tensor(colors_nodes)
+
+    return wc_triangles, colors_nodes
+
 
 def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
     """
@@ -75,7 +113,8 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
 def generate_3d_staircase_scene(
     num_steps: int = 5,
     step_size: Tuple[float, float, float] = (0.5, 5, 0.5),
-    z: float = 5.
+    z: float = 5.,
+    delta_z: float = 0.,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Generate a 3D scene with a staircase made of rectangles (each represented by two triangles)
@@ -91,17 +130,14 @@ def generate_3d_staircase_scene(
         - world-coordinate triangles of the staircase
         - vertices colors.
     """
-    step_x, step_y, delta_z = step_size
+    step_x, step_y, step_z = step_size
+    step_z = step_z + delta_z
     wc_triangles = []
     colors_nodes = []
 
-    # Function to generate rainbow colors
-    def rainbow_color(step, total_steps):
-        return [np.sin(0.3 * step + 0), np.sin(0.3 * step + 2 * np.pi / 3), np.sin(0.3 * step + 4 * np.pi / 3)]
-
     current_z = z
     for i in range(num_steps):
-        color = np.array(rainbow_color(i, num_steps))
+        color = np.array(rainbow_color(i))
         x_stair_end = i * step_x + step_x
         if True:
             # Original step
@@ -124,14 +160,14 @@ def generate_3d_staircase_scene(
         # Perpendicular step
         wc_triangles.extend([
             [
-                [x_stair_end, -step_y/2., current_z + delta_z, 1.],
+                [x_stair_end, -step_y/2., current_z + step_z, 1.],
                 [x_stair_end, -step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z + delta_z, 1.]
+                [x_stair_end, step_y/2., current_z + step_z, 1.]
             ],  # [::-1],
             [
                 [x_stair_end, -step_y/2., current_z, 1.],
                 [x_stair_end, step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z + delta_z, 1.]
+                [x_stair_end, step_y/2., current_z + step_z, 1.]
             ]  # [::-1]
         ])
         for _ in range(2):
