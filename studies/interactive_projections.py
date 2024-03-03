@@ -1,4 +1,6 @@
 import torch
+import argparse
+import sys
 from interactive_pipe import interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 import numpy as np
@@ -79,7 +81,30 @@ def projection_pipeline():
     return splatted_image, rendered_image
 
 
-def main():
+def splat_pipeline():
+    wc_triangles, colors = generate_simulated_world()
+    # wc_triangles, colors = generate_3d_scene_sample_from_mesh()
+    wc_normals = extract_normals(wc_triangles)
+    wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(wc_triangles, colors, wc_normals)
+    yaw, pitch, roll, cam_pos = set_camera_parameters()
+    camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
+    camera_intrinsics, w, h = get_camera_intrinsics()
+    cc_points, points_depths, cc_normals = project_3d_to_2d(
+        wc_points, camera_intrinsics, camera_extrinsics, wc_normals)
+
+    # Let's splat the triangle nodes
+    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, camera_intrinsics, cc_normals)
+    splatted_image = tensor_to_image(splatted_image)
+
+    return splatted_image
+
+
+def main(argv):
+    arg = argparse.ArgumentParser()
+    arg.add_argument('-r', '--rasterizer', help="Rasterize the scene", action="store_true")
+    args = arg.parse_args(argv)
+    rasterizer_flag = args.rasterizer
+
     import logging
     logging.basicConfig(level=logging.INFO)
     define_default_sliders()
@@ -89,8 +114,8 @@ def main():
         cache=True,
         safe_input_buffer_deepcopy=False,
         size=(20, 10)
-    )(projection_pipeline)()
+    )(projection_pipeline if rasterizer_flag else splat_pipeline)()
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
