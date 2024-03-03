@@ -6,7 +6,11 @@ import numpy as np
 
 
 def rainbow_color(step):
-    return [np.sin(0.3 * step + 0), np.sin(0.3 * step + 2 * np.pi / 3), np.sin(0.3 * step + 4 * np.pi / 3)]
+    return [
+        np.abs(np.sin(0.3 * step + 0)),
+        np.abs(np.sin(0.3 * step + 2 * np.pi / 3)),
+        np.abs(np.sin(0.3 * step + 4 * np.pi / 3))
+    ]
 
 
 def generate_rect(
