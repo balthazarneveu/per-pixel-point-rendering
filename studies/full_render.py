@@ -45,7 +45,7 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render a scene using BlenderProc")
-    # parser.add_argument("scene", type=str, help="The name of the scene to render")
+    parser.add_argument("-s", "--scene", type=str, help="Name of the scene to render", default=NAME)
     parser.add_argument("-d", "--debug", action="store_true", help="Run BlenderProc in debug mode")
     args = parser.parse_args()
-    main(debug=args.debug)
+    main(name=args.scene, debug=args.debug)

@@ -54,7 +54,7 @@ def export_obj_and_mtl_files(wc_triangles_original, colors_nodes, name: str, out
 def export_scene(name: str = STAIRCASE):
     # Generate vertices and colors
     assert name in ALL_SCENE_MODES
-    wc_triangles, colors_nodes = generate_simulated_world(z=0., delta_z=2., scene_mode=name)
+    wc_triangles, colors_nodes = generate_simulated_world(z=0., delta_z=2., scene_mode=name, invert_z_axis=False)
     export_obj_and_mtl_files(wc_triangles, colors_nodes, name)
     print(f"Files {name}.obj and {name}.mtl have been saved to {SAMPLE_SCENES}.")
 
