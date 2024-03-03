@@ -138,6 +138,7 @@ def generate_3d_staircase_scene(
     step_z = step_z + delta_z
     wc_triangles = []
     colors_nodes = []
+    offset_y = 1.
 
     current_z = z
     for i in range(num_steps):
@@ -147,14 +148,14 @@ def generate_3d_staircase_scene(
             # Original step
             wc_triangles.extend([
                 [
-                    [i * step_x, -step_y/2., current_z, 1.],
-                    [x_stair_end, -step_y/2., current_z, 1.],
-                    [i * step_x, step_y/2., current_z, 1.]
+                    [i * step_x, -step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                    [i * step_x, step_y/2.+offset_y, current_z, 1.]
                 ][::-1],
                 [
-                    [x_stair_end, -step_y/2., current_z, 1.],
-                    [x_stair_end, step_y/2., current_z, 1.],
-                    [i * step_x, step_y/2., current_z, 1.]
+                    [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_end, step_y/2.+offset_y, current_z, 1.],
+                    [i * step_x, step_y/2.+offset_y, current_z, 1.]
                 ][::-1]
             ])
 
@@ -164,14 +165,14 @@ def generate_3d_staircase_scene(
         # Perpendicular step
         wc_triangles.extend([
             [
-                [x_stair_end, -step_y/2., current_z + step_z, 1.],
-                [x_stair_end, -step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z + step_z, 1.]
+                [x_stair_end, -step_y/2.+offset_y, current_z + step_z, 1.],
+                [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                [x_stair_end, step_y/2.+offset_y, current_z + step_z, 1.]
             ],  # [::-1],
             [
-                [x_stair_end, -step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z, 1.],
-                [x_stair_end, step_y/2., current_z + step_z, 1.]
+                [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                [x_stair_end, step_y/2.+offset_y, current_z, 1.],
+                [x_stair_end, step_y/2.+offset_y, current_z + step_z, 1.]
             ]  # [::-1]
         ])
         for _ in range(2):

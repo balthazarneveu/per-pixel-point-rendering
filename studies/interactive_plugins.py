@@ -25,7 +25,7 @@ def define_default_sliders():
         roll_deg=(0., [-180., 180.]),
         trans_x=(0., [-10., 10.]),
         trans_y=(0., [-10., 10.]),
-        trans_z=(5., [-10., 10.])
+        trans_z=(13.741, [-10., 15.])
     )(set_camera_parameters)
     interactive(
         num_samples=(100, [100, 10000])
