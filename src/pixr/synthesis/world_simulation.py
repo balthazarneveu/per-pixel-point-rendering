@@ -9,18 +9,6 @@ STAIRCASE = "staircase"
 ALL_SCENE_MODES = [TEST_RECT, TEST_TRIANGLES, STAIRCASE]
 
 
-def generate_3d_scene_sample_triangles(
-    z: float = 0,
-    delta_z: float = 0.,
-    scene_mode=TEST_TRIANGLES
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    if scene_mode == TEST_TRIANGLES:
-        wc_triangles, colors_nodes = generate_3d_scene_sample_test_triangles(z=z, delta_z=delta_z)
-    elif scene_mode == STAIRCASE:
-        wc_triangles, colors_nodes = generate_3d_staircase_scene(z=z)
-    return wc_triangles, colors_nodes
-
-
 def generate_simulated_world(
     scene_mode=TEST_RECT,
     z: float = 0,

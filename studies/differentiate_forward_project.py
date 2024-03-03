@@ -1,6 +1,6 @@
 from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
 from pixr.synthesis.forward_project import project_3d_to_2d
-from pixr.synthesis.world_simulation import generate_3d_scene_sample_triangles
+from pixr.synthesis.world_simulation import generate_simulated_world, TEST_TRIANGLES
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.rendering.splatting import splat_points
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
@@ -16,7 +16,7 @@ def generate_world(
     device=DEVICE
 ):
     with torch.no_grad():
-        triangles, colors = generate_3d_scene_sample_triangles(delta_z=1.)
+        triangles, colors = generate_simulated_world(z=5., delta_z=1., scene_mode=TEST_TRIANGLES)
         wc_normals = extract_normals(triangles)
         if num_samples is not None:
             point_cloud, colors, wc_normals = pick_point_cloud_from_triangles(
