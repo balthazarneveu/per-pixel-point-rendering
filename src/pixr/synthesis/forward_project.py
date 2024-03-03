@@ -16,6 +16,7 @@ def project_3d_to_2d(
         cc_triangles = torch.matmul(camera_extrinsics, wc_triangles)
         if wc_normals is not None:
             cc_normals = torch.matmul(camera_extrinsics[..., :3], wc_normals.unsqueeze(-1))
+            cc_normals[:, 1] *= -1.  # flip y axis normal to get a image-like coordinate system
         else:
             cc_normals = None
         cc_triangles[:, 1, :] *= -1.  # flip y axis to get a image-like coordinate system
