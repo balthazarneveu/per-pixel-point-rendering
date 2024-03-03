@@ -10,7 +10,7 @@ def rainbow_color(step):
 
 
 def generate_rect(
-    z: float = 5.,
+    z: float = 0.,
     delta_z: float = 0.,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     wc_triangles = []
@@ -41,7 +41,7 @@ def generate_rect(
     return wc_triangles, colors_nodes
 
 
-def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
+def generate_3d_scene_sample_test_triangles(z: float = 0, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Generate a 3D scene with N triangles in world coordinates and their colors.
 
@@ -71,10 +71,10 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
                 [2., 1., z+delta_z, 1.]
             ],  # BACKFACING THE CAMERA!
             [
-                [0.5, 0., -z, 1.],
-                [0.5, 1., -z, 1.],
-                [1.5, 1., -z, 1.]
-            ],  # BEHIND CAMERA!
+                [0.5, 0., -z - 10., 1.],
+                [0.5, 1., -z - 10., 1.],
+                [1.5, 1., -z - 10., 1.]
+            ][::-1],  # BEHIND CAMERA!
         ]
     )
     # [N, xyz1, 3=triangle]
@@ -113,7 +113,7 @@ def generate_3d_scene_sample_test_triangles(z: float = 5, delta_z: float = 0.) -
 def generate_3d_staircase_scene(
     num_steps: int = 5,
     step_size: Tuple[float, float, float] = (0.5, 5, 0.5),
-    z: float = 5.,
+    z: float = 0.,
     delta_z: float = 0.,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """

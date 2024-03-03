@@ -25,13 +25,13 @@ def define_default_sliders():
         roll_deg=(0., [-180., 180.]),
         trans_x=(0., [-10., 10.]),
         trans_y=(0., [-10., 10.]),
-        trans_z=(0., [-10., 10.])
+        trans_z=(5., [-10., 10.])
     )(set_camera_parameters)
     interactive(
         num_samples=(100, [100, 10000])
     )(pick_point_cloud_from_triangles)
     interactive(
-        z=(10., [2., 100.]),
+        z=(0., [-10., 10.]),
         delta_z=(0.01, [-5., 5.]),
         scene_mode=("test_rect", ["test_rect", "test_triangles", "staircase"] + [pth.stem for pth in MESH_PATH.glob("*.obj")]),
     )(generate_simulated_world)

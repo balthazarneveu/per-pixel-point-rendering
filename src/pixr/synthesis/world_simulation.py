@@ -5,7 +5,7 @@ from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 
 
 def generate_3d_scene_sample_triangles(
-    z: float = 5,
+    z: float = 0,
     delta_z: float = 0.,
     scene_mode="test_triangles"
 ) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -18,7 +18,7 @@ def generate_3d_scene_sample_triangles(
 
 def generate_simulated_world(
     scene_mode="test_rect",
-    z: float = 5,
+    z: float = 0,
     delta_z: float = 0.,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if scene_mode == "test_rect":

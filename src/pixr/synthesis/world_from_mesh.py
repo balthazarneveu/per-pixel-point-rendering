@@ -8,7 +8,7 @@ from pixr.properties import DEVICE, MESH_PATH
 def generate_3d_scene_sample_from_mesh(
         mesh_name: str = "teapot",
         mesh_path: Path = MESH_PATH,
-        z: float = 5,
+        z: float = 0,
         device: str = DEVICE) -> Tuple[torch.Tensor, torch.Tensor]:
     # Load the mesh
     mesh = trimesh.load((mesh_path/mesh_name).with_suffix(".obj"), force='mesh')
