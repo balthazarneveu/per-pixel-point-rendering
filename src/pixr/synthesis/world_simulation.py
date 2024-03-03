@@ -20,6 +20,7 @@ def generate_simulated_world(
     scene_mode="test_rect",
     z: float = 0,
     delta_z: float = 0.,
+    normalize: bool = False
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if scene_mode == "test_rect":
         wc_triangles, colors_nodes = generate_rect(z=z, delta_z=delta_z)
@@ -28,5 +29,5 @@ def generate_simulated_world(
     elif scene_mode == "staircase":
         wc_triangles, colors_nodes = generate_3d_staircase_scene(num_steps=5, z=z, delta_z=delta_z)
     else:
-        wc_triangles, colors_nodes = generate_3d_scene_sample_from_mesh(mesh_name=scene_mode, z=z)
+        wc_triangles, colors_nodes = generate_3d_scene_sample_from_mesh(mesh_name=scene_mode, z=z, normalize=normalize)
     return wc_triangles, colors_nodes

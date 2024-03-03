@@ -33,12 +33,15 @@ def define_default_sliders():
     interactive(
         z=(0., [-10., 10.]),
         delta_z=(0.01, [-5., 5.]),
-        scene_mode=("test_rect", ["test_rect", "test_triangles", "staircase"] + [pth.stem for pth in MESH_PATH.glob("*.obj")]),
+        scene_mode=("test_rect",
+                    ["test_rect", "test_triangles", "staircase"] +
+                    [pth.stem for pth in MESH_PATH.glob("*.obj")]),
+        normalize=(False,),
     )(generate_simulated_world)
     interactive(
         show_depth=(False,),
-        for_loop=(True,),
-        limit=(-1, [-1, 10000]),
+        # for_loop=(True,),
+        # limit=(-1, [-1, 10000]),
     )(shade_screen_space)
     interactive(
         debug=(False,),
