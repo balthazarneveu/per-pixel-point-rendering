@@ -38,6 +38,7 @@ def splat_points(
     depths: torch.Tensor,
     w: int,
     h: int,
+    camera_intrinsics: torch.Tensor,
     cc_normals: Optional[torch.Tensor],
     debug: Optional[bool] = False,
     no_grad: Optional[bool] = True
@@ -64,7 +65,8 @@ def splat_points(
     image = torch.zeros((h, w, 3))
     # Get the number of vertices
     num_vertices = cc_points.shape[1]
-
+    camera_intrinsics_inverse = torch.linalg.inv(camera_intrinsics)
+    camera_intrinsics_inverse = camera_intrinsics_inverse.to(cc_points.device)
     # Extract the colors at the vertices
     vertex_colors = colors[:, :num_vertices, :]
     with torch.no_grad() if no_grad else torch.enable_grad():
@@ -88,7 +90,8 @@ def splat_points(
                     continue
 
                 # -- Normal culling! --
-                if normal is not None and normal[-1] >= 0:
+                beam_direction = torch.matmul(camera_intrinsics_inverse, triangle[:, node_idx])
+                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) >= 0:
                     if debug:
                         image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
                     continue

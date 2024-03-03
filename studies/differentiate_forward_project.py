@@ -150,6 +150,7 @@ def forward_chain(
         img = splat_points(
             proj_point_cloud, colors, depth,
             w, h,
+            cam_int,
             cc_normals,
             no_grad=False,
             # debug=True

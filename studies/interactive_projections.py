@@ -69,7 +69,7 @@ def projection_pipeline():
     rendered_image = linear_rgb_to_srgb(rendered_image)
     rendered_image = tensor_to_image(rendered_image)
     # Let's splat the triangle nodes
-    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, cc_normals)
+    splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, camera_intrinsics, cc_normals)
     # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
 
@@ -85,7 +85,8 @@ def main():
     define_default_sliders()
 
     interactive_pipeline(
-        gui="qt", cache=True,
+        gui="qt",
+        cache=True,
         safe_input_buffer_deepcopy=False,
         size=(20, 10)
     )(projection_pipeline)()
