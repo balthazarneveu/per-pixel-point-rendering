@@ -6,7 +6,7 @@ from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.rendering.splatting import splat_points
 # from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
-from pixr.synthesis.world_simulation import generate_simulated_world
+from pixr.synthesis.world_simulation import generate_simulated_world, TEST_RECT, TEST_TRIANGLES, STAIRCASE
 from pixr.properties import MESH_PATH
 
 
@@ -32,9 +32,9 @@ def define_default_sliders():
     )(pick_point_cloud_from_triangles)
     interactive(
         z=(0., [-10., 10.]),
-        delta_z=(0.01, [-5., 5.]),
-        scene_mode=("test_rect",
-                    ["test_rect", "test_triangles", "staircase"] +
+        delta_z=(2., [-5., 5.]),
+        scene_mode=(STAIRCASE,
+                    [STAIRCASE, TEST_TRIANGLES, TEST_RECT] +
                     [pth.stem for pth in MESH_PATH.glob("*.obj")]),
         normalize=(False,),
     )(generate_simulated_world)

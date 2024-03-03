@@ -1,4 +1,4 @@
-from pixr.synthesis.world_simulation import generate_simulated_world
+from pixr.synthesis.world_simulation import generate_simulated_world, ALL_SCENE_MODES, TEST_RECT, TEST_TRIANGLES, STAIRCASE
 from config import SAMPLE_SCENES
 from pathlib import Path
 
@@ -51,17 +51,14 @@ def export_obj_and_mtl_files(wc_triangles_original, colors_nodes, name: str, out
         mtl_file.write(mtl_content)
 
 
-def main(name: str = "staircase"):
+def export_scene(name: str = STAIRCASE):
     # Generate vertices and colors
-    assert name in [
-        "test_rect",
-        "test_triangles",
-        "staircase",
-    ]
+    assert name in ALL_SCENE_MODES
     wc_triangles, colors_nodes = generate_simulated_world(z=0., delta_z=2., scene_mode=name)
     export_obj_and_mtl_files(wc_triangles, colors_nodes, name)
     print(f"Files {name}.obj and {name}.mtl have been saved to {SAMPLE_SCENES}.")
 
 
 if __name__ == "__main__":
-    main()
+    for scene in ALL_SCENE_MODES:
+        export_scene(name=scene)
