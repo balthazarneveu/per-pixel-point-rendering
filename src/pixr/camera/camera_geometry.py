@@ -81,5 +81,6 @@ def get_camera_extrinsics(
     cam_pos: torch.Tensor  # translation
 ) -> torch.Tensor:
     cam_rot = euler_to_rot(yaw, pitch, roll)
-    camera_ext = torch.cat([cam_rot, cam_pos], dim=1)
+    cam_pos_rot = torch.matmul(cam_rot, cam_pos)
+    camera_ext = torch.cat([cam_rot, cam_pos_rot], dim=1)
     return camera_ext
