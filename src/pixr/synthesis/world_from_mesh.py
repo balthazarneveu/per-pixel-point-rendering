@@ -39,7 +39,7 @@ def generate_3d_scene_sample_from_mesh(
         center[..., -1, :] = 0.
         wc_triangles -= center
         scale = wc_triangles[..., :3, :].std(dim=(0, 1, 2), keepdim=True)
-        wc_triangles *= 0.3/scale  # 30 cm size
+        wc_triangles[..., :3, :] *= 0.3/scale  # 30 cm size
     wc_triangles[..., 2, :] += z
     wc_triangles = wc_triangles.to(device)
     colors_nodes = colors_nodes.to(device)
