@@ -61,7 +61,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
             splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, camera_intrinsics, cc_normals)
 
             splatted_image = tensor_to_image(splatted_image)
-            Image(splatted_image).save(out_dir/f"{idx:04}_splat_red_culling.png")
+            Image(splatted_image).save(out_dir/f"{idx:04}_splat.png")
 
         if raster_flag:
             cc_triangles, triangles_depths, _ = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics, None)
@@ -70,4 +70,4 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
 
 
 if __name__ == "__main__":
-    main(splat_flag=True, raster_flag=False)
+    main(splat_flag=True, raster_flag=True)

@@ -1,17 +1,25 @@
 import blenderproc as bproc
 import argparse
 import json
+import bpy
 
 
 parser = argparse.ArgumentParser(description="Render a scene using BlenderProc use blenderproc run")
-parser.add_argument('-c', '--camera', nargs="+", help="Path to the camera file, should be examples/resources/camera_positions")
+parser.add_argument('-c', '--camera', nargs="+",
+                    help="Path to the camera file, should be examples/resources/camera_positions")
 parser.add_argument('-s', '--scene', help="Path to the scene.obj file, should be examples/resources/scene.obj")
 parser.add_argument(
     '-o', '--output-dir',  help="Path to where the final files, will be saved")
+parser.add_argument('--backface-culling', help="Enable backface culling", action="store_true")
 args = parser.parse_args()
 
 bproc.init()
 objs = bproc.loader.load_obj(args.scene)
+if args.backface_culling:
+    materials = bproc.material.collect_all()
+    for idx, mat in enumerate(materials):
+        bpy.context.object.active_material_index = idx
+        bpy.context.object.active_material.use_backface_culling = True
 # BEWARE! Z means vertical here
 light = bproc.types.Light()
 light.set_type("POINT")
