@@ -12,7 +12,7 @@ ALL_SCENE_MODES = [TEST_RECT, TEST_TRIANGLES, STAIRCASE]
 def generate_simulated_world(
     scene_mode=TEST_RECT,
     z: float = 0,
-    delta_z: float = 0.,
+    delta_z: float = 2.,
     normalize: bool = False,
     invert_z_axis: bool = True
 ) -> Tuple[torch.Tensor, torch.Tensor]:
