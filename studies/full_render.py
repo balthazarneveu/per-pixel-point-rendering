@@ -8,7 +8,7 @@ import shutil
 import numpy as np
 from pathlib import Path
 from interactive_pipe.data_objects.image import Image
-
+from itertools import product
 NAME = "staircase"
 
 
@@ -20,16 +20,18 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
     full_camera_paths = []
     full_output_paths = []
     roll = 0
-    # for yaw in range(-30, 30, 5):
-    # for yaw in [0]:
+    pitch = 0
+    yaw = 0
     view_counter = 0
-    for yaw in range(-30, 30, 5):
+    tx, ty, tz = 0, 0, 0
+    # for yaw, pitch in product(range(-20, 20, 5), range(-15, 15, 5)):
+    for tx, ty, tz in product(range(-5, 6, 3), range(-5, 6, 4), range(-5, 6, 4)):
         view_dir = out_dir/f"view_{view_counter:03d}"
         view_dir.mkdir(exist_ok=True, parents=True)
         full_output_paths.append(view_dir)
         pretty_name = f"{name}_{yaw}"
-        position = [0, -13.741, 0.]
-        rotation_angles = [np.deg2rad(90.), 0+np.deg2rad(roll), np.deg2rad(yaw)]
+        position = [tx, -13.741+ty, tz]
+        rotation_angles = [np.deg2rad(90.+pitch), 0+np.deg2rad(roll), np.deg2rad(yaw)]
         camera_dict = {
             "k_matrix": [
                 [f, 0, w/2],
@@ -40,7 +42,10 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
             "w": w,
             "h": h,
             "position": position,
-            "euler_rotation": rotation_angles
+            "euler_rotation": rotation_angles,
+            "yaw": yaw,
+            "pitch": pitch,
+            "roll": roll,
         }
         camera_path = view_dir/"camera_params.json"
         with open(str(camera_path), "w") as file_out:
