@@ -3,6 +3,12 @@ import numpy as np
 import json
 from config import SAMPLE_SCENES, OUT_DIR
 import subprocess
+import h5py
+import shutil
+import numpy as np
+from pathlib import Path
+from interactive_pipe.data_objects.image import Image
+
 NAME = "staircase"
 
 
@@ -12,8 +18,15 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
     out_dir = out_root/f"{name}"
     out_dir.mkdir(exist_ok=True, parents=True)
     full_camera_paths = []
+    full_output_paths = []
     roll = 0
+    # for yaw in range(-30, 30, 5):
+    # for yaw in [0]:
+    view_counter = 0
     for yaw in range(-30, 30, 5):
+        view_dir = out_dir/f"view_{view_counter:03d}"
+        view_dir.mkdir(exist_ok=True, parents=True)
+        full_output_paths.append(view_dir)
         pretty_name = f"{name}_{yaw}"
         position = [0, -13.741, 0.]
         rotation_angles = [np.deg2rad(90.), 0+np.deg2rad(roll), np.deg2rad(yaw)]
@@ -29,24 +42,29 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
             "position": position,
             "euler_rotation": rotation_angles
         }
-        camera_path = out_dir/f"camera_params_{pretty_name}.json"
+        camera_path = view_dir/"camera_params.json"
         with open(str(camera_path), "w") as file_out:
             json.dump(camera_dict, file_out)
         full_camera_paths.append(str(camera_path))
-    current_image = out_dir/"0.hdf5"
-    if not current_image.exists() or debug:
-        subprocess.run([
-            "blenderproc",
-            "debug" if debug else "run",
-            "studies/blender_proc_exports.py",
-            "--scene", str(scene_path),
-            "--output-dir", str(out_dir),
-            "--camera",] + full_camera_paths,
-        )
+        view_counter += 1
+    # current_image = out_dir/"{yaw}.hdf5"
+    # if not current_image.exists() or debug:
 
     subprocess.run([
-        "blenderproc", "vis", "hdf5", str(current_image)
-    ])
+        "blenderproc",
+        "debug" if debug else "run",
+        "studies/blender_proc_exports.py",
+        "--scene", str(scene_path),
+        "--output-dir", str(out_dir),
+        "--camera",] + full_camera_paths,
+    )
+
+    for idx, pth in enumerate(full_output_paths):
+        out_view = pth/"view.hdf5"
+        shutil.move(out_dir/f"{idx}.hdf5", out_view)
+        f = h5py.File(out_view, 'r')
+        Image(np.array(f["colors"])/255.).save(out_view.with_suffix(".png"))
+        Image(np.array(f["colors"])/255.).save(out_dir/f"{idx:04d}.png")
 
 
 if __name__ == "__main__":

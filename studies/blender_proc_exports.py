@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description="Render a scene using BlenderProc u
 parser.add_argument('-c', '--camera', nargs="+", help="Path to the camera file, should be examples/resources/camera_positions")
 parser.add_argument('-s', '--scene', help="Path to the scene.obj file, should be examples/resources/scene.obj")
 parser.add_argument(
-    '-o', '--output-dir', help="Path to where the final files, will be saved")
+    '-o', '--output-dir',  help="Path to where the final files, will be saved")
 args = parser.parse_args()
 
 bproc.init()
@@ -17,7 +17,7 @@ light = bproc.types.Light()
 light.set_type("POINT")
 light.set_location([5, -5, 5])
 light.set_energy(1000)
-for camera_file in args.camera:
+for idx, camera_file in enumerate(args.camera):
     with open(camera_file) as fi:
         data = json.load(fi)
         w = data["w"]
