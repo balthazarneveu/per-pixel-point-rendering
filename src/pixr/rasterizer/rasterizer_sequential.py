@@ -80,8 +80,9 @@ def shade_screen_space_sequential(
             # (P1 - P0) x (P2 - P0)
             # Same as /src/pixr/synthesis/normals.py
             signed_area = 0.5 * ((x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0))
-            #>=0 for the blender sample scene :-( with the monkey head to get correct normals!
-            if signed_area <= 0:  # Skip rendering if the triangle is not counterclockwise (facing away)
+            # >=0 for the blender sample scene :-( with the monkey head to get correct normals!
+
+            if signed_area >= 0:  # Skip rendering if the triangle is not counterclockwise (facing away)
                 continue
 
             # -- 3. Rasterize the triangle--

@@ -27,12 +27,12 @@ def generate_rect(
             [1, -1, current_z+delta_z, 1.],
             [1, 1, current_z+delta_z, 1.]
             # ],
-        ][::-1],
+        ],  # [::-1],
         [
             [1, 1, current_z, 1.],
             [-1, 1, current_z, 1.],
             [-1, -1, current_z, 1.]
-        ][::-1]
+        ]  # [::-1]
     ])
 
     for shft in range(2):  # Add the same color for the four triangles that form a step
@@ -63,22 +63,22 @@ def generate_3d_scene_sample_test_triangles(z: float = 0, delta_z: float = 0.) -
                 [0., 0., z, 1.],
                 [0., 1., z, 1.],
                 [1., 1., z, 1.]
-            ],
+            ][::-1],
             [
                 [-1., 0., z+delta_z, 1.],
                 [2., 0., z+delta_z, 1.],
                 [2., 1., z+delta_z, 1.]
-            ][::-1],
+            ],
             [
                 [-1., 1., z+delta_z, 1.],
                 [-1., 0., z+delta_z, 1.],
                 [2., 1., z+delta_z, 1.]
-            ],  # BACKFACING THE CAMERA!
+            ][::-1],  # BACKFACING THE CAMERA!
             [
                 [0.5, 0., -z - 10., 1.],
                 [0.5, 1., -z - 10., 1.],
                 [1.5, 1., -z - 10., 1.]
-            ][::-1],  # BEHIND CAMERA!
+            ],  # BEHIND CAMERA!
         ]
     )
     # [N, xyz1, 3=triangle]
@@ -91,22 +91,22 @@ def generate_3d_scene_sample_test_triangles(z: float = 0, delta_z: float = 0.) -
                 [0., 0.1, 1.],
                 [0.1, 0., 1.],
                 [1., 1., 2.]
-            ],
-            [
-                [1., 1., 0.],
-                [1., 0., 0.],
-                [1., 0.5, 0.3]
             ][::-1],
             [
                 [1., 1., 0.],
                 [1., 0., 0.],
                 [1., 0.5, 0.3]
-            ][::-1],
+            ],  # [::-1],
+            [
+                [1., 1., 0.],
+                [1., 0., 0.],
+                [1., 0.5, 0.3]
+            ],  # [::-1],
             [
                 [1., 1., 1.],
                 [1., 1., 1.],
                 [1., 1., 0.]
-            ]
+            ][::-1],
         ]
     )
     # [N, 3 triangle, 3=rgb]
@@ -151,12 +151,12 @@ def generate_3d_staircase_scene(
                     [i * step_x, -step_y/2.+offset_y, current_z, 1.],
                     [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
                     [i * step_x, step_y/2.+offset_y, current_z, 1.]
-                ][::-1],
+                ],  # [::-1],
                 [
                     [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
                     [x_stair_end, step_y/2.+offset_y, current_z, 1.],
                     [i * step_x, step_y/2.+offset_y, current_z, 1.]
-                ][::-1]
+                ]  # [::-1]
             ])
 
             for _ in range(2):  # Add the same color for the four triangles that form a step
@@ -168,12 +168,12 @@ def generate_3d_staircase_scene(
                 [x_stair_end, -step_y/2.+offset_y, current_z + step_z, 1.],
                 [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
                 [x_stair_end, step_y/2.+offset_y, current_z + step_z, 1.]
-            ],  # [::-1],
+            ][::-1],
             [
                 [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
                 [x_stair_end, step_y/2.+offset_y, current_z, 1.],
                 [x_stair_end, step_y/2.+offset_y, current_z + step_z, 1.]
-            ]  # [::-1]
+            ][::-1]
         ])
         for _ in range(2):
             colors_nodes.append([1.-color/2., 1.-color/2., 1.-color/2.])

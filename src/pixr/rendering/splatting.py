@@ -91,7 +91,7 @@ def splat_points(
 
                 # -- Normal culling! --
                 beam_direction = torch.matmul(camera_intrinsics_inverse, triangle[:, node_idx])
-                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) >= 0:
+                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
                     if debug:
                         image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
                     continue
