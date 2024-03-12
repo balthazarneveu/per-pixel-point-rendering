@@ -47,7 +47,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
         yaw, pitch, roll, cam_pos = set_camera_parameters(
             yaw_deg=yaw_angle,
             pitch_deg=pitch_angle,
-            roll=roll_angle,
+            roll_deg=roll_angle,
             trans_x=position[0],
             trans_y=position[1],
             trans_z=position[2]
@@ -64,7 +64,8 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
             Image(splatted_image).save(out_dir/f"{idx:04}_splat.png")
 
         if raster_flag:
-            cc_triangles, triangles_depths, _ = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics, None)
+            cc_triangles, triangles_depths, _ = project_3d_to_2d(
+                wc_triangles, camera_intrinsics, camera_extrinsics, None)
             rendered_image = shade_screen_space(cc_triangles, colors, triangles_depths, w, h)
             Image(tensor_to_image(rendered_image)).save(out_dir/f"{idx:04}_raster.png")
 
