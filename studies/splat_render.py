@@ -10,6 +10,7 @@ from interactive_pipe.data_objects.parameters import Parameters
 import torch
 import numpy as np
 from config import SAMPLE_SCENES, OUT_DIR
+import argparse
 
 
 def tensor_to_image(image: torch.Tensor) -> np.ndarray:
@@ -36,14 +37,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
         pitch_angle = params["pitch"]
         roll_angle = params["roll"]
         position_blender = params["position"]
-        # position = [-position_blender[0], -position_blender[2], -position_blender[1]] # looks ok...
         position = [-position_blender[0], -position_blender[2], -position_blender[1]]  # looks ok...
-
-        print(params)
-        # roll_angle = 0
-        # pitch_angle = 0
-        # yaw_angle=0
-        # position = [0., 0., 13.741]
         yaw, pitch, roll, cam_pos = set_camera_parameters(
             yaw_deg=yaw_angle,
             pitch_deg=pitch_angle,
@@ -71,4 +65,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
 
 
 if __name__ == "__main__":
-    main(splat_flag=True, raster_flag=True)
+    parser = argparse.ArgumentParser(description="Render a scene using BlenderProc")
+    parser.add_argument("-s", "--scene", type=str, help="Name of the scene to render", default=STAIRCASE)
+    args = parser.parse_args()
+    main(name=args.scene, splat_flag=True, raster_flag=True)

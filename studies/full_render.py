@@ -9,6 +9,7 @@ import numpy as np
 from pathlib import Path
 from interactive_pipe.data_objects.image import Image
 from itertools import product
+import random
 NAME = "staircase"
 
 
@@ -29,7 +30,10 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
     # for yaw, pitch in product(range(-15, 16, 5), range(-15, 16, 5)): #yaw pitch test
     # for tx, ty, tz in product(range(-4, 5, 3), range(-4, 5, 4), range(-3, 3, 2)):
     # for yaw, pitch, tx in product(range(-5, 6, 5), range(-5, 5, 6), range(-3, 4, 3)):
-    for yaw, pitch, roll in product(range(-10, 11, 10), range(-10, 11, 10), [-30, 10, 30]):  # yaw pitch test
+    # for yaw, pitch, roll in product(range(-10, 11, 10), range(-10, 11, 10), [-30, 10, 30]):  # yaw pitch test
+    for _ in range(5):
+        yaw, pitch, roll = random.randint(-15, 16), random.randint(-8, 9), random.randint(-180, 180)
+        tx, ty, tz = random.randint(-4, 5), random.randint(-7, 2), random.randint(-3, 4)
         view_dir = out_dir/f"view_{view_counter:03d}"
         view_dir.mkdir(exist_ok=True, parents=True)
         full_output_paths.append(view_dir)
