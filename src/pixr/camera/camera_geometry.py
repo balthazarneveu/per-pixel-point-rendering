@@ -70,7 +70,8 @@ def euler_to_rot(
         torch.stack([torch.cos(roll), -torch.sin(roll), tensor_0]),
         torch.stack([torch.sin(roll), torch.cos(roll), tensor_0]),
         torch.stack([tensor_0, tensor_0, tensor_1])]).reshape(3, 3)
-    R = torch.mm(torch.mm(RZ, RY), RX)
+    # R = torch.mm(torch.mm(RZ, RY), RX)
+    R = torch.mm(torch.mm(RZ, RX), RY)
     return R
 
 
