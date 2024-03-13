@@ -60,7 +60,7 @@ def rescale_image(image: np.ndarray, global_params={}) -> np.ndarray:
     scale = global_params.get('scale', 0)
     if scale > 0:
         factor = 2**scale
-        image = cv2.resize(image, (0, 0), fx=factor, fy=factor)
+        image = cv2.resize(image, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_NEAREST)
     return image
 
 

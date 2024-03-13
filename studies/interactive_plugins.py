@@ -41,5 +41,7 @@ def define_default_sliders():
         debug=(False,),
         z_buffer_flag=(True,),
         normal_culling_flag=(False,),
-        scale=(0, [0, 5])
+        fuzzy_depth_test=(0.01, [0., 0.1]),
+        scale=(0, [0, 5]),
+
     )(splat_points)
