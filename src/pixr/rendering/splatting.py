@@ -20,7 +20,7 @@ def splat_points(
     no_grad: Optional[bool] = True,
     z_buffer_flag: Optional[bool] = True,
     scale: Optional[int] = 0,
-    normal_culling_flag: Optional[bool] = False,
+    normal_culling_flag: Optional[bool] = True,
     fuzzy_depth_test: Optional[float] = 0.01,
     global_params: Optional[dict] = {}
 ) -> torch.Tensor:
@@ -46,7 +46,8 @@ def splat_points(
     global_params['scale'] = scale
     # Create an empty image with shape (h, w, 3)
     w, h = int(w_full/scale_factor), int(h_full/scale_factor)
-    image = torch.zeros((h, w, 3)).to(cc_points.device)
+    image = torch.zeros((h, w, 3))
+    image = image.to(cc_points.device)
     # Get the number of vertices
     num_vertices = cc_points.shape[1]
     camera_intrinsics_inverse = torch.linalg.inv(camera_intrinsics)

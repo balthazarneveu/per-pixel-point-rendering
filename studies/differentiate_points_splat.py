@@ -4,12 +4,9 @@ from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
-from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.multiview.scenes_utils import load_views
 from interactive_pipe.data_objects.image import Image
-from differentiate_points_projection import forward_chain
 import torch
-import numpy as np
 import matplotlib.pyplot as plt
 from config import OUT_DIR
 from pixr.properties import DEVICE
@@ -17,7 +14,9 @@ import argparse
 
 
 def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colors, w, h):
+    # print(point_cloud.device, wc_normals.device, cam_ext.device, cam_int.device, colors.device)
     wc_normals = wc_normals.to(point_cloud.device)
+    point_cloud = point_cloud
     proj_point_cloud, depth, cc_normals = project_3d_to_2d(point_cloud, cam_int, cam_ext, wc_normals, no_grad=True)
     img = splat_points(
         proj_point_cloud,
@@ -70,7 +69,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     all_rendered_images.requires_grad = False
     # Limit the amount of views for now! -> split train and validation here!
     rendered_images = all_rendered_images[:2]
-    print(rendered_images.shape, camera_intrinsics.shape, camera_extrinsics.shape, w, h)
+    rendered_images = rendered_images.to(device)
 
     out_dir = out_root/f"{name}_splat_differentiate_points"
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -83,8 +82,12 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
         # num_samples=20000
         num_samples=2000
     )
-
+    # Move data to GPU
+    wc_points = wc_points.to(device)
+    camera_intrinsics = camera_intrinsics.to(device)
+    camera_extrinsics = camera_extrinsics.to(device)
     color_pred = torch.randn(points_colors.shape, requires_grad=True, device=device)
+    color_pred = color_pred.to(device)
     optimizer = torch.optim.Adam([color_pred], lr=0.3)
     with torch.autograd.set_detect_anomaly(False):
         for step in range(200+1):
@@ -107,7 +110,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
             if step % 100 == 0 and save:
                 validation_step(
                     wc_points, wc_normals, camera_extrinsics, camera_intrinsics, w, h, color_pred,
-                    target_img=all_rendered_images, save_path=out_dir, suffix=f"step_{step:05d}")
+                    target_img=all_rendered_images, save_path=out_dir, suffix=f"step_{step:05d}"+"_zbuffer")
             if plot_step_flag and show:
                 plt.figure()
                 plt.subplot(1, 2, 1)
