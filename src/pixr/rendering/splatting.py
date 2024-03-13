@@ -17,7 +17,8 @@ def splat_points(
     camera_intrinsics: torch.Tensor,
     cc_normals: Optional[torch.Tensor],
     debug: Optional[bool] = False,
-    no_grad: Optional[bool] = True
+    no_grad: Optional[bool] = True,
+    z_buffer_flag: Optional[bool] = True
 ) -> torch.Tensor:
     """
     Splat the colors of the vertices onto an image.
@@ -45,6 +46,7 @@ def splat_points(
     camera_intrinsics_inverse = camera_intrinsics_inverse.to(cc_points.device)
     # Extract the colors at the vertices
     vertex_colors = colors[:, :num_vertices, :]
+    z_buffer = torch.full((h, w), float('inf'))
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Perform splatting of vertex colors
         for batch_idx in range(cc_points.shape[0]):
@@ -60,15 +62,23 @@ def splat_points(
             depth = depths[batch_idx, :, 0]
 
             if depth < 0:
-                if debug:
-                    image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
+                # if debug:
+                #     image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
                 continue
+
+            # -- Z-buffering! --
+            if z_buffer_flag:
+                buffered_z = z_buffer[y, x]
+                if depth <= buffered_z:
+                    z_buffer[y, x] = depth
+                else:
+                    continue
 
             # -- Normal culling! --
             beam_direction = torch.matmul(camera_intrinsics_inverse, point)
             if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
-                if debug:
-                    image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
+                # if debug:
+                #     image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
                 continue
             image[y, x] = color
 
