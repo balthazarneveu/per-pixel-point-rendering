@@ -2,31 +2,6 @@ import torch
 from typing import Optional
 
 
-# @TODO: refactor this function with the one in shader.py
-def point_in_triangle(x: int, y: int, triangle: torch.Tensor) -> bool:
-    # Get the vertices of the triangle
-    v0, v1, v2 = triangle
-
-    # Calculate the barycentric coordinates of the point (x, y) with respect to the triangle
-    barycentric_coords = barycentric_coordinates(x, y, v0, v1, v2)
-
-    # Check if the barycentric coordinates are inside the triangle
-    return 0 <= barycentric_coords[0] <= 1 and 0 <= barycentric_coords[1] <= 1 and 0 <= barycentric_coords[2] <= 1
-
-
-def barycentric_coordinates(x: int, y: int, v0: torch.Tensor, v1: torch.Tensor, v2: torch.Tensor) -> torch.Tensor:
-    # Calculate the area of the triangle
-    triangle_area = 0.5 * (-v1[1] * v2[0] + v0[1] * (-v1[0] + v2[0]) + v0[0] * (v1[1] - v2[1]) + v1[0] * v2[1])
-
-    # Calculate the barycentric coordinates
-    alpha = (0.5 * (-v1[1] * v2[0] + v0[1] * (-v1[0] + v2[0]) + v0[0] * (v1[1] - v2[1]) + v1[0] * v2[1]) -
-             0.5 * (-v1[1] * x + v0[1] * (-v1[0] + x) + v0[0] * (v1[1] - y) + v1[0] * y)) / triangle_area
-    beta = (0.5 * (v2[1] * x - v0[1] * v2[0] + v0[0] * (-v2[1] + y) - v2[0] * y) / triangle_area)
-    gamma = 1 - alpha - beta
-
-    return torch.tensor([alpha, beta, gamma])
-
-
 # @TODO: WARNING: channel last! - not compatible with usual N, C, H, W
 # @TODO: do not set the image to zero, needs to be initialized outside
 # @TODO: z-buffer here / depths tests here
