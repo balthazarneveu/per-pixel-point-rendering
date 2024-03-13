@@ -16,7 +16,6 @@ NAME = "staircase"
 
 def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False, backface_culling=True):
     # Backface culling to hide the back of the triangles.
-
     scene_path = scene_root/f"{name}.obj"
     assert scene_path.exists(), f"Scene {scene_path} does not exist"
     out_dir = out_root/(f"{name}" + ("debug" if debug else ""))
@@ -76,7 +75,7 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
         out_view = pth/"view.hdf5"
         shutil.move(out_dir/f"{idx}.hdf5", out_view)
         f = h5py.File(out_view, 'r')
-        Image(np.array(f["colors"])/255.).save(out_view.with_suffix(".png"))
+        Image(np.array(f["colors"])/255.).save(out_view.parent/RGB_VIEW_FILE)
         Image(np.array(f["colors"])/255.).save(out_dir/f"{idx:04d}.png")
 
 
