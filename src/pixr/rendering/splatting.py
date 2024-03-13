@@ -32,6 +32,7 @@ def barycentric_coordinates(x: int, y: int, v0: torch.Tensor, v1: torch.Tensor, 
 # @TODO: z-buffer here / depths tests here
 # @TODO: get rid of the primitive dimension!
 # @TODO: multiscale
+# @torch.compile()
 def splat_points(
     cc_points: torch.Tensor,
     colors: torch.Tensor,
