@@ -41,7 +41,7 @@ def generate_scene(
             'roll_deg': -11.076923076923038,
             'trans_x': -1.53846153846154,
             'trans_y': 0.8,
-            'trans_z': 0.0,
+            'trans_z': 13.,
             'w': 128,
             'h': 64,
             'focal_length_pix': 200.
@@ -96,12 +96,12 @@ def check_gradient_descent_on_camera_coordinates(
         yaw = torch.tensor([0.], requires_grad=True).to(device)
         pitch = torch.tensor([0.], requires_grad=True).to(device)
         roll = torch.tensor([0.], requires_grad=True).to(device)
-        cam_pos = torch.tensor([0., 0., 0.], requires_grad=True).to(device).unsqueeze(-1)
+        cam_pos = torch.tensor([0., 0., 14.], requires_grad=True).to(device).unsqueeze(-1)
         yaw = torch.nn.Parameter(yaw)
         pitch = torch.nn.Parameter(pitch)
         roll = torch.nn.Parameter(roll)
         cam_pos = torch.nn.Parameter(cam_pos)
-        optimizer = torch.optim.Adam([yaw, pitch, roll, cam_pos], lr=0.5)
+        optimizer = torch.optim.Adam([yaw, pitch, roll, cam_pos], lr=0.3)
         cam_int_gt.requires_grad = False  # freeze the camera intrinsics
         for step in range(200+1):
             plot_step_flag = step % 100 == 0
@@ -137,6 +137,55 @@ def check_gradient_descent_on_camera_coordinates(
                 plt.show()
 
 
+def check_gradient_descent_on_point_features(
+    show=False,
+    device=DEVICE,
+    num_samples: Optional[int] = None
+):
+    # NO BACKPROP ALONG SPLATTING INVOLVED !
+    # Fit camera parameters from 2D projections and known 3D scene (fixed point cloud)
+    point_cloud_3d, colors, wc_normals = generate_world(num_samples=num_samples, device=device)
+    (proj_point_cloud_gt, cc_normals, yaw_gt, pitch_gt, roll_gt, cam_pos_gt,
+     w, h, cam_int_gt, splat_image_gt) = generate_scene(
+        point_cloud_3d, wc_normals, colors=colors, device=device)
+    proj_point_cloud_gt = proj_point_cloud_gt.to(device)
+    if splat_image_gt is not None:
+        splat_image_gt = splat_image_gt.clip(0., 1.)
+    with torch.autograd.set_detect_anomaly(True):
+        color_pred = torch.rand_like(colors, requires_grad=True).to(device)
+        optimizer = torch.optim.Adam([color_pred], lr=0.3)
+        cam_int_gt.requires_grad = False  # freeze the camera intrinsics
+        for step in range(50+1):
+            plot_step_flag = step % 10 == 0
+            optimizer.zero_grad()
+            proj_point_cloud, img_pred, _ = forward_chain(
+                point_cloud_3d, wc_normals,
+                yaw_gt, pitch_gt, roll_gt,
+                cam_pos_gt,
+                cam_int_gt,
+                w=w, h=h,
+                colors=color_pred
+            )
+            # loss = torch.nn.functional.mse_loss(proj_point_cloud, proj_point_cloud_gt)
+            loss = torch.nn.functional.mse_loss(img_pred, splat_image_gt)
+            loss.backward()
+            optimizer.step()
+            if step % 1 == 0:
+                print(
+                    f"Step {step:05d}\tLoss {loss.item():.5f}"
+                )
+
+            if plot_step_flag and show:
+                plt.figure()
+                plt.subplot(1, 2, 1)
+                plt.title("Groundtruth")
+                plt.imshow(splat_image_gt.detach().numpy())
+                plt.subplot(1, 2, 2)
+                plt.imshow(img_pred.clip(0., 1.).detach().numpy())
+                plt.title(f"Step {step}")
+                plt.show()
+
+
 def forward_chain(
     point_cloud,
     wc_normals,
@@ -161,6 +210,7 @@ def forward_chain(
 
 
 def main(visualize=False):
+    check_gradient_descent_on_point_features(show=visualize, device=DEVICE, num_samples=1000)
     if visualize:
         check_gradient_descent_on_camera_coordinates(splat_flag=True, show=True, device=DEVICE, num_samples=1000)
     else:
