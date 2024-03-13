@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import json
 from config import SAMPLE_SCENES, OUT_DIR
+from pixr.properties import CAMERA_PARAMS_FILE, RGB_VIEW_FILE
 import subprocess
 import h5py
 import shutil
@@ -55,7 +56,7 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
             "pitch": pitch,
             "roll": roll,
         }
-        camera_path = view_dir/"camera_params.json"
+        camera_path = view_dir/CAMERA_PARAMS_FILE
         with open(str(camera_path), "w") as file_out:
             json.dump(camera_dict, file_out)
         full_camera_paths.append(str(camera_path))

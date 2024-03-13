@@ -1,15 +1,14 @@
 from pixr.synthesis.world_simulation import generate_simulated_world, STAIRCASE
 from pixr.synthesis.normals import extract_normals
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
-from pixr.camera.camera_geometry import set_camera_parameters, get_camera_extrinsics, get_camera_intrinsics
 from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 from pixr.rasterizer.rasterizer import shade_screen_space
-from interactive_pipe.data_objects.parameters import Parameters
+from pixr.synthesis.scenes_utils import load_views
 import torch
 import numpy as np
-from config import SAMPLE_SCENES, OUT_DIR
+from config import OUT_DIR
 import argparse
 
 
@@ -30,24 +29,11 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
     wc_normals = extract_normals(wc_triangles)
     wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(
         wc_triangles, colors, wc_normals, num_samples=20000)
-    # for idx, yaw_angle in enumerate(range(-30, 30, 5)):
-    for idx, current_view_path in enumerate(views):
-        params = Parameters.load_json(current_view_path/"camera_params.json")
-        yaw_angle = params["yaw"]
-        pitch_angle = params["pitch"]
-        roll_angle = params["roll"]
-        position_blender = params["position"]
-        position = [-position_blender[0], -position_blender[2], -position_blender[1]]  # looks ok...
-        yaw, pitch, roll, cam_pos = set_camera_parameters(
-            yaw_deg=yaw_angle,
-            pitch_deg=pitch_angle,
-            roll_deg=roll_angle,
-            trans_x=position[0],
-            trans_y=position[1],
-            trans_z=position[2]
-        )
-        camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
-        camera_intrinsics, w, h = get_camera_intrinsics()
+    # config_views_path = [current_view_path/"camera_params.json" for idx, current_view_path in enumerate(views)]
+    views = load_views(views)
+    for idx, view_dict in enumerate(views):
+        camera_intrinsics, w, h = view_dict["camera_intrinsics"], view_dict["w"], view_dict["h"]
+        camera_extrinsics = view_dict["camera_extrinsics"]
         if splat_flag:
             print(camera_extrinsics, camera_intrinsics)
             cc_points, points_depths, cc_normals = project_3d_to_2d(
