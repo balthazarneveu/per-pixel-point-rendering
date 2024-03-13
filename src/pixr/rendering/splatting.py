@@ -20,6 +20,7 @@ def splat_points(
     no_grad: Optional[bool] = True,
     z_buffer_flag: Optional[bool] = True,
     scale: Optional[int] = 0,
+    normal_culling_flag: Optional[bool] = False,
     global_params: Optional[dict] = {}
 ) -> torch.Tensor:
     """
@@ -57,7 +58,7 @@ def splat_points(
         for batch_idx in range(cc_points.shape[0]):
             point = cc_points[batch_idx, :, 0]
             color = vertex_colors[batch_idx]
-            normal = cc_normals[batch_idx] if cc_normals is not None else None
+
             x, y = torch.round(point[0]/scale_factor).long(), torch.round(point[1]/scale_factor).long()
             # -- Bounds Test --
             if not (0 <= x < w and 0 <= y < h):
@@ -70,7 +71,15 @@ def splat_points(
                 # if debug:
                 #     image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
                 continue
-
+            # -- Normal culling! --
+            if normal_culling_flag:
+                normal = cc_normals[batch_idx] if cc_normals is not None else None
+                beam_direction = torch.matmul(camera_intrinsics_inverse, point)
+                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
+                    # if debug:
+                    #     image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
+                    continue
+            
             # -- Z-buffering! --
             if z_buffer_flag:
                 buffered_z = z_buffer[y, x]
@@ -78,13 +87,6 @@ def splat_points(
                     z_buffer[y, x] = depth
                 else:
                     continue
-
-            # -- Normal culling! --
-            beam_direction = torch.matmul(camera_intrinsics_inverse, point)
-            if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
-                # if debug:
-                #     image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
-                continue
             image[y, x] = color
 
     # Return the splatted image

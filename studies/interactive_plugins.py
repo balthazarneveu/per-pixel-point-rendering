@@ -40,5 +40,6 @@ def define_default_sliders():
     interactive(
         debug=(False,),
         z_buffer_flag=(True,),
+        normal_culling_flag=(False,),
         scale=(0, [0, 5])
     )(splat_points)
