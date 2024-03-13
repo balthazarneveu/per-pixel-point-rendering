@@ -6,69 +6,53 @@ from pixr.properties import CAMERA_PARAMS_FILE, RGB_VIEW_FILE
 import subprocess
 import h5py
 import shutil
-import numpy as np
 from pathlib import Path
 from interactive_pipe.data_objects.image import Image
-from itertools import product
-import random
+from pixr.multiview.scene_definition import define_scene
+from typing import List, Tuple
 NAME = "staircase"
 
 
-def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False, backface_culling=True):
-    # Backface culling to hide the back of the triangles.
-    scene_path = scene_root/f"{name}.obj"
-    assert scene_path.exists(), f"Scene {scene_path} does not exist"
-    out_dir = out_root/(f"{name}" + ("debug" if debug else ""))
+def prepare_multiviews_on_disk_for_blender_proc(
+    out_dir,
+    views_list=None,
+    w=640, h=480, f=1000,
+) -> Tuple[List[Path], List[Path]]:
+
     out_dir.mkdir(exist_ok=True, parents=True)
-    full_camera_paths = []
     full_output_paths = []
-    roll = 0
-    pitch = 0
-    yaw = 0
-    view_counter = 0
-    tx, ty, tz = 0, 0, 0
-    # for yaw, pitch in product(range(-15, 16, 5), range(-15, 16, 5)): #yaw pitch test
-    # for tx, ty, tz in product(range(-4, 5, 3), range(-4, 5, 4), range(-3, 3, 2)):
-    # for yaw, pitch, tx in product(range(-5, 6, 5), range(-5, 5, 6), range(-3, 4, 3)):
-    # for yaw, pitch, roll in product(range(-10, 11, 10), range(-10, 11, 10), [-30, 10, 30]):  # yaw pitch test
-    for _ in range(5):
-        yaw, pitch, roll = random.randint(-15, 16), random.randint(-8, 9), random.randint(-180, 180)
-        tx, ty, tz = random.randint(-4, 5), random.randint(-7, 2), random.randint(-3, 4)
+    full_camera_paths = []
+    multiview_list = define_scene(views_list=views_list, camera=(w, h, f))
+    for view_counter, camera_dict in enumerate(multiview_list):
         view_dir = out_dir/f"view_{view_counter:03d}"
         view_dir.mkdir(exist_ok=True, parents=True)
         full_output_paths.append(view_dir)
-        pretty_name = f"{name}_{yaw}"
-        position = [tx, -13.741+ty, tz]
-        rotation_angles = [np.deg2rad(90.+pitch), 0+np.deg2rad(roll), np.deg2rad(yaw)]
-        camera_dict = {
-            "k_matrix": [
-                [f, 0, w/2],
-                [0, f, h/2],
-                [0, 0, 1]
-            ],
-            "f": f,  # "focal length in pixels, should be the same as the first element of the k_matrix
-            "w": w,
-            "h": h,
-            "position": position,
-            "euler_rotation": rotation_angles,
-            "yaw": yaw,
-            "pitch": pitch,
-            "roll": roll,
-        }
+
         camera_path = view_dir/CAMERA_PARAMS_FILE
         with open(str(camera_path), "w") as file_out:
             json.dump(camera_dict, file_out)
         full_camera_paths.append(str(camera_path))
-        view_counter += 1
+    return full_camera_paths, full_output_paths
 
+
+def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False):
+    scene_path = scene_root/f"{name}.obj"
+    assert scene_path.exists(), f"Scene {scene_path} does not exist"
+    out_dir = out_root/(f"{name}" + ("debug" if debug else ""))
+    full_camera_paths, full_output_paths = prepare_multiviews_on_disk_for_blender_proc(
+        out_dir,
+        views_list=None,
+        w=w, h=h, f=f
+    )
+    for pth in full_output_paths:
+        assert not (Path(pth)/"view.hdf5").exists(), f"View {pth} already exists - do not overwrite"
     subprocess.run([
         "blenderproc",
         "debug" if debug else "run",
         "studies/blender_proc_exports.py",
         "--scene", str(scene_path),
         "--output-dir", str(out_dir),
-        "--camera",] + full_camera_paths +
-        ["--backface-culling"] if backface_culling else None,
+        "--camera",] + full_camera_paths
     )
 
     for idx, pth in enumerate(full_output_paths):

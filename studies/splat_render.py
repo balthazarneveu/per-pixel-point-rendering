@@ -5,7 +5,7 @@ from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 from pixr.rasterizer.rasterizer import shade_screen_space
-from pixr.synthesis.scenes_utils import load_views
+from pixr.multiview.scenes_utils import load_views
 import torch
 import numpy as np
 from config import OUT_DIR
