@@ -48,38 +48,29 @@ def splat_points(
     with torch.no_grad() if no_grad else torch.enable_grad():
         # Perform splatting of vertex colors
         for batch_idx in range(cc_points.shape[0]):
-            triangle = cc_points[batch_idx]  # Not triangles!
+            point = cc_points[batch_idx, :, 0]
             color = vertex_colors[batch_idx]
             normal = cc_normals[batch_idx] if cc_normals is not None else None
-            for node_idx in range(triangle.shape[1]):  # We shall not loop over this dimension!
-                x, y = torch.round(triangle[0, node_idx]).long(), torch.round(triangle[1, node_idx]).long()
-                # -- Bounds Test --
-                if not (0 <= x < w and 0 <= y < h):
-                    continue
+            x, y = torch.round(point[0]).long(), torch.round(point[1]).long()
+            # -- Bounds Test --
+            if not (0 <= x < w and 0 <= y < h):
+                continue
 
-                # -- In front of camera --
-                depth = depths[batch_idx, :, node_idx]
+            # -- In front of camera --
+            depth = depths[batch_idx, :, 0]
 
-                if depth < 0:
-                    if debug:
-                        image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
-                    continue
+            if depth < 0:
+                if debug:
+                    image[y, x] = torch.tensor([0, 1, 1])  # FORCED CYAN FOR DEBUG!
+                continue
 
-                # -- Normal culling! --
-                beam_direction = torch.matmul(camera_intrinsics_inverse, triangle[:, node_idx])
-                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
-                    if debug:
-                        image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
-                    continue
-                image[y, x] = color[node_idx]
+            # -- Normal culling! --
+            beam_direction = torch.matmul(camera_intrinsics_inverse, point)
+            if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
+                if debug:
+                    image[y, x] = torch.tensor([1, 1, 0])  # FORCE RED FOR DEBUG
+                continue
+            image[y, x] = color
 
-                # if 0 <= x < w and 0 <= y < h:
-                #     if debug:
-                #         # DEBUG!
-                #         for u in range(-4, 4):
-                #             for v in range(-4, 4):
-                #                 if 0 <= x+u < w and 0 <= y+v < h:
-                #                     image[y+v, x+u] = color[node_idx]
-                #     image[y, x] = color[node_idx]
     # Return the splatted image
     return image
