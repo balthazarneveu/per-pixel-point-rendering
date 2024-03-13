@@ -12,13 +12,15 @@ def splat_points(
     cc_points: torch.Tensor,
     colors: torch.Tensor,
     depths: torch.Tensor,
-    w: int,
-    h: int,
+    w_full: int,
+    h_full: int,
     camera_intrinsics: torch.Tensor,
     cc_normals: Optional[torch.Tensor],
     debug: Optional[bool] = False,
     no_grad: Optional[bool] = True,
-    z_buffer_flag: Optional[bool] = True
+    z_buffer_flag: Optional[bool] = True,
+    scale: Optional[int] = 0,
+    global_params: Optional[dict] = {}
 ) -> torch.Tensor:
     """
     Splat the colors of the vertices onto an image.
@@ -38,7 +40,10 @@ def splat_points(
     Returns:
         torch.Tensor: Tensor of shape (H, W, C=3rgb) representing the splatted image.
     """
+    scale_factor = 2.**scale
+    global_params['scale'] = scale
     # Create an empty image with shape (h, w, 3)
+    w, h = int(w_full/scale_factor), int(h_full/scale_factor)
     image = torch.zeros((h, w, 3))
     # Get the number of vertices
     num_vertices = cc_points.shape[1]
@@ -53,7 +58,7 @@ def splat_points(
             point = cc_points[batch_idx, :, 0]
             color = vertex_colors[batch_idx]
             normal = cc_normals[batch_idx] if cc_normals is not None else None
-            x, y = torch.round(point[0]).long(), torch.round(point[1]).long()
+            x, y = torch.round(point[0]/scale_factor).long(), torch.round(point[1]/scale_factor).long()
             # -- Bounds Test --
             if not (0 <= x < w and 0 <= y < h):
                 continue

@@ -39,4 +39,6 @@ def define_default_sliders():
     )(shade_screen_space)
     interactive(
         debug=(False,),
+        z_buffer_flag=(True,),
+        scale=(0, [0, 5])
     )(splat_points)

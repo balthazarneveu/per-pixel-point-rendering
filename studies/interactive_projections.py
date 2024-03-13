@@ -14,6 +14,7 @@ from pixr.synthesis.world_simulation import generate_simulated_world
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
+import cv2
 
 
 def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
@@ -55,6 +56,14 @@ def tensor_to_image(image: torch.Tensor) -> np.ndarray:
     return image
 
 
+def rescale_image(image: np.ndarray, global_params={}) -> np.ndarray:
+    scale = global_params.get('scale', 0)
+    if scale > 0:
+        factor = 2**scale
+        image = cv2.resize(image, (0, 0), fx=factor, fy=factor)
+    return image
+
+
 def projection_pipeline():
     wc_triangles, colors = generate_simulated_world()
     # wc_triangles, colors = generate_3d_scene_sample_from_mesh()
@@ -74,7 +83,7 @@ def projection_pipeline():
     splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, camera_intrinsics, cc_normals)
     # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
-
+    splatted_image = rescale_image(splatted_image)
     # img_scene = visualize_2d_scene(cc_triangles, w, h)
     # return img_scene, splatted_image, rendered_image
 
