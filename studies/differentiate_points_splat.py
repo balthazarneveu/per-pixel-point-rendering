@@ -13,7 +13,7 @@ from pixr.properties import DEVICE
 import argparse
 
 
-def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colors, w, h):
+def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colors, w, h, scale=0):
     # print(point_cloud.device, wc_normals.device, cam_ext.device, cam_int.device, colors.device)
     wc_normals = wc_normals.to(point_cloud.device)
     point_cloud = point_cloud
@@ -26,6 +26,7 @@ def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colo
         cam_int,
         cc_normals,
         no_grad=False,
+        scale=scale
     )
     return img
 
@@ -53,11 +54,13 @@ def validation_step(
         wc_points, wc_normals, camera_extrinsics, camera_intrinsics, w, h, color_pred,
         target_img=None,
         save_path=None,
-        suffix=""):
+        suffix="",
+        scale=0):
     with torch.no_grad():
         for batch_idx in range(camera_extrinsics.shape[0]):
             cam_ext, cam_int = camera_extrinsics[batch_idx, ...], camera_intrinsics[batch_idx, ...]
-            img_pred = forward_chain_not_parametric(wc_points, wc_normals, cam_ext, cam_int, color_pred, w, h)
+            img_pred = forward_chain_not_parametric(
+                wc_points, wc_normals, cam_ext, cam_int, color_pred, w, h, scale=scale)
             img = Image(img_pred.cpu().numpy())
             img.save(save_path/f"{batch_idx:04d}_{suffix}.png")
 
@@ -89,6 +92,8 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     color_pred = torch.randn(points_colors.shape, requires_grad=True, device=device)
     color_pred = color_pred.to(device)
     optimizer = torch.optim.Adam([color_pred], lr=0.3)
+
+    scale = 2
     with torch.autograd.set_detect_anomaly(False):
         for step in range(200+1):
             optimizer.zero_grad()
@@ -96,8 +101,15 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
             # Aggregate the loss over several views
             for batch_idx in range(rendered_images.shape[0]):
                 cam_ext, cam_int = camera_extrinsics[batch_idx, ...], camera_intrinsics[batch_idx, ...]
-                img_pred = forward_chain_not_parametric(wc_points, wc_normals, cam_ext, cam_int, color_pred, w, h)
-                loss += torch.nn.functional.mse_loss(img_pred, rendered_images[batch_idx])
+                img_pred = forward_chain_not_parametric(
+                    wc_points, wc_normals, cam_ext, cam_int, color_pred, w, h, scale=scale)
+                if scale > 0:
+                    # Downsample the target image using basic average pooling as an AA filter
+                    img_target = torch.nn.functional.avg_pool2d(
+                        rendered_images[batch_idx].permute(2, 0, 1), 2**scale).permute(1, 2, 0)
+                else:
+                    img_target = rendered_images[batch_idx]
+                loss += torch.nn.functional.mse_loss(img_pred, img_target)
             loss.backward()
             optimizer.step()
 
