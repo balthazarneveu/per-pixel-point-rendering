@@ -40,8 +40,9 @@ def define_default_sliders():
     interactive(
         debug=(False,),
         z_buffer_flag=(True,),
-        normal_culling_flag=(False,),
+        normal_culling_flag=(True,),
         fuzzy_depth_test=(0.01, [0., 0.1]),
         scale=(0, [0, 5]),
+        for_loop_zbuffer=(False,),
 
     )(splat_points)

@@ -1,6 +1,6 @@
 import torch
 from typing import Optional
-
+from pixr.rendering.zbuffer_pass import zbuffer_pass
 
 # @TODO: WARNING: channel last! - not compatible with usual N, C, H, W
 # @TODO: do not set the image to zero, needs to be initialized outside
@@ -8,6 +8,8 @@ from typing import Optional
 # @TODO: get rid of the primitive dimension!
 # @TODO: multiscale
 # @torch.compile()
+
+
 def splat_points(
     cc_points: torch.Tensor,
     colors: torch.Tensor,
@@ -22,6 +24,7 @@ def splat_points(
     scale: Optional[int] = 0,
     normal_culling_flag: Optional[bool] = True,
     fuzzy_depth_test: Optional[float] = 0.01,
+    for_loop_zbuffer: Optional[bool] = False,
     global_params: Optional[dict] = {}
 ) -> torch.Tensor:
     """
@@ -59,32 +62,44 @@ def splat_points(
     with torch.no_grad() if no_grad else torch.enable_grad():
         if z_buffer_flag:
             with torch.no_grad():
-                z_buffer = torch.full((h, w), float('inf'))
                 if fuzzy_depth_test > 0 and z_buffer_flag:
-                    for batch_idx in range(cc_points.shape[0]):
-                        point = cc_points[batch_idx, :, 0]
-                        x, y = torch.round(point[0]/scale_factor).long(), torch.round(point[1]/scale_factor).long()
-                        # -- Bounds Test --
-                        if not (0 <= x < w and 0 <= y < h):
-                            continue
-                        # -- In front of camera --
-                        depth = depths[batch_idx, :, 0]
-                        if depth < 0:
-                            continue
-                        # -- Normal culling! --
-                        if normal_culling_flag:
-                            normal = cc_normals[batch_idx] if cc_normals is not None else None
-                            beam_direction = torch.matmul(camera_intrinsics_inverse, point)
-                            if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
-                                continue
+                    if not for_loop_zbuffer:
+                        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> No for loop zbuffer")
+                        z_buffer = zbuffer_pass(cc_points[:, :, 0], depths[..., 0, 0], w, h,
+                                                camera_intrinsics, cc_normals, scale_factor=scale_factor)
 
-                        # -- Z-buffering! --
-                        if z_buffer_flag:
-                            buffered_z = z_buffer[y, x]
-                            if depth <= buffered_z:
-                                z_buffer[y, x] = depth
-                            else:
+                    else:
+                        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FOR!!! loop zbuffer")
+                        z_buffer = torch.full((h, w), float('inf'))
+                        for batch_idx in range(cc_points.shape[0]):
+                            point = cc_points[batch_idx, :, 0]
+                            x, y = torch.round(point[0]/scale_factor).long(), torch.round(point[1]/scale_factor).long()
+                            # -- Bounds Test --
+                            if not (0 <= x < w and 0 <= y < h):
                                 continue
+                            # -- In front of camera --
+                            depth = depths[batch_idx, :, 0]
+                            if depth < 0:
+                                continue
+                            # -- Normal culling! --
+                            if normal_culling_flag:
+                                normal = cc_normals[batch_idx] if cc_normals is not None else None
+                                beam_direction = torch.matmul(camera_intrinsics_inverse, point)
+                                if normal is not None and torch.dot(normal.squeeze(-1), beam_direction) <= 0:
+                                    continue
+
+                            # -- Z-buffering! --
+                            if z_buffer_flag:
+                                buffered_z = z_buffer[y, x]
+                                if depth <= buffered_z:
+                                    z_buffer[y, x] = depth
+                                else:
+                                    continue
+                    if debug:
+                        valid_mask = z_buffer < float('inf')
+                        z_buffer[~valid_mask] = 0.
+                        z_buffer = z_buffer.clip(0, 1)
+                        return z_buffer
                     z_buffer = (1+fuzzy_depth_test) * z_buffer
         # Perform splatting of vertex colors
 

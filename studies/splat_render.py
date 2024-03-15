@@ -29,7 +29,6 @@ def main(out_root=OUT_DIR, name=STAIRCASE, splat_flag=True, raster_flag=True):
     wc_normals = extract_normals(wc_triangles)
     wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(
         wc_triangles, colors, wc_normals, num_samples=20000)
-    # config_views_path = [current_view_path/"camera_params.json" for idx, current_view_path in enumerate(views)]
     views = load_views(views)
     for idx, view_dict in enumerate(views):
         camera_intrinsics, w, h = view_dict["camera_intrinsics"], view_dict["w"], view_dict["h"]
