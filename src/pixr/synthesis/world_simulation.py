@@ -2,7 +2,7 @@ import torch
 from typing import Tuple
 from pixr.synthesis.world_from_triangles import generate_3d_scene_sample_test_triangles, generate_3d_staircase_scene, generate_rect
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
-
+from pixr.properties import DEVICE
 TEST_RECT = "test_rect"
 TEST_TRIANGLES = "test_triangles"
 STAIRCASE = "staircase"
@@ -27,4 +27,6 @@ def generate_simulated_world(
     if invert_z_axis:
         # DISABLE WHEN EXPORTING TO OBJ FOR BLENDER!
         wc_triangles[..., 2, :] *= -1
+    wc_triangles = wc_triangles.to(DEVICE)
+    colors_nodes = colors_nodes.to(DEVICE)
     return wc_triangles, colors_nodes
