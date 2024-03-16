@@ -40,6 +40,7 @@ class BaseModel(torch.nn.Module):
         Returns:
             int: receptive field
         """
+        channels = self.in_channels if hasattr(self, "in_channels") else channels
         input_tensor = torch.ones(1, channels, size, size, requires_grad=True)
         if device is not None:
             input_tensor = input_tensor.to(device)

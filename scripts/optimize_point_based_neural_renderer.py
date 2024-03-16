@@ -3,7 +3,7 @@ from pixr.learning.experiments import get_training_content
 import torch
 from pixr.learning.utils import prepare_dataset
 from config import OUT_DIR, TRAINING_DIR
-from pixr.properties import DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR
+from pixr.properties import DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR, PSEUDO_COLOR_DIMENSION, NB_POINTS
 from tqdm import tqdm
 from experiments_definition import get_experiment_from_id
 from pathlib import Path
@@ -16,11 +16,11 @@ from pixr.learning.dataloader import get_data_loader
 from pixr.rendering.splatting import splat_points
 from pixr.synthesis.forward_project import project_3d_to_2d
 from shared_parser import get_shared_parser
+from typing import List
 
 
 def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scale=0, no_grad=False):
     wc_normals = wc_normals.to(point_cloud.device)
-    point_cloud = point_cloud
     proj_point_cloud, depth, cc_normals = project_3d_to_2d(point_cloud, cam_int, cam_ext, wc_normals, no_grad=True)
     img = splat_points(
         proj_point_cloud,
@@ -51,9 +51,11 @@ def training_loop(
     best_accuracy = 0.
     model.to(device)
     for n_epoch in tqdm(range(config[NB_EPOCHS])):
-        current_metrics = {TRAIN: 0., VALIDATION: 0., LR: optimizer.param_groups[0]['lr'],
-                           METRIC_PSNR: 0.
-                           }
+        current_metrics = {
+            TRAIN: 0.,
+            VALIDATION: 0., LR: optimizer.param_groups[0]['lr'],
+            METRIC_PSNR: 0.
+        }
         for phase in [TRAIN, VALIDATION]:
             if phase == TRAIN:
                 model.train()
@@ -127,8 +129,10 @@ def training_loop(
     return model
 
 
-def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samples=20000, pseudo_color_dim=3):
+def main(exp: int, out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, seudo_color_dim=3):
     config = get_experiment_from_id(exp)
+    num_samples = config[NB_POINTS]
+    pseudo_color_dim = config[PSEUDO_COLOR_DIMENSION]
     train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(
         out_root, name, num_samples=num_samples)
     # Move training data to GPU
@@ -171,7 +175,12 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samp
     )
 
 
+def loop_over_experiments(exp_list: List[int]):
+    for exp in exp_list:
+        main(exp=exp)
+
+
 if __name__ == "__main__":
     parser = get_shared_parser(description="Neural point based rendering training")
     args = parser.parse_args()
-    main(name=args.scene)
+    loop_over_experiments(args.experiment)
