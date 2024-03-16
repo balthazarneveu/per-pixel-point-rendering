@@ -71,7 +71,8 @@ def splat_points(
                             w, h,
                             camera_intrinsics_inverse,
                             cc_normals,
-                            scale_factor=scale_factor
+                            scale_factor=scale_factor,
+                            normal_culling_flag=normal_culling_flag
                         )
 
                     else:
