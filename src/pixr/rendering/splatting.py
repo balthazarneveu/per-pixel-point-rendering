@@ -1,7 +1,7 @@
 import torch
 from typing import Optional
-from pixr.rendering.zbuffer_pass import zbuffer_pass, zbuffer_pass_for_loop, aggregate_colors_fuzzy_depth_test
-
+from pixr.rendering.zbuffer_pass import zbuffer_pass, zbuffer_pass_for_loop
+from pixr.rendering.colors_aggregation import aggregate_colors_fuzzy_depth_test
 # @TODO: WARNING: channel last! - not compatible with usual N, C, H, W
 # @TODO: do not set the image to zero, needs to be initialized outside
 # @TODO: z-buffer here / depths tests here
