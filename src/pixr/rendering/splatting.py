@@ -1,6 +1,6 @@
 import torch
 from typing import Optional
-from pixr.rendering.zbuffer_pass import zbuffer_pass, zbuffer_pass_for_loop
+from pixr.rendering.zbuffer_pass import zbuffer_pass, zbuffer_pass_for_loop, aggregate_colors_fuzzy_depth_test
 
 # @TODO: WARNING: channel last! - not compatible with usual N, C, H, W
 # @TODO: do not set the image to zero, needs to be initialized outside
@@ -65,7 +65,7 @@ def splat_points(
                 if fuzzy_depth_test > 0 and z_buffer_flag:
                     if not for_loop_zbuffer:
                         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> No for loop zbuffer")
-                        z_buffer = zbuffer_pass(
+                        z_buffer_flat = zbuffer_pass(
                             cc_points[:, :, 0],
                             depths[..., 0, 0],
                             w, h,
@@ -74,6 +74,8 @@ def splat_points(
                             scale_factor=scale_factor,
                             normal_culling_flag=normal_culling_flag
                         )
+                        z_buffer_flat = (1+fuzzy_depth_test) * z_buffer_flat
+                        z_buffer = z_buffer_flat[1:].reshape(h, w)
 
                     else:
                         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FOR!!! loop zbuffer")
@@ -95,7 +97,21 @@ def splat_points(
                 else:
                     z_buffer = torch.full((h, w), float('inf'))
         # Perform splatting of vertex colors
-
+    if not for_loop_zbuffer:
+        z_buffer_flat = (1+fuzzy_depth_test) * z_buffer_flat
+        image = aggregate_colors_fuzzy_depth_test(
+            cc_points[:, :, 0],
+            depths[..., 0, 0],
+            w, h,
+            camera_intrinsics_inverse,
+            cc_normals,
+            scale_factor,
+            colors[:, 0, :],
+            z_buffer_flat,
+            normal_culling_flag=normal_culling_flag
+        )
+        return image
+    else:
         for batch_idx in range(cc_points.shape[0]):
             point = cc_points[batch_idx, :, 0]
             color = vertex_colors[batch_idx, 0, :]
