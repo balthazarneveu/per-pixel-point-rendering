@@ -65,7 +65,7 @@ def splat_points(
                 if fuzzy_depth_test > 0 and z_buffer_flag:
                     if not for_loop_zbuffer:
                         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> No for loop zbuffer")
-                        z_buffer_flat = zbuffer_pass(
+                        z_buffer_flat, point_to_flat_image_coordinate_mapping = zbuffer_pass(
                             cc_points[:, :, 0],
                             depths[..., 0, 0],
                             w, h,
@@ -76,7 +76,6 @@ def splat_points(
                         )
                         z_buffer_flat = (1+fuzzy_depth_test) * z_buffer_flat
                         z_buffer = z_buffer_flat[1:].reshape(h, w)
-
                     else:
                         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FOR!!! loop zbuffer")
                         z_buffer = zbuffer_pass_for_loop(
@@ -100,15 +99,11 @@ def splat_points(
     if not for_loop_zbuffer:
         z_buffer_flat = (1+fuzzy_depth_test) * z_buffer_flat
         image = aggregate_colors_fuzzy_depth_test(
-            cc_points[:, :, 0],
             depths[..., 0, 0],
-            w, h,
-            camera_intrinsics_inverse,
-            cc_normals,
-            scale_factor,
             colors[:, 0, :],
             z_buffer_flat,
-            normal_culling_flag=normal_culling_flag
+            point_to_flat_image_coordinate_mapping,
+            w, h
         )
         return image
     else:
