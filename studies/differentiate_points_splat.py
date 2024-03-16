@@ -5,7 +5,7 @@ from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points as splat_points  # Run the for loop
-from pixr.multiview.scenes_utils import load_views
+from pixr.learning.utils import prepare_data
 import torch
 import matplotlib.pyplot as plt
 from config import OUT_DIR
@@ -28,25 +28,6 @@ def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colo
         scale=scale,
     )
     return img
-
-
-def prepare_data(views_path):
-    views = load_views(views_path)
-    rendered_images = []
-    camera_intrinsics = []
-    camera_extrinsics = []
-    for idx, view_dict in enumerate(views):
-        img = Image.load_image(view_dict["path_to_image"])
-        img = torch.from_numpy(img).float()  # .permute(2, 0, 1)
-        rendered_images.append(img)
-        camera_intrinsics_single, w, h = view_dict["camera_intrinsics"], view_dict["w"], view_dict["h"]
-        camera_extrinsics_single = view_dict["camera_extrinsics"]
-        camera_intrinsics.append(camera_intrinsics_single)
-        camera_extrinsics.append(camera_extrinsics_single)
-    rendered_images = torch.stack(rendered_images)
-    camera_intrinsics = torch.stack(camera_intrinsics)
-    camera_extrinsics = torch.stack(camera_extrinsics)
-    return rendered_images, camera_intrinsics, camera_extrinsics, w, h
 
 
 def validation_step(
