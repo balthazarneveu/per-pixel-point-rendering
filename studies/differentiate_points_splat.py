@@ -1,11 +1,9 @@
-from pixr.synthesis.world_simulation import generate_simulated_world, STAIRCASE
-from pixr.synthesis.normals import extract_normals
-from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
+from pixr.synthesis.world_simulation import STAIRCASE
 from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points as splat_points  # Run the for loop
-from pixr.learning.utils import prepare_data
+from pixr.learning.utils import prepare_data, get_point_cloud
 import torch
 import matplotlib.pyplot as plt
 from config import OUT_DIR
@@ -59,18 +57,19 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     out_dir.mkdir(exist_ok=True, parents=True)
     camera_extrinsics.requires_grad = False
     camera_intrinsics.requires_grad = False
-    wc_triangles, colors = generate_simulated_world(scene_mode=name)
-    wc_normals = extract_normals(wc_triangles)
-    wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(
-        wc_triangles, colors, wc_normals,
-        # num_samples=20000
-        num_samples=20000
-    )
+    # wc_triangles, colors = generate_simulated_world(scene_mode=name)
+    # wc_normals = extract_normals(wc_triangles)
+    # wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(
+    #     wc_triangles, colors, wc_normals,
+    #     # num_samples=20000
+    #     num_samples=20000
+    # )
+    wc_points, wc_normals, _points_colors = get_point_cloud(name, num_samples=20000)
     # Move data to GPU
     wc_points = wc_points.to(device)
     camera_intrinsics = camera_intrinsics.to(device)
     camera_extrinsics = camera_extrinsics.to(device)
-    color_pred = torch.randn(points_colors.shape, requires_grad=True, device=device)
+    color_pred = torch.randn(_points_colors.shape, requires_grad=True, device=device)
     color_pred = color_pred.to(device)
     optimizer = torch.optim.Adam([color_pred], lr=0.3)
 

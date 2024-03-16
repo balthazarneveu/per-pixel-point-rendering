@@ -1,5 +1,8 @@
 from pixr.multiview.scenes_utils import load_views
+from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_pipe.data_objects.image import Image
+from pixr.synthesis.normals import extract_normals
+from pixr.synthesis.world_simulation import generate_simulated_world
 import torch
 from pathlib import Path
 from typing import List, Tuple
@@ -39,14 +42,39 @@ def split_dataset(number_of_views: int, seed: int = 42, ratio_train: float = 0.8
     return train_indices, val_indices
 
 
-def prepare_dataset(out_root: Path, name: str, seed: int = 42, ratio_train: float = 0.8):
+def get_point_cloud(name, num_samples: int = 20000, seed: int = 42):
+    wc_triangles, triangle_colors = generate_simulated_world(scene_mode=name)
+    wc_normals = extract_normals(wc_triangles)
+    wc_points, points_colors, wc_normals = pick_point_cloud_from_triangles(
+        wc_triangles,
+        triangle_colors,
+        wc_normals,
+        num_samples=num_samples,
+        seed=seed
+    )
+    return wc_points, wc_normals, points_colors
+
+
+def preare_image_dataset(out_root: Path, name: str, seed: int = 42, ratio_train: float = 0.8):
     view_dir = out_root/f"{name}"
     views = sorted(list(view_dir.glob("view_*")))
-    train_indices, valid_indices = split_dataset(len(views))
+    train_indices, valid_indices = split_dataset(len(views), seed, ratio_train)
     views_train = [views[i] for i in train_indices]
     views_valid = [views[i] for i in valid_indices]
     rendered_view_train, camera_intrinsics_train, camera_extrinsics_train, w, h = prepare_data(views_train)
     rendered_view_valid, camera_intrinsics_valid, camera_extrinsics_valid, w, h = prepare_data(views_valid)
-    # all_rendered_images.requires_grad = False
-    # rendered_images = all_rendered_images
-    return (rendered_view_train, camera_intrinsics_train, camera_extrinsics_train), (rendered_view_valid, camera_intrinsics_valid, camera_extrinsics_valid), (w, h)
+    return (
+        rendered_view_train, camera_intrinsics_train, camera_extrinsics_train), (
+        rendered_view_valid, camera_intrinsics_valid, camera_extrinsics_valid), (
+        w, h
+    )
+
+
+def prepare_dataset(
+    out_root: Path, name: str,
+    seed: int = 42, ratio_train: float = 0.8,
+    num_samples=20000
+):
+    training_material, validation_material, size = preare_image_dataset(out_root, name, seed, ratio_train)
+    wc_points, wc_normals, _ = get_point_cloud(name, num_samples, seed=seed)
+    return training_material, validation_material, size, (wc_points, wc_normals)

@@ -5,7 +5,8 @@ def pick_point_cloud_from_triangles(
         wc_triangles: torch.Tensor,
         colors: torch.Tensor,
         wc_normals: torch.Tensor,
-        num_samples: int = 100
+        num_samples: int = 100,
+        seed=42
 ) -> torch.Tensor:
     """Pick m samples from the triangles in the 3D scene.
 
@@ -19,7 +20,8 @@ def pick_point_cloud_from_triangles(
         torch.Tensor: [m, 4=xyz1, 1] point cloud
         torch.Tensor: [m, 1, 3=rgb] point colors
     """
-    print(colors.shape)
+    if seed is not None:
+        torch.manual_seed(seed)
     # Calculate the vectors forming the sides of the triangles
     vec0 = wc_triangles[:, :3, 1] - wc_triangles[:, :3, 0]
     vec1 = wc_triangles[:, :3, 2] - wc_triangles[:, :3, 0]

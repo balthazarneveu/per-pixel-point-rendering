@@ -21,11 +21,24 @@ def generate_rect(
     colors_nodes = []
 
     current_z = z
+    # wc_triangles.extend([
+    #     [
+    #         [-1, -1, current_z+delta_z, 1.],
+    #         [1, -1, current_z+delta_z, 1.],
+    #         [1, 1, current_z+delta_z, 1.]
+    #         # ],
+    #     ],  # [::-1],
+    #     [
+    #         [1, 1, current_z, 1.],
+    #         [-1, 1, current_z, 1.],
+    #         [-1, -1, current_z, 1.]
+    #     ]  # [::-1]
+    # ])
     wc_triangles.extend([
         [
-            [-1, -1, current_z+delta_z, 1.],
-            [1, -1, current_z+delta_z, 1.],
-            [1, 1, current_z+delta_z, 1.]
+            [1, 1, current_z+delta_z, 1.],
+            [-1, 1, current_z+delta_z, 1.],
+            [-1, -1, current_z+delta_z, 1.]
             # ],
         ],  # [::-1],
         [
