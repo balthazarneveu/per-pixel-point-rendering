@@ -4,6 +4,7 @@ from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
+# from pixr.rendering.legacy_splatting import splat_points as splat_points  # Run the for loop
 from pixr.multiview.scenes_utils import load_views
 from interactive_pipe.data_objects.image import Image
 import torch
@@ -26,7 +27,7 @@ def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colo
         cam_int,
         cc_normals,
         no_grad=False,
-        scale=scale
+        scale=scale,
     )
     return img
 
@@ -94,7 +95,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     optimizer = torch.optim.Adam([color_pred], lr=0.3)
 
     scale = 2
-    with torch.autograd.set_detect_anomaly(False):
+    with torch.autograd.set_detect_anomaly(True):
         for step in range(200+1):
             optimizer.zero_grad()
             loss = 0.
@@ -122,7 +123,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
             if step % 100 == 0 and save:
                 validation_step(
                     wc_points, wc_normals, camera_extrinsics, camera_intrinsics, w, h, color_pred,
-                    target_img=all_rendered_images, save_path=out_dir, suffix=f"step_{step:05d}"+"_zbuffer")
+                    target_img=all_rendered_images, save_path=out_dir, suffix=f"step_{step:05d}")
             if plot_step_flag and show:
                 plt.figure()
                 plt.subplot(1, 2, 1)
@@ -136,10 +137,10 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     plt.figure()
     plt.subplot(1, 2, 1)
     plt.title("Groundtruth")
-    plt.imshow(rendered_images[batch_idx].detach().numpy())
+    plt.imshow(rendered_images[batch_idx].detach().cpu().numpy())
     plt.subplot(1, 2, 2)
     print(img_pred.shape)
-    plt.imshow(img_pred.clip(0., 1.).detach().numpy())
+    plt.imshow(img_pred.clip(0., 1.).detach().cpu().numpy())
     # plt.title(f"Step {step}")
     plt.show()
 

@@ -14,6 +14,7 @@ from pixr.synthesis.world_simulation import generate_simulated_world
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
+# from pixr.rendering.legacy_splatting import splat_points_legacy as splat_points # Use the legacy splatting with for loop = useless !
 import cv2
 
 
@@ -76,18 +77,16 @@ def projection_pipeline():
         wc_points, camera_intrinsics, camera_extrinsics, wc_normals)
     cc_triangles, triangles_depths, _ = project_3d_to_2d(wc_triangles, camera_intrinsics, camera_extrinsics, None)
     # Screen space triangles.
-    rendered_image = shade_screen_space(cc_triangles, colors, triangles_depths, w, h)
-    rendered_image = linear_rgb_to_srgb(rendered_image)
-    rendered_image = tensor_to_image(rendered_image)
-    # Let's splat the triangle nodes
+    rendered_image_from_mesh = shade_screen_space(cc_triangles, colors, triangles_depths, w, h)
+    rendered_image_from_mesh = linear_rgb_to_srgb(rendered_image_from_mesh)
+    rendered_image_from_mesh = tensor_to_image(rendered_image_from_mesh)
     splatted_image = splat_points(cc_points, points_colors, points_depths, w, h, camera_intrinsics, cc_normals)
-    # splatted_image = splat_points(cc_triangles, colors, w, h)
     splatted_image = tensor_to_image(splatted_image)
     splatted_image = rescale_image(splatted_image)
     # img_scene = visualize_2d_scene(cc_triangles, w, h)
-    # return img_scene, splatted_image, rendered_image
+    # return img_scene, splatted_image, rendered_image_from_mesh
 
-    return splatted_image, rendered_image
+    return splatted_image, rendered_image_from_mesh
 
 
 def splat_pipeline():

@@ -20,21 +20,25 @@ def aggregate_colors_fuzzy_depth_test(
     # Per point minimum depth scaled by 1.01, if point depth is <= , then it's a valid point
 
     min_depth = z_buffer_flat[flat_idx]
-    mask = depths <= z_buffer_flat[flat_idx]  # fuzzy depth test
+    mask = depths <= min_depth  # fuzzy depth test
     flat_idx[~mask] = 0  # discarded points are mapped to the dropped element index.
     flat_colors = torch.zeros((1 + h * w, colors.shape[-1]), device=colors.device, dtype=torch.float32)
-    # The per-channel for loop can be avoided with the code below by repeating the indexes on the colors axis..
-    # but this does not seem to be faster
-    for ch in range(colors.shape[-1]):
-        flat_colors[..., ch] = flat_colors[..., ch].scatter_reduce(0, flat_idx, colors[..., ch], reduce="mean",
-                                                                   include_self=False)
-    if False:  # Avoid for loop
+    flat_colors = torch.ones((1 + h * w, colors.shape[-1]), device=colors.device, dtype=torch.float32) * 0.275
+    if False:
+        # The per-channel for loop can be avoided with the code below by repeating the indexes on the colors axis..
+        for ch in range(colors.shape[-1]):
+            flat_colors[..., ch] = flat_colors[..., ch].scatter_reduce(0, flat_idx, colors[..., ch], reduce="mean",
+                                                                       include_self=False)
+    else:  # Avoid for loop
+        # Required for backward operation!
         flat_colors = flat_colors.scatter_reduce(
             0, flat_idx.unsqueeze(-1).repeat(1, colors.shape[-1]),
             colors,
-            reduce="mean", include_self=False)
+            reduce="mean",
+            include_self=False  # allows automatic env map background if a pixel is not hit
+        )
 
     new_colors = flat_colors[1:, :].reshape(h, w, 3)
-    print(f"{depths.shape=:}\n , {colors.shape=:}\n{z_buffer_flat.shape=:}")
-    print(f"{flat_idx.shape=:}\n {mask.shape=:}\n {min_depth.shape=:}\n {flat_colors.shape=:}\n {new_colors.shape=:}")
+    # print(f"{depths.shape=:}\n , {colors.shape=:}\n{z_buffer_flat.shape=:}")
+    # print(f"{flat_idx.shape=:}\n {mask.shape=:}\n {min_depth.shape=:}\n {flat_colors.shape=:}\n {new_colors.shape=:}")
     return new_colors
