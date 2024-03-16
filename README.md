@@ -42,3 +42,11 @@ pip install -e .
   - d=1 for depth d=3 for xyz, 4 xyz1 for homogeneous coordinates
   - M is the number of primitives in a batch. 
 - $m$ is the total amount of points.
+
+
+#### Splatting of points
+
+
+| Fuzzy depth test (varying $\alpha$ on a scene with two very close triangles) | Normal culling | Multiscale splatting |
+| :---: | :---: | :---: |
+![](report/figures/fuzzy_depth_test_two_close_triangles.gif) | ![](report/figures/normal_culling_test.gif) | ![](report/figures/multiscale_splatting.gif) |
