@@ -5,3 +5,4 @@ Pillow>=9.0.1
 scikit-image>=0.20
 pytest>=6.2.5
 torch>=2.0.0
+interactive-pipe
