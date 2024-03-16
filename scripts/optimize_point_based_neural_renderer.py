@@ -17,6 +17,7 @@ from pixr.rendering.splatting import splat_points
 from pixr.synthesis.forward_project import project_3d_to_2d
 from shared_parser import get_shared_parser
 from typing import List
+from pixr.learning.utils import save_model
 
 
 def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scale=0, no_grad=False):
@@ -116,16 +117,13 @@ def training_loop(
             best_accuracy = current_metrics[METRIC_PSNR]
             if output_dir is not None:
                 print("new best model saved!")
-                torch.save(model.state_dict(), output_dir/"best_model.pt")
-        torch.save({
-            "point_cloud": wc_points,
-            "normals": wc_normals,
-            "colors": color_pred,
-        },
-            output_dir/f"point_cloud_checkpoint_{n_epoch:05d}.pt"
-        )
+                # torch.save(model.state_dict(), output_dir/"best_model.pt")
+                save_model(model, wc_points, wc_normals, color_pred, output_dir/"best_model.pt")
+
+        # save_model(model, wc_points, wc_normals, color_pred, output_dir/f"point_cloud_checkpoint_{n_epoch:05d}.pt")
     if output_dir is not None:
-        torch.save(model.cpu().state_dict(), output_dir/"last_model.pt")
+        # torch.save(model.cpu().state_dict(), output_dir/"last_model.pt")
+        save_model(model, wc_points, wc_normals, color_pred, output_dir/"last_model.pt")
     return model
 
 

@@ -16,6 +16,13 @@ def model_configurations(config, model_preset="UNet") -> dict:
             ),
             NAME: model_preset
         }
+    elif model_preset == "Bypass":
+        config[MODEL] = {
+            ARCHITECTURE: dict(
+                in_channels=config[PSEUDO_COLOR_DIMENSION],
+            ),
+            NAME: model_preset
+        }
     else:
         raise ValueError(f"Unknown model preset {model_preset}")
 
@@ -28,7 +35,8 @@ def presets_experiments(
     scene: str = STAIRCASE,
     nb_points: int = 20000,
     seed: int = 42,
-    pseudo_color_dimension: int = 3
+    pseudo_color_dimension: int = 3,
+    lr: float = 1e-3
 ) -> dict:
     config = {
         ID: exp,
@@ -38,7 +46,7 @@ def presets_experiments(
     config[OPTIMIZER] = {
         NAME: "Adam",
         PARAMS: {
-            LR: 1e-3
+            LR: lr
         }
     }
     config[DATALOADER] = {
@@ -66,5 +74,11 @@ def get_experiment_from_id(exp: int):
         return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE)
     elif exp == 2:
         return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE, pseudo_color_dimension=8)
+    elif exp == 3:
+        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=3)
+    elif exp == 4:
+        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=3, lr=0.3)
+    elif exp == 5:
+        return presets_experiments(exp, b=4, n=50, model_preset="UNet", scene=SCENE, pseudo_color_dimension=3, lr=0.01)
     else:
         raise NameError(f"Experiment {exp} not found!")

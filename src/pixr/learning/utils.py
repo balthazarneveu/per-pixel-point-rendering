@@ -78,3 +78,23 @@ def prepare_dataset(
     training_material, validation_material, size = preare_image_dataset(out_root, name, seed, ratio_train)
     wc_points, wc_normals, _ = get_point_cloud(name, num_samples, seed=seed)
     return training_material, validation_material, size, (wc_points, wc_normals)
+
+
+def save_model(model, points, normals, colors, output_path):
+    torch.save({
+        "model": model.state_dict(),
+        "point_cloud": points,
+        "normals": normals,
+        "colors": colors,
+    },
+        output_path
+    )
+
+
+def load_model(path):
+    model_dic = torch.load(path)
+    model_state_dict = model_dic["model"]
+    points = model_dic["point_cloud"]
+    normals = model_dic["normals"]
+    colors = model_dic["colors"]
+    return model_state_dict, points, normals, colors
