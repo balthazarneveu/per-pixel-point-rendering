@@ -1,7 +1,7 @@
 from pixr.properties import (NB_EPOCHS, TRAIN, VALIDATION, SCHEDULER, REDUCELRONPLATEAU,
                              MODEL, ARCHITECTURE, ID, NAME, SCHEDULER_CONFIGURATION, OPTIMIZER, PARAMS, LR,
-                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE)
-from typing import Tuple
+                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED)
+from pixr.synthesis.world_simulation import STAIRCASE
 
 
 def model_configurations(config, model_preset="UNet") -> dict:
@@ -23,7 +23,10 @@ def presets_experiments(
     exp: int,
     b: int = 16,
     n: int = 50,
-    model_preset: str = "UNet"
+    model_preset: str = "UNet",
+    scene: str = STAIRCASE,
+    nb_points: int = 20000,
+    seed: int = 42
 ) -> dict:
     config = {
         ID: exp,
@@ -49,9 +52,12 @@ def presets_experiments(
         "patience": 5
     }
     config[LOSS] = LOSS_MSE
+    config[SCENE] = scene
+    config[NB_POINTS] = nb_points
+    config[SEED] = seed
     return config
 
 
 def get_experiment_from_id(exp: int):
     if exp == 1:
-        return presets_experiments(exp, b=4, n=200, model_preset="UNet")
+        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE)

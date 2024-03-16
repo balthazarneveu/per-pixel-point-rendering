@@ -8,6 +8,7 @@ from pixr.synthesis.forward_project import project_3d_to_2d
 from interactive_pipe import interactive_pipeline
 from pixr.interactive.utils import tensor_to_image, rescale_image
 from pixr.properties import DEVICE
+from shared_parser import get_shared_parser
 
 
 def infer_image(splatted_image, model):
@@ -60,6 +61,8 @@ def main_interactive_version(splat_scene_path, model_path=None):
 
 
 if __name__ == '__main__':
+    parser = get_shared_parser()
+    args = parser.parse_args()
     splat_scene_path = Path(
         # "/Data/code/per-pixel-point-rendering/__output/staircase_splat_differentiate_points/checkpoint_00200.pt",
         "/Data/code/per-pixel-point-rendering/__training/__0001/point_cloud_checkpoint_00199.pt",

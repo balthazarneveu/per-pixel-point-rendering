@@ -5,7 +5,6 @@ from pixr.learning.utils import prepare_dataset
 from config import OUT_DIR, TRAINING_DIR
 from pixr.properties import DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR
 from tqdm import tqdm
-import argparse
 from experiments_definition import get_experiment_from_id
 from pathlib import Path
 from pixr.learning.loss import compute_loss
@@ -16,6 +15,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from pixr.learning.dataloader import get_data_loader
 from pixr.rendering.splatting import splat_points
 from pixr.synthesis.forward_project import project_3d_to_2d
+from shared_parser import get_shared_parser
 
 
 def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scale=0, no_grad=False):
@@ -61,9 +61,7 @@ def training_loop(
                 model.eval()
             for target_view, cam_int, cam_ext in tqdm(dl_dict[phase], desc=f"{phase} - Epoch {n_epoch}"):
                 target_view = target_view.to(device)
-                # x = torch.rand_like(target_view, device=device)
                 h, w = target_view.shape[-2:]
-                # print(cam_int.shape, cam_ext.shape, wc_points.shape, wc_normals.shape, color_pred.shape, w, h)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == TRAIN):
                     loss = 0
@@ -131,7 +129,6 @@ def training_loop(
 
 def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samples=20000, pseudo_color_dim=3):
     config = get_experiment_from_id(exp)
-
     train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(
         out_root, name, num_samples=num_samples)
     # Move training data to GPU
@@ -156,7 +153,6 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samp
     # Validation images can remain on CPU
     rendered_view_valid, camera_intrinsics_valid, camera_extrinsics_valid = valid_material
     rendered_view_valid = rendered_view_valid.cpu()
-    n_steps = 200
     color_pred = torch.nn.Parameter(torch.randn((num_samples, 1, pseudo_color_dim), requires_grad=True, device=device))
     model, optim = get_training_content(config, training_mode=True, extra_params=[color_pred])
     out_dir_train = TRAINING_DIR/f"__{exp:04d}"
@@ -176,8 +172,6 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samp
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Render a scene using BlenderProc")
-    parser.add_argument("-s", "--scene", type=str, help="Name of the scene to render", default=STAIRCASE)
-    parser.add_argument("-e", "--experiment", type=int, nargs="+", help="Training experiment", default=None)
+    parser = get_shared_parser(description="Neural point based rendering training")
     args = parser.parse_args()
     main(name=args.scene)

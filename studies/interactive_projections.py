@@ -12,7 +12,7 @@ from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.synthesis.normals import extract_normals
 from pixr.synthesis.world_simulation import generate_simulated_world
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
-from interactive_plugins import define_default_sliders
+from pixr.interactive.interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points_legacy as splat_points # Use the legacy splatting with for loop = useless !
 from pixr.interactive.utils import tensor_to_image, rescale_image

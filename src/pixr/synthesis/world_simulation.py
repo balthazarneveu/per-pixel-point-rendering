@@ -1,6 +1,9 @@
 import torch
 from typing import Tuple
-from pixr.synthesis.world_from_triangles import generate_3d_scene_sample_test_triangles, generate_3d_staircase_scene, generate_rect
+from pixr.synthesis.world_from_triangles import (
+    generate_3d_scene_sample_test_triangles, generate_3d_staircase_scene, generate_rect
+)
+
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 from pixr.properties import DEVICE
 TEST_RECT = "test_rect"

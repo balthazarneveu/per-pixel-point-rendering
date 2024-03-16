@@ -8,7 +8,7 @@ RGB_VIEW_FILE = "view.png"
 X = 0
 Y = 1
 Z = 2
-
+SCENE = "scene"
 OUTPUT_FOLDER_NAME = "__output"
 DATALOADER = "data_loader"
 BATCH_SIZE = "batch_size"
@@ -35,3 +35,5 @@ REDUCTION_SKIP = "skip"
 LEAKY_RELU = "LeakyReLU"
 RELU = "ReLU"
 SIMPLE_GATE = "SimpleGate"
+NB_POINTS = "nb_points"
+SEED = "seed"
