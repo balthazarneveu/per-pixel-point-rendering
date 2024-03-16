@@ -5,13 +5,20 @@ from pixr.camera.camera_geometry import set_camera_parameters, get_camera_extrin
 from interactive_pipe.data_objects.image import Image
 
 
-def main(splat_scene_path):
+def load_colored_point_cloud_from_files(splat_scene_path):
     scene_dict = torch.load(splat_scene_path)
     wc_points = scene_dict["point_cloud"]
     wc_normals = scene_dict["normals"]
     color_pred = scene_dict["colors"]
+    wc_points.requires_grad = False
+    wc_normals.requires_grad = False
+    color_pred.requires_grad = False
+    return wc_points, wc_normals, color_pred
+
+
+def main_static_version(splat_scene_path):
+    wc_points, wc_normals, color_pred = load_colored_point_cloud_from_files(splat_scene_path)
     scale = 0
-    w, h = 640, 480
     set_camera_parameters(z=13.)
     yaw, pitch, roll, cam_pos = set_camera_parameters(trans_z=13.741)
     camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
@@ -25,4 +32,4 @@ if __name__ == '__main__':
     splat_scene_path = Path(
         "/Data/code/per-pixel-point-rendering/__output/staircase_splat_differentiate_points/checkpoint_00040.pt")
     assert splat_scene_path.exists()
-    main(splat_scene_path)
+    main_static_version(splat_scene_path)

@@ -15,7 +15,7 @@ from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from interactive_plugins import define_default_sliders
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points_legacy as splat_points # Use the legacy splatting with for loop = useless !
-import cv2
+from pixr.interactive.utils import tensor_to_image, rescale_image
 
 
 def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
@@ -51,18 +51,6 @@ def visualize_2d_scene(cc_triangles: torch.Tensor, w, h) -> Curve:
         title="Projected points")
     return img_scene
 
-
-def tensor_to_image(image: torch.Tensor) -> np.ndarray:
-    image = image.cpu().numpy()
-    return image
-
-
-def rescale_image(image: np.ndarray, global_params={}) -> np.ndarray:
-    scale = global_params.get('scale', 0)
-    if scale > 0:
-        factor = 2**scale
-        image = cv2.resize(image, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_NEAREST)
-    return image
 
 
 def projection_pipeline():

@@ -14,6 +14,22 @@ def set_camera_parameters(
     return yaw, pitch, roll, cam_pos
 
 
+def set_camera_parameters_orbit_mode(
+    yaw_deg: float = 0., pitch_deg: float = 0., roll_deg: float = 0.,
+    trans_x: float = 0., trans_y: float = 0., trans_z: float = 0.,
+    **_kwargs
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    yaw = torch.deg2rad(torch.Tensor([yaw_deg]))
+    pitch = torch.deg2rad(torch.Tensor([pitch_deg]))
+    roll = torch.deg2rad(torch.Tensor([roll_deg]))
+    cam_pos = torch.stack([torch.Tensor([trans_x]), torch.Tensor([trans_y]), torch.Tensor([trans_z])])
+    camera_extrinsics = get_camera_extrinsics(yaw, pitch, roll, cam_pos)
+    cam_rot, _ = camera_extrinsics[:, :3], camera_extrinsics[:, 3]
+    # cam_pos_rot = torch.matmul(cam_rot, cam_pos)
+    cam_pos = torch.matmul(cam_rot.t(), cam_pos)
+    return yaw, pitch, roll, cam_pos
+
+
 def get_camera_intrinsics(w: int = 640, h: int = 480, focal_length_pix: float = 1000.) -> Tuple[torch.Tensor, int, int]:
     """
     Get camera intrinsics matrix and image dimensions.
