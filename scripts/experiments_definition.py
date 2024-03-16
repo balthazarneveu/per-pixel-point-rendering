@@ -54,4 +54,4 @@ def presets_experiments(
 
 def get_experiment_from_id(exp: int):
     if exp == 1:
-        return presets_experiments(exp, n=50, model_preset="UNet")
+        return presets_experiments(exp, b=4, n=200, model_preset="UNet")

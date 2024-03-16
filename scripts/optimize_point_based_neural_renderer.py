@@ -14,11 +14,33 @@ import wandb
 import json
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from pixr.learning.dataloader import get_data_loader
+from pixr.rendering.splatting import splat_points
+from pixr.synthesis.forward_project import project_3d_to_2d
+
+
+def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scale=0, no_grad=False):
+    wc_normals = wc_normals.to(point_cloud.device)
+    point_cloud = point_cloud
+    proj_point_cloud, depth, cc_normals = project_3d_to_2d(point_cloud, cam_int, cam_ext, wc_normals, no_grad=True)
+    img = splat_points(
+        proj_point_cloud,
+        colors,
+        depth,
+        w, h,
+        cam_int,
+        cc_normals,
+        no_grad=no_grad,
+        scale=scale,
+    )
+    return img
 
 
 def training_loop(
     model,
     optimizer,
+    wc_points,
+    wc_normals,
+    color_pred,
     dl_dict: dict,
     config: dict,
     scheduler=None,
@@ -37,13 +59,27 @@ def training_loop(
                 model.train()
             else:
                 model.eval()
-            for y, cam_int, cam_ext in tqdm(dl_dict[phase], desc=f"{phase} - Epoch {n_epoch}"):
-                y = y.to(device)
-                x = torch.rand_like(y, device=device)
+            for target_view, cam_int, cam_ext in tqdm(dl_dict[phase], desc=f"{phase} - Epoch {n_epoch}"):
+                target_view = target_view.to(device)
+                # x = torch.rand_like(target_view, device=device)
+                h, w = target_view.shape[-2:]
+                # print(cam_int.shape, cam_ext.shape, wc_points.shape, wc_normals.shape, color_pred.shape, w, h)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == TRAIN):
-                    y_pred = model(x)
-                    loss = compute_loss(y_pred, y, mode=config.get(LOSS, LOSS_MSE))
+                    loss = 0
+                    for scale in [3, 2, 1, 0]:
+                        batch_splat = []
+                        for img_index in range(cam_int.shape[0]):
+                            img_splat = infer_function(
+                                wc_points, cam_int[img_index], cam_ext[img_index], wc_normals, color_pred, w, h, scale=scale)
+                            batch_splat.append(img_splat.permute(2, 0, 1))
+                        batch_splat = torch.stack(batch_splat)
+                        image_pred = model(batch_splat)
+                        if scale > 0:
+                            img_target = torch.nn.functional.avg_pool2d(target_view, 2**scale)
+                        else:
+                            img_target = target_view
+                        loss += compute_loss(image_pred, img_target, mode=config.get(LOSS, LOSS_MSE))
                     if torch.isnan(loss):
                         print(f"Loss is NaN at epoch {n_epoch} and phase {phase}!")
                         continue
@@ -52,7 +88,7 @@ def training_loop(
                         optimizer.step()
                 current_metrics[phase] += loss.item()
                 if phase == VALIDATION:
-                    metrics_on_batch = compute_metrics(y_pred, y)
+                    metrics_on_batch = compute_metrics(image_pred, target_view)
                     for k, v in metrics_on_batch.items():
                         current_metrics[k] += v
 
@@ -81,15 +117,23 @@ def training_loop(
             if output_dir is not None:
                 print("new best model saved!")
                 torch.save(model.state_dict(), output_dir/"best_model.pt")
+        torch.save({
+            "point_cloud": wc_points,
+            "normals": wc_normals,
+            "colors": color_pred,
+        },
+            output_dir/f"point_cloud_checkpoint_{n_epoch:05d}.pt"
+        )
     if output_dir is not None:
         torch.save(model.cpu().state_dict(), output_dir/"last_model.pt")
     return model
 
 
-def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samples=2000, pseudo_color_dim=3):
+def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samples=20000, pseudo_color_dim=3):
     config = get_experiment_from_id(exp)
 
-    train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(out_root, name)
+    train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(
+        out_root, name, num_samples=num_samples)
     # Move training data to GPU
     wc_points, wc_normals = point_cloud_material
     wc_points = wc_points.to(device)
@@ -120,6 +164,9 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, exp: int = 1, num_samp
     training_loop(
         model,
         optim,
+        wc_points,
+        wc_normals,
+        color_pred,
         dl_dict,
         config,
         device=device,
