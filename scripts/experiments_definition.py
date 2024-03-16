@@ -75,7 +75,7 @@ def get_experiment_from_id(exp: int):
     elif exp == 2:
         return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE, pseudo_color_dimension=8)
     elif exp == 3:
-        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=3)
+        return presets_experiments(exp, b=4, n=50, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=5, lr=0.3)
     elif exp == 4:
         return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=3, lr=0.3)
     elif exp == 5:

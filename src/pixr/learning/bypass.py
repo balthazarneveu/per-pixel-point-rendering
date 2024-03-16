@@ -7,9 +7,9 @@ class Bypass(BaseModel):
         super().__init__()
         print(f"Pseudo color dimension {in_channels} -> {out_channels}")
         self.in_channels = in_channels
-        self.conv1 = nn.Conv2d(in_channels, out_channels, 1)
+        self.combine_channels = nn.Conv2d(in_channels, out_channels, 1)
         self.in_channels = in_channels
         self.out_channels = out_channels
 
     def forward(self, x):
-        return x[..., :3, :, :]
+        return self.combine_channels(x)

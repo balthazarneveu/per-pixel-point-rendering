@@ -8,6 +8,7 @@ def aggregate_colors_fuzzy_depth_test(
     flat_idx,  # [M] (-> int h*w+1) : point_to_flat_image_coordinate_mapping
     w: int,
     h: int,
+    background_color: torch.Tensor = None,
 ):
     # z-buffer flat [?, 10m, 3m, inf, 50cm, -10m ,....] <-> dropped first element + image [h,w]
 
@@ -22,8 +23,11 @@ def aggregate_colors_fuzzy_depth_test(
     min_depth = z_buffer_flat[flat_idx]
     mask = depths <= min_depth  # fuzzy depth test
     flat_idx[~mask] = 0  # discarded points are mapped to the dropped element index.
-    flat_colors = torch.zeros((1 + h * w, colors.shape[-1]), device=colors.device, dtype=torch.float32)
-    flat_colors = torch.ones((1 + h * w, colors.shape[-1]), device=colors.device, dtype=torch.float32) * 0.275
+    if background_color is None:
+        flat_colors = torch.zeros((1 + h * w, colors.shape[-1]), device=colors.device, dtype=torch.float32)
+    else:
+        flat_colors = torch.ones((1 + h * w, colors.shape[-1]),
+                                 device=colors.device, dtype=torch.float32) * background_color
     if False:
         # The per-channel for loop can be avoided with the code below by repeating the indexes on the colors axis..
         for ch in range(colors.shape[-1]):
