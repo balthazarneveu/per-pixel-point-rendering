@@ -37,6 +37,6 @@ def main_interactive_version(splat_scene_path):
 
 if __name__ == '__main__':
     splat_scene_path = Path(
-        "/Data/code/per-pixel-point-rendering/__output/staircase_splat_differentiate_points/checkpoint_00040.pt")
+        "/Data/code/per-pixel-point-rendering/__output/staircase_splat_differentiate_points/checkpoint_00200.pt")
     assert splat_scene_path.exists()
     main_interactive_version(splat_scene_path)

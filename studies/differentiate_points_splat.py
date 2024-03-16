@@ -6,7 +6,6 @@ from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points as splat_points  # Run the for loop
 from pixr.multiview.scenes_utils import load_views
-from interactive_pipe.data_objects.image import Image
 import torch
 import matplotlib.pyplot as plt
 from config import OUT_DIR
@@ -15,7 +14,6 @@ import argparse
 
 
 def forward_chain_not_parametric(point_cloud, wc_normals, cam_ext, cam_int, colors, w, h, scale=0, no_grad=False):
-    # print(point_cloud.device, wc_normals.device, cam_ext.device, cam_int.device, colors.device)
     wc_normals = wc_normals.to(point_cloud.device)
     point_cloud = point_cloud
     proj_point_cloud, depth, cc_normals = project_3d_to_2d(point_cloud, cam_int, cam_ext, wc_normals, no_grad=True)
@@ -96,7 +94,7 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
     optimizer = torch.optim.Adam([color_pred], lr=0.3)
 
     n_steps = 200+1
-    n_steps = 40+1
+    # n_steps = 40+1
     scales = [0, 1, 2, 3]
     with torch.autograd.set_detect_anomaly(True):
         for step in range(n_steps):
@@ -141,19 +139,28 @@ def main(out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, show=True, save=False)
                 print(img_pred.shape)
                 plt.imshow(img_pred.clip(0., 1.).detach().cpu().numpy())
                 plt.show()
-            torch.save({
-                "point_cloud": wc_points,
-                "normals": wc_normals,
-                "colors": color_pred,
-            },
-                out_dir/f"checkpoint_{step:05d}.pt"
-            )
+            if step % 10 == 0 and save:
+                torch.save({
+                    "point_cloud": wc_points,
+                    "normals": wc_normals,
+                    "colors": color_pred,
+                },
+                    out_dir/f"checkpoint_{step:05d}.pt"
+                )
     for scale in range(3):
         validation_step(
             wc_points, wc_normals, camera_extrinsics, camera_intrinsics, w, h, color_pred,
             target_img=all_rendered_images, save_path=out_dir, suffix=f"step_{step:05d}_scale={scale:02d}",
             scale=scale
         )
+    torch.save({
+        "point_cloud": wc_points,
+        "normals": wc_normals,
+        "colors": color_pred,
+    },
+        out_dir/f"checkpoint_{step:05d}.pt"
+    )
+
     plt.figure()
     plt.subplot(1, 2, 1)
     plt.title("Groundtruth")

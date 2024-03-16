@@ -50,3 +50,12 @@ pip install -e .
 | Fuzzy depth test (varying $\alpha$ on a scene with two very close triangles) | Normal culling | Multiscale splatting |
 | :---: | :---: | :---: |
 ![](report/figures/fuzzy_depth_test_two_close_triangles.gif) | ![](report/figures/normal_culling_test.gif) | ![](report/figures/multiscale_splatting.gif) |
+
+
+
+#### Non-neuronal point based rendering : Optimizing per point color
+To each point of the point cloud, we associate a color vector (*later this vector will have a larger dimension, we get pseudo-colors instead of RGB*).
+
+| Rendered colored point cloud - novel view synthesis| Groundtruth shaded images used to get colors per point so that the final rendering is faithful | 
+|:---: | :---: |
+| ![](/report/figures/non_neuronal_render.gif) | ![](report/figures/non_neuronal_rendering.png) |
