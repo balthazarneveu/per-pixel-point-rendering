@@ -1,8 +1,37 @@
 import torch
-from typing import Optional
+from typing import Optional, List
 from pixr.rendering.zbuffer_pass import zbuffer_pass
 from pixr.rendering.colors_aggregation import aggregate_colors_fuzzy_depth_test
 # @TODO: WARNING: channel last! - not compatible with usual N, C, H, W
+
+
+def ms_splatting(
+    cc_points: torch.Tensor,
+    colors: torch.Tensor,
+    depths: torch.Tensor,
+    w_full: int,
+    h_full: int,
+    camera_intrinsics: torch.Tensor,
+    cc_normals: Optional[torch.Tensor],
+    scales: List[int],
+    global_params={},
+    no_grad: Optional[bool] = True,
+    z_buffer_flag: Optional[bool] = True,
+    scale: Optional[int] = 0,
+    normal_culling_flag: Optional[bool] = True,
+    fuzzy_depth_test: Optional[float] = 0.01,
+):
+    global_params['scale'] = scale
+    ms_splatting_images = []
+    for sc in scales:
+        splatted_image = splat_points(cc_points, colors, depths, w_full, h_full,
+                                      camera_intrinsics, cc_normals, scale=sc,
+                                      no_grad=no_grad,
+                                      z_buffer_flag=z_buffer_flag,
+                                      normal_culling_flag=normal_culling_flag,
+                                      fuzzy_depth_test=fuzzy_depth_test)
+        ms_splatting_images.append(splatted_image)
+    return (ms_splatting_images,)
 
 
 def splat_points(

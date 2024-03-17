@@ -1,7 +1,8 @@
 from pixr.properties import (NB_EPOCHS, TRAIN, VALIDATION, SCHEDULER, REDUCELRONPLATEAU,
                              MODEL, ARCHITECTURE, ID, NAME, SCHEDULER_CONFIGURATION, OPTIMIZER, PARAMS, LR,
-                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION)
+                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION, SCALE_LIST)
 from pixr.synthesis.world_simulation import STAIRCASE
+from typing import List
 
 
 def model_configurations(config, model_preset="UNet") -> dict:
@@ -20,6 +21,7 @@ def model_configurations(config, model_preset="UNet") -> dict:
         config[MODEL] = {
             ARCHITECTURE: dict(
                 in_channels=config[PSEUDO_COLOR_DIMENSION],
+                n_scales=len(config[SCALE_LIST])
             ),
             NAME: model_preset
         }
@@ -36,6 +38,7 @@ def presets_experiments(
     nb_points: int = 20000,
     seed: int = 42,
     pseudo_color_dimension: int = 3,
+    scale_list: List[int] = [0, 1, 2, 3],
     lr: float = 1e-3
 ) -> dict:
     config = {
@@ -56,6 +59,7 @@ def presets_experiments(
         },
     }
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
+    config[SCALE_LIST] = scale_list
     model_configurations(config, model_preset=model_preset)
     config[SCHEDULER] = REDUCELRONPLATEAU
     config[SCHEDULER_CONFIGURATION] = {
@@ -71,14 +75,14 @@ def presets_experiments(
 
 def get_experiment_from_id(exp: int):
     if exp == 1:
-        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE)
+        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
     elif exp == 2:
-        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=SCENE, pseudo_color_dimension=8)
+        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
     elif exp == 3:
-        return presets_experiments(exp, b=4, n=50, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=5, lr=0.3)
+        return presets_experiments(exp, b=4, n=50, model_preset="Bypass", scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
     elif exp == 4:
-        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=SCENE, pseudo_color_dimension=3, lr=0.3)
+        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
     elif exp == 5:
-        return presets_experiments(exp, b=4, n=50, model_preset="UNet", scene=SCENE, pseudo_color_dimension=3, lr=0.01)
+        return presets_experiments(exp, b=4, n=50, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
     else:
         raise NameError(f"Experiment {exp} not found!")

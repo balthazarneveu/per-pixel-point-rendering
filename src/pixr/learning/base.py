@@ -1,5 +1,5 @@
 import torch
-from pixr.properties import LEAKY_RELU, RELU, SIMPLE_GATE
+from pixr.properties import LEAKY_RELU, RELU, SIMPLE_GATE, DEVICE
 from typing import Optional, Tuple
 
 
@@ -40,16 +40,21 @@ class BaseModel(torch.nn.Module):
         Returns:
             int: receptive field
         """
+        if device is None:
+            device = "cpu"
         channels = self.in_channels if hasattr(self, "in_channels") else channels
-        input_tensor = torch.ones(1, channels, size, size, requires_grad=True)
-        if device is not None:
-            input_tensor = input_tensor.to(device)
+        n_scales = self.n_scales if hasattr(self, "n_scales") else 1
+        input_tensor = [
+            torch.ones(1, channels, size//(2**sc), size//(2**sc), requires_grad=True).to(device) for sc in range(n_scales)
+        ]
         out = self.forward(input_tensor)
+        if isinstance(out, (list, tuple)):
+            out = out[0]
         grad = torch.zeros_like(out)
         grad[..., out.shape[-2]//2, out.shape[-1]//2] = torch.nan  # set NaN gradient at the middle of the output
         out.backward(gradient=grad)
         self.zero_grad()
-        receptive_field_mask = input_tensor.grad.isnan()[0, 0]
+        receptive_field_mask = input_tensor[0].grad.isnan()[0, 0]
         receptive_field_indexes = torch.where(receptive_field_mask)
         # Count NaN in the input
         receptive_x = 1+receptive_field_indexes[-1].max() - receptive_field_indexes[-1].min()  # Horizontal x

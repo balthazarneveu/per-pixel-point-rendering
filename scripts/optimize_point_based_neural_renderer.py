@@ -1,9 +1,8 @@
-from pixr.synthesis.world_simulation import STAIRCASE
 from pixr.learning.experiments import get_training_content
 import torch
 from pixr.learning.utils import prepare_dataset
 from config import OUT_DIR, TRAINING_DIR
-from pixr.properties import DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR, PSEUDO_COLOR_DIMENSION, NB_POINTS
+from pixr.properties import SCENE, DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST
 from tqdm import tqdm
 from experiments_definition import get_experiment_from_id
 from pathlib import Path
@@ -49,7 +48,8 @@ def training_loop(
     wandb_flag: bool = False,
     output_dir: Path = None
 ):
-    best_accuracy = 0.
+    best_accuracy = 0
+    scales_list = config[SCALE_LIST]
     model.to(device)
     for n_epoch in tqdm(range(config[NB_EPOCHS])):
         current_metrics = {
@@ -68,19 +68,25 @@ def training_loop(
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == TRAIN):
                     loss = 0
-                    for scale in [3, 2, 1, 0]:
+                    multiscale_batches = []
+                    for scale in scales_list:
                         batch_splat = []
                         for img_index in range(cam_int.shape[0]):
                             img_splat = infer_function(
-                                wc_points, cam_int[img_index], cam_ext[img_index], wc_normals, color_pred, w, h, scale=scale)
+                                wc_points, cam_int[img_index], cam_ext[img_index], wc_normals, color_pred, w, h,
+                                scale=scale
+                            )
                             batch_splat.append(img_splat.permute(2, 0, 1))
                         batch_splat = torch.stack(batch_splat)
-                        image_pred = model(batch_splat)
-                        if scale > 0:
-                            img_target = torch.nn.functional.avg_pool2d(target_view, 2**scale)
-                        else:
-                            img_target = target_view
-                        loss += compute_loss(image_pred, img_target, mode=config.get(LOSS, LOSS_MSE))
+                        multiscale_batches.append(batch_splat)
+                    image_pred = model(multiscale_batches)
+
+                    img_target = [torch.nn.functional.avg_pool2d(
+                        target_view, 2**sc) if sc > 0 else target_view for sc in scales_list]
+                    # >>> Multiscale supervision <<<
+                    for scale_idx, _scale in enumerate(scales_list):
+                        loss += compute_loss(image_pred[scale_idx], img_target[scale_idx],
+                                             mode=config.get(LOSS, LOSS_MSE))
                     if torch.isnan(loss):
                         print(f"Loss is NaN at epoch {n_epoch} and phase {phase}!")
                         continue
@@ -89,7 +95,7 @@ def training_loop(
                         optimizer.step()
                 current_metrics[phase] += loss.item()
                 if phase == VALIDATION:
-                    metrics_on_batch = compute_metrics(image_pred, target_view)
+                    metrics_on_batch = compute_metrics(image_pred[0], img_target[0])
                     for k, v in metrics_on_batch.items():
                         current_metrics[k] += v
 
@@ -127,26 +133,19 @@ def training_loop(
     return model
 
 
-def main(exp: int, out_root=OUT_DIR, name=STAIRCASE, device=DEVICE, seudo_color_dim=3):
+def main(exp: int, out_root=OUT_DIR, device=DEVICE):
     config = get_experiment_from_id(exp)
     num_samples = config[NB_POINTS]
     pseudo_color_dim = config[PSEUDO_COLOR_DIMENSION]
+    name = config[SCENE]
     train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(
-        out_root, name, num_samples=num_samples)
+        out_root, name, num_samples=num_samples
+    )
     # Move training data to GPU
     wc_points, wc_normals = point_cloud_material
     wc_points = wc_points.to(device)
     wc_normals = wc_normals.to(device)
     dl_dict = get_data_loader(config, train_material, valid_material)
-    # dl_dict[TRAIN]
-
-    # for i, (batch_inp, batch_cam_int, batch_cam_ext) in enumerate(dl_dict[TRAIN]):
-    #     print(batch_inp.shape, batch_cam_int.shape, batch_cam_ext.shape)  # Should print [batch_size, size[0], size[1], 3] for each batch
-    #     if i == 0:  # Just to break the loop after two batches for demonstration
-    #         import matplotlib.pyplot as plt
-    #         plt.imshow(batch_inp[0].cpu().numpy())
-    #         plt.show()
-    #         break
 
     rendered_view_train, camera_intrinsics_train, camera_extrinsics_train = train_material
     rendered_view_train = rendered_view_train.to(device)
