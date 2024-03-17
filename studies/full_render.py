@@ -36,7 +36,9 @@ def prepare_multiviews_on_disk_for_blender_proc(
 
 
 def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False):
-    scene_path = scene_root/f"{name}.obj"
+    scene_path = scene_root/f"{name}.blend"
+    if not scene_path.exists():
+        scene_path = scene_root/f"{name}.obj"
     assert scene_path.exists(), f"Scene {scene_path} does not exist"
     out_dir = out_root/(f"{name}" + ("debug" if debug else ""))
     full_camera_paths, full_output_paths = prepare_multiviews_on_disk_for_blender_proc(

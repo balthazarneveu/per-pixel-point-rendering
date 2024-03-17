@@ -14,12 +14,15 @@ parser.add_argument('--backface-culling', help="Enable backface culling", action
 args = parser.parse_args()
 
 bproc.init()
-objs = bproc.loader.load_obj(args.scene)
-if args.backface_culling:
-    materials = bproc.material.collect_all()
-    for idx, mat in enumerate(materials):
-        bpy.context.object.active_material_index = idx
-        bpy.context.object.active_material.use_backface_culling = True
+if args.scene.endswith(".blend"):
+    objs = bproc.loader.load_blend(args.scene)
+else:
+    objs = bproc.loader.load_obj(args.scene)
+    if args.backface_culling:
+        materials = bproc.material.collect_all()
+        for idx, mat in enumerate(materials):
+            bpy.context.object.active_material_index = idx
+            bpy.context.object.active_material.use_backface_culling = True
 # BEWARE! Z means vertical here
 light = bproc.types.Light()
 light.set_type("POINT")
