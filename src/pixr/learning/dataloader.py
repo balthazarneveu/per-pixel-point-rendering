@@ -1,18 +1,7 @@
 import torch
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from typing import Tuple
-from rstor.synthetic_data.dead_leaves_cpu import cpu_dead_leaves_chart
-from rstor.synthetic_data.dead_leaves_gpu import gpu_dead_leaves_chart
-from rstor.properties import DATALOADER, BATCH_SIZE, TRAIN, VALIDATION, LENGTH, CONFIG_DEAD_LEAVES, SIZE
-import cv2
-from skimage.filters import gaussian
-import random
-import numpy as np
-
-from numba import cuda
-
-from rstor.utils import DEFAULT_TORCH_FLOAT_TYPE
+from pixr.properties import DATALOADER, BATCH_SIZE, TRAIN, VALIDATION
 
 
 class ViewDataset(Dataset):
