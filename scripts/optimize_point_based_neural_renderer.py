@@ -54,9 +54,13 @@ def training_loop(
     for n_epoch in tqdm(range(config[NB_EPOCHS])):
         current_metrics = {
             TRAIN: 0.,
-            VALIDATION: 0., LR: optimizer.param_groups[0]['lr'],
-            METRIC_PSNR: 0.
+            VALIDATION: 0.,
+            LR: optimizer.param_groups[0]['lr'],
+            METRIC_PSNR: 0.,
         }
+        for phase in [TRAIN, VALIDATION]:
+            for scale in scales_list:
+                current_metrics[f"{phase}_MSE_{scale}"] = 0.
         for phase in [TRAIN, VALIDATION]:
             if phase == TRAIN:
                 model.train()
@@ -83,10 +87,33 @@ def training_loop(
 
                     img_target = [torch.nn.functional.avg_pool2d(
                         target_view, 2**sc) if sc > 0 else target_view for sc in scales_list]
+                    from matplotlib import pyplot as plt
+                    # plt.imshow(img_target[0][0].permute(1, 2, 0).cpu().numpy())
+                    # plt.show()
+                    # plt.imshow(img_target[1][0].permute(1, 2, 0).cpu().numpy())
+                    # plt.show()
+
                     # >>> Multiscale supervision <<<
-                    for scale_idx, _scale in enumerate(scales_list):
-                        loss += compute_loss(image_pred[scale_idx], img_target[scale_idx],
-                                             mode=config.get(LOSS, LOSS_MSE))
+                    for scale_idx, scale in enumerate(scales_list):
+                        # if scale == 1:
+                        if True:
+                            per_scale_loss = compute_loss(image_pred[scale_idx], img_target[scale_idx],
+                                                          mode=config.get(LOSS, LOSS_MSE))
+                            # print(f"Loss at scale {scale} is {per_scale_loss}")
+                            loss += per_scale_loss
+                            current_metrics[f"{phase}_MSE_{scale}"] += per_scale_loss.item()
+                            # if phase == VALIDATION and n_epoch % 10 == 0:
+                            if phase == VALIDATION and n_epoch % 10 == 0:
+                                plt.figure(figsize=(10, 10))
+                                n_img = img_target[scale_idx].shape[0]
+                                for img_idx in range(n_img):
+                                    plt.subplot(n_img, 2, img_idx*2+1)
+                                    plt.imshow(img_target[scale_idx][img_idx].permute(1, 2, 0).clip(0, 1).cpu().numpy())
+                                    plt.subplot(n_img, 2, img_idx*2+2)
+                                    plt.imshow(image_pred[scale_idx][img_idx].permute(
+                                        1, 2, 0).clip(0, 1).cpu().detach().numpy())
+                                plt.savefig(output_dir/f"{phase}_{n_epoch:05d}_scale_{scale}.png")
+                                plt.close()
                     if torch.isnan(loss):
                         print(f"Loss is NaN at epoch {n_epoch} and phase {phase}!")
                         continue
@@ -107,11 +134,12 @@ def training_loop(
                         current_metrics[k] = current_metrics[k].item()
                     except AttributeError:
                         pass
-        debug_print = f"{phase}: Epoch {n_epoch} - Loss: {current_metrics[phase]:.3e} "
-        for k, v in current_metrics.items():
-            if k not in [TRAIN, VALIDATION, LR]:
-                debug_print += f"{k}: {v:.3} |"
-        print(debug_print)
+        for phase in [TRAIN, VALIDATION]:
+            debug_print = f"{phase}: Epoch {n_epoch} - Loss: {current_metrics[phase]:.3e} "
+            for k, v in current_metrics.items():
+                if phase not in k and k not in [TRAIN, VALIDATION, LR]:
+                    debug_print += f"{k}: {v:.3} |"
+            print(debug_print)
         if scheduler is not None and isinstance(scheduler, ReduceLROnPlateau):
             scheduler.step(current_metrics[VALIDATION])
         if output_dir is not None:

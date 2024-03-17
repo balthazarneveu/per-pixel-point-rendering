@@ -1,5 +1,7 @@
 from pixr.learning.base import BaseModel
+from pixr.properties import LEAKY_RELU, RELU, SIMPLE_GATE
 import torch.nn as nn
+import torch
 
 
 class UNet(BaseModel):

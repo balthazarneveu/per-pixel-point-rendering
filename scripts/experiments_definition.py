@@ -117,7 +117,7 @@ def get_experiment_from_id(exp: int):
 
     elif exp == 11:
         conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.001, k_size=1)  # + LOSS supervision scale 3
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=1)  # + LOSS supervision scale 3
 
     else:
         raise NameError(f"Experiment {exp} not found!")

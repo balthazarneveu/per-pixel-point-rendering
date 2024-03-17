@@ -1,3 +1,4 @@
+from interactive_pipe import interactive
 from pathlib import Path
 from pixr.camera.camera_geometry import get_camera_extrinsics, get_camera_intrinsics, set_camera_parameters_orbit_mode
 import torch
@@ -28,6 +29,60 @@ def infer_image(splatted_image, model, global_params={}) -> torch.Tensor:
         return splatted_image
 
 
+def apply_pca_to_tensor(tensor, n_components=3):
+    """
+    Applies PCA on a tensor of shape (H, W, C) to reduce it to (H, W, n_components).
+
+    Parameters:
+    - tensor: Input tensor of shape (H, W, C)
+    - n_components: Number of principal components to keep
+
+    Returns:
+    - pca_tensor: Tensor of shape (H, W, n_components) after PCA
+    """
+
+    # Validate inputs
+    if tensor.dim() != 3 or tensor.size(2) < n_components:
+        raise ValueError("Input tensor must be of shape (H, W, C) with C >= n_components.")
+
+    H, W, C = tensor.shape
+
+    # Flatten the (H, W) dimensions
+    flat_tensor = tensor.reshape(-1, C)
+
+    # Standardize the features
+    mean = flat_tensor.mean(dim=0)
+    std = flat_tensor.std(dim=0)
+    standardized_tensor = (flat_tensor - mean) / std
+    try:
+        # Perform SVD, which is equivalent to PCA since the data is centered
+        U, S, V = torch.svd(standardized_tensor)
+    except Exception as e:
+        print(e)
+        return tensor[:, :n_components]
+    # Keep the top n_components
+    principal_components = V[:, :n_components]
+
+    # Project the data onto the top n_components
+    pca_result = torch.mm(standardized_tensor, principal_components)
+
+    # Reshape back to (H, W, n_components)
+    pca_tensor = pca_result.reshape(H, W, n_components)
+
+    return pca_tensor
+
+
+@interactive(pca_flag=(True,))
+def debug_splat(img_ms, pca_flag=True, global_params={}):
+    seleced_scale = global_params.get('scale', 0)
+    if pca_flag:
+        selected_full_res = apply_pca_to_tensor(img_ms[seleced_scale])
+    else:
+        selected_full_res = img_ms[seleced_scale][:, :, :3]
+
+    return rescale_image(tensor_to_image(selected_full_res).clip(0, 1), global_params=global_params)
+
+
 def splat_pipeline_novel_view(wc_points, wc_normals, points_colors, model, scales_list):
     # yaw, pitch, roll, cam_pos = set_camera_parameters()
     yaw, pitch, roll, cam_pos = set_camera_parameters_orbit_mode()
@@ -43,13 +98,15 @@ def splat_pipeline_novel_view(wc_points, wc_normals, points_colors, model, scale
     inferred_image = infer_image(splatted_image, model)
     inferred_image = tensor_to_image(inferred_image)
     inferred_image = rescale_image(inferred_image)
-    return inferred_image
+    splatted_image_debug = debug_splat(splatted_image)
+    return inferred_image, splatted_image_debug
 
 
 def main_interactive_version(exp, training_dir):
     config = get_experiment_from_id(exp)
     model, optim = get_training_content(config, training_mode=False)
-    model_path = training_dir / f"__{exp:04d}" / "best_model.pt"
+    # model_path = training_dir / f"__{exp:04d}" / "best_model.pt"
+    model_path = training_dir / f"__{exp:04d}" / "last_model.pt"
     # wc_points, wc_normals, color_pred = load_colored_point_cloud_from_files(splat_scene_path)
     model_state_dict, wc_points, wc_normals, color_pred = load_model(model_path)
     wc_points = wc_points.detach().to(DEVICE)
