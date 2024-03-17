@@ -6,7 +6,7 @@ import torch
 def tensor_to_image(image: torch.Tensor) -> np.ndarray:
     if image is None:
         return None
-    image = image.cpu().contiguous().numpy()
+    image = image.cpu().contiguous().numpy().clip(0, 1)
     return image
 
 

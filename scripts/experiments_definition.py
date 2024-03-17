@@ -5,7 +5,7 @@ from pixr.synthesis.world_simulation import STAIRCASE
 from typing import List
 
 
-def model_configurations(config, model_preset="UNet") -> dict:
+def model_configurations(config, model_preset="UNet", k_size=1) -> dict:
     if model_preset == "UNet":
         config[MODEL] = {
             ARCHITECTURE: dict(
@@ -21,7 +21,8 @@ def model_configurations(config, model_preset="UNet") -> dict:
         config[MODEL] = {
             ARCHITECTURE: dict(
                 in_channels=config[PSEUDO_COLOR_DIMENSION],
-                n_scales=len(config[SCALE_LIST])
+                n_scales=len(config[SCALE_LIST]),
+                k_size=k_size
             ),
             NAME: model_preset
         }
@@ -29,7 +30,8 @@ def model_configurations(config, model_preset="UNet") -> dict:
         config[MODEL] = {
             ARCHITECTURE: dict(
                 in_channels=config[PSEUDO_COLOR_DIMENSION],
-                n_scales=len(config[SCALE_LIST])
+                n_scales=len(config[SCALE_LIST]),
+                k_size=k_size
             ),
             NAME: model_preset
         }
@@ -47,7 +49,8 @@ def presets_experiments(
     seed: int = 42,
     pseudo_color_dimension: int = 3,
     scale_list: List[int] = [0, 1, 2, 3],
-    lr: float = 1e-3
+    lr: float = 1e-3,
+    k_size: int = 3
 ) -> dict:
     config = {
         ID: exp,
@@ -68,7 +71,8 @@ def presets_experiments(
     }
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
     config[SCALE_LIST] = scale_list
-    model_configurations(config, model_preset=model_preset)
+    k_size: int = 3
+    model_configurations(config, model_preset=model_preset, k_size=k_size)
     config[SCHEDULER] = REDUCELRONPLATEAU
     config[SCHEDULER_CONFIGURATION] = {
         "factor": 0.8,
@@ -83,14 +87,39 @@ def presets_experiments(
 
 def get_experiment_from_id(exp: int):
     if exp == 1:
-        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
+        conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
     elif exp == 2:
-        return presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
+        conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
     elif exp == 3:
-        return presets_experiments(exp, b=4, n=50, model_preset="Bypass", scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
+        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
     elif exp == 4:
-        return presets_experiments(exp, b=4, n=200, model_preset="Bypass", scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
+        conf = presets_experiments(exp, b=4, n=200, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
     elif exp == 5:
-        return presets_experiments(exp, b=4, n=50, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
+        conf = presets_experiments(exp, b=4, n=50, model_preset="UNet",
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
+    elif exp == 6:
+        conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions",
+                                   scene=STAIRCASE, pseudo_color_dimension=8, lr=0.001)
+    elif exp == 7:
+        conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", scene=STAIRCASE,
+                                   pseudo_color_dimension=3, k_size=9, lr=0.3)
+    elif exp == 8:
+        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=1)  # + LOSS supervision scale 3
+    elif exp == 9:
+        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=3)  # + LOSS supervision scale 3
+    elif exp == 10:
+        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=3)  # + LOSS supervision scale 3
+
+    elif exp == 11:
+        conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.001, k_size=1)  # + LOSS supervision scale 3
+
     else:
         raise NameError(f"Experiment {exp} not found!")
+    print(conf)
+    return conf
