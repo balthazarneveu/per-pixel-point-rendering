@@ -33,7 +33,7 @@ def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scal
         cc_normals,
         no_grad=no_grad,
         scale=scale,
-        normal_culling_flag=False  # !WARNING DISABLED NORMAL CULLING TO MATCH BLENDER!
+        normal_culling_flag=True  # !WARNING ONLY DISABLE NORMAL CULLING TO MATCH BLENDER FOR OPEN OBJECTS!
     )
     return img
 

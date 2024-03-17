@@ -17,12 +17,15 @@ def prepare_multiviews_on_disk_for_blender_proc(
     out_dir,
     views_list=None,
     w=640, h=480, f=1000,
+    mode="random",
+    num_view=4,
+    config=None
 ) -> Tuple[List[Path], List[Path]]:
 
     out_dir.mkdir(exist_ok=True, parents=True)
     full_output_paths = []
     full_camera_paths = []
-    multiview_list = define_scene(views_list=views_list, camera=(w, h, f))
+    multiview_list = define_scene(views_list=views_list, camera=(w, h, f), mode=mode, num_view=num_view, config=config)
     for view_counter, camera_dict in enumerate(multiview_list):
         view_dir = out_dir/f"view_{view_counter:03d}"
         view_dir.mkdir(exist_ok=True, parents=True)
@@ -35,7 +38,7 @@ def prepare_multiviews_on_disk_for_blender_proc(
     return full_camera_paths, full_output_paths
 
 
-def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False):
+def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False, mode="random", num_view=4, config=None):
     scene_path = scene_root/f"{name}.blend"
     if not scene_path.exists():
         scene_path = scene_root/f"{name}.obj"
@@ -44,7 +47,10 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
     full_camera_paths, full_output_paths = prepare_multiviews_on_disk_for_blender_proc(
         out_dir,
         views_list=None,
-        w=w, h=h, f=f
+        w=w, h=h, f=f,
+        mode=mode,
+        num_view=num_view,
+        config=config
     )
     for pth in full_output_paths:
         assert not (Path(pth)/"view.hdf5").exists(), f"View {pth} already exists - do not overwrite"
@@ -69,5 +75,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Render a scene using BlenderProc")
     parser.add_argument("-s", "--scene", type=str, help="Name of the scene to render", default=NAME)
     parser.add_argument("-d", "--debug", action="store_true", help="Run BlenderProc in debug mode")
+    parser.add_argument("-m", "--mode", type=str, choices=["random", "orbit"], default="random")
+    parser.add_argument("-n", "--num-view", type=int, default=4)
     args = parser.parse_args()
-    main(name=args.scene, debug=args.debug)
+    config = {"distance": 0.7, "altitude": 0.1}
+    main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)

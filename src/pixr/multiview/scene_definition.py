@@ -1,22 +1,20 @@
 import random
 import numpy as np
 from typing import List
+from pixr.camera.camera_geometry import set_camera_parameters_orbit_mode
 
 
-def define_orbits(seed: int = 42) -> List[List[float]]:
-    # @TODO: FIXME! This is just panning, not orbiting!
-    # for yaw, pitch in product(range(-15, 16, 5), range(-15, 16, 5)): #yaw pitch test
-    # for tx, ty, tz in product(range(-4, 5, 3), range(-4, 5, 4), range(-3, 3, 2)):
-    # for yaw, pitch, tx in product(range(-5, 6, 5), range(-5, 5, 6), range(-3, 4, 3)):
-    # for yaw, pitch, roll in product(range(-10, 11, 10), range(-10, 11, 10), [-30, 10, 30]):  # yaw pitch test
-    pitch = 0
-    roll = 0
-    tx = 0
-    ty = 0
-    tz = 0
+def define_orbits(seed: int = 42, num_view=5, config={"distance": 20., "altitude": 0}) -> List[List[float]]:
     views = []
-    for yaw in range(-180, 180, 30):
-        views.append([yaw, pitch, roll, tx, ty, tz])
+    random.seed(seed)
+    distance = config["distance"]
+    altitude = config["altitude"]
+    for yaw_in in range(-180, 180, int(np.ceil(360/num_view))):
+        pitch_in = (random.random() - 0.5) * 90.
+        yaw, pitch, roll, cam_pos = set_camera_parameters_orbit_mode(
+            yaw_deg=yaw_in, pitch_deg=pitch_in, roll=0., trans_z=distance, trans_y=-altitude)
+        views.append([np.rad2deg(yaw.item()), np.rad2deg(pitch.item()), np.rad2deg(roll.item()),
+                      -float(cam_pos[0]), -float(cam_pos[2]), -float(cam_pos[1])])
     return views
 
 
@@ -36,9 +34,12 @@ def define_default_camera(w: int = 640, h: int = 480, f: float = 1000) -> tuple:
     return w, h, f
 
 
-def define_scene(views_list=None, camera=None):
+def define_scene(views_list=None, camera=None, mode="random", num_view=5, config=None):
     if views_list is None:
-        views_list = define_random_positions(num_view=5)
+        if mode == "random":
+            views_list = define_random_positions(num_view=num_view)
+        elif mode == "orbit":
+            views_list = define_orbits(num_view=num_view, config=config)
     if camera is None:
         w, h, f = define_default_camera()
     else:

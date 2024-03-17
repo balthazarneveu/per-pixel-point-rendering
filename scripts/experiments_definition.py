@@ -1,6 +1,6 @@
 from pixr.properties import (NB_EPOCHS, TRAIN, VALIDATION, SCHEDULER, REDUCELRONPLATEAU,
                              MODEL, ARCHITECTURE, ID, NAME, SCHEDULER_CONFIGURATION, OPTIMIZER, PARAMS, LR,
-                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION, 
+                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION,
                              SCALE_LIST, RATIO_TRAIN)
 from pixr.synthesis.world_simulation import STAIRCASE
 from typing import List
@@ -107,7 +107,16 @@ def get_experiment_from_id(exp: int):
                                    scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
     if exp == 2:
         conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98) # Chekc
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)  # Chekc
+    if exp == 3:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)  # Backface culling disabled!
+    if exp == 4:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)  # Optimize  with backface culling
+    if exp == 5:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)  # Optimize  with backface culling + 12 views!
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
