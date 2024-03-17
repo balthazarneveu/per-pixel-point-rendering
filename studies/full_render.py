@@ -78,5 +78,8 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode", type=str, choices=["random", "orbit"], default="random")
     parser.add_argument("-n", "--num-view", type=int, default=4)
     args = parser.parse_args()
-    config = {"distance": 0.7, "altitude": 0.1}
+    if args.scene == "volleyball":
+        config = {"distance": 0.7, "altitude": 0.1}
+    if args.scene == "chair":
+        config = {"distance": 0.2, "altitude": 0.1}
     main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)
