@@ -1,6 +1,7 @@
 from pixr.properties import MODEL, NAME, N_PARAMS, ARCHITECTURE
 from pixr.learning.unet import UNet
 from pixr.learning.bypass import Bypass
+from pixr.learning.stacked_convolutions import StackedConvolutions
 import torch
 
 
@@ -8,6 +9,8 @@ def load_architecture(config: dict) -> torch.nn.Module:
     conf_model = config[MODEL][ARCHITECTURE]
     if config[MODEL][NAME] == UNet.__name__:
         model = UNet(**conf_model)
+    elif config[MODEL][NAME] == StackedConvolutions.__name__:
+        model = StackedConvolutions(**conf_model)
     elif config[MODEL][NAME] == Bypass.__name__:
         model = Bypass(**conf_model)
     else:

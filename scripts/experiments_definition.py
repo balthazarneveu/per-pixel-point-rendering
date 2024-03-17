@@ -17,6 +17,14 @@ def model_configurations(config, model_preset="UNet") -> dict:
             ),
             NAME: model_preset
         }
+    elif model_preset == "StackedConvolutions":
+        config[MODEL] = {
+            ARCHITECTURE: dict(
+                in_channels=config[PSEUDO_COLOR_DIMENSION],
+                n_scales=len(config[SCALE_LIST])
+            ),
+            NAME: model_preset
+        }
     elif model_preset == "Bypass":
         config[MODEL] = {
             ARCHITECTURE: dict(
