@@ -29,7 +29,7 @@ def get_data_loader(config, training_material, valid_material):
     dl_dict = {
         TRAIN: DataLoader(
             dl_train,
-            shuffle=False,
+            shuffle=True,
             batch_size=config[DATALOADER][BATCH_SIZE][TRAIN],
         ),
         VALIDATION: DataLoader(

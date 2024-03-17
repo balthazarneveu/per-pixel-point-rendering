@@ -6,7 +6,7 @@ from typing import List
 
 
 class StackedConvolutions(BaseModel):
-    def __init__(self, in_channels=3, out_channels=3, n_scales=4, k_size=3, **kwargs):
+    def __init__(self, in_channels=3, out_channels=3, n_scales=4, k_size=3, depth=2, h_dim=8, **kwargs):
         super().__init__()
         print(f"Pseudo color dimension {in_channels} -> {out_channels}")
         print(f"Number of scales {n_scales} , kernel size {k_size}")
@@ -15,13 +15,14 @@ class StackedConvolutions(BaseModel):
         h_dim = 8
         self.processing_stages = torch.nn.ModuleList(
             [ConvolutionStage(
-                in_channels, h_dim,
-                h_dim=8,  # *(2**sc),
-                depth=2,
+                in_channels,
+                h_dim,
+                h_dim=h_dim,
+                depth=depth,
                 k_size=k_size,
                 activation=RELU,
                 # last_activation=SIGMOID
-                last_activation=RELU, #IDENTITY if sc == 0 else RELU
+                last_activation=RELU,  # IDENTITY if sc == 0 else RELU
             )
                 for sc in range(n_scales)]
         )
@@ -33,16 +34,6 @@ class StackedConvolutions(BaseModel):
             )
                 for sc in range(n_scales)]
         )
-
-        # EXP 11
-        # self.processing_stages = torch.nn.ModuleList(
-        #     [BaseConvolutionBlock(
-        #         in_channels, out_channels,
-        #         k_size=k_size,
-        #         activation=IDENTITY
-        #     )
-        #         for sc in range(n_scales)]
-        # )
         self.in_channels = in_channels
         self.out_channels = out_channels
 

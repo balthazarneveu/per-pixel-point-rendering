@@ -6,7 +6,7 @@ from pixr.synthesis.world_simulation import STAIRCASE
 from typing import List
 
 
-def model_configurations(config, model_preset="UNet", k_size=1) -> dict:
+def model_configurations(config, model_preset="UNet", k_size=1, depth=2, h_dim=8) -> dict:
     if model_preset == "UNet":
         config[MODEL] = {
             ARCHITECTURE: dict(
@@ -23,7 +23,9 @@ def model_configurations(config, model_preset="UNet", k_size=1) -> dict:
             ARCHITECTURE: dict(
                 in_channels=config[PSEUDO_COLOR_DIMENSION],
                 n_scales=len(config[SCALE_LIST]),
-                k_size=k_size
+                k_size=k_size,
+                depth=depth,
+                h_dim=h_dim
             ),
             NAME: model_preset
         }
@@ -61,7 +63,9 @@ def presets_experiments(
     scale_list: List[int] = [0, 1, 2, 3],
     lr: float = 1e-3,
     k_size: int = 3,
-    ratio_train: float = 0.8
+    ratio_train: float = 0.8,
+    depth: int = 2,
+    h_dim: int = 8
 ) -> dict:
     config = {
         ID: exp,
@@ -85,7 +89,7 @@ def presets_experiments(
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
     config[SCALE_LIST] = scale_list
     k_size: int = 3
-    model_configurations(config, model_preset=model_preset, k_size=k_size)
+    model_configurations(config, model_preset=model_preset, k_size=k_size, depth=depth, h_dim=h_dim)
     config[SCHEDULER] = REDUCELRONPLATEAU
     config[SCHEDULER_CONFIGURATION] = {
         "factor": 0.8,
@@ -130,9 +134,22 @@ def get_experiment_from_id(exp: int):
     elif exp == 11:
         conf = presets_experiments(exp, b=32, n=100, model_preset="StackedConvolutions",
                                    scene="volleyball", pseudo_color_dimension=3, lr=0.1, k_size=5, ratio_train=0.98)
-    elif exp == 12:
+    elif exp == 12:  # 29.5db
         conf = presets_experiments(exp, b=16, n=100, model_preset="StackedConvolutions",
-                                   scene="volleyball", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98)
+                                   scene="volleyball", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98,
+                                   depth=2, h_dim=8)
+    elif exp == 13:  # 29.2db
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="volleyball", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
+    elif exp == 14:  # 29.2db
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="volleyball", pseudo_color_dimension=8, lr=0.001, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
+    elif exp == 15:  # 28.3db
+        conf = presets_experiments(exp, b=8, n=400, model_preset="StackedConvolutions",
+                                   scene="volleyball", pseudo_color_dimension=8, lr=0.005, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
