@@ -12,28 +12,37 @@ class StackedConvolutions(BaseModel):
         print(f"Number of scales {n_scales} , kernel size {k_size}")
         self.in_channels = in_channels
         self.n_scales = n_scales
-        # self.processing_stages = torch.nn.ModuleList(
-        #     [ConvolutionStage(
-        #         in_channels, out_channels,
-        #         h_dim=8,  # *(2**sc),
-        #         depth=2,
-        #         k_size=k_size,
-        #         activation=RELU,
-        #         # last_activation=SIGMOID
-        #         last_activation=IDENTITY
-        #     )
-        #         for sc in range(n_scales)]
-        # )
-
-        # EXP 11
+        h_dim = 8
         self.processing_stages = torch.nn.ModuleList(
+            [ConvolutionStage(
+                in_channels, h_dim,
+                h_dim=8,  # *(2**sc),
+                depth=2,
+                k_size=k_size,
+                activation=RELU,
+                # last_activation=SIGMOID
+                last_activation=RELU, #IDENTITY if sc == 0 else RELU
+            )
+                for sc in range(n_scales)]
+        )
+        self.refinement_auxiliary = torch.nn.ModuleList(
             [BaseConvolutionBlock(
-                in_channels, out_channels,
+                h_dim, out_channels,
                 k_size=k_size,
                 activation=IDENTITY
             )
                 for sc in range(n_scales)]
         )
+
+        # EXP 11
+        # self.processing_stages = torch.nn.ModuleList(
+        #     [BaseConvolutionBlock(
+        #         in_channels, out_channels,
+        #         k_size=k_size,
+        #         activation=IDENTITY
+        #     )
+        #         for sc in range(n_scales)]
+        # )
         self.in_channels = in_channels
         self.out_channels = out_channels
 
@@ -42,7 +51,8 @@ class StackedConvolutions(BaseModel):
         buffers_list = []
         for scale in range(self.n_scales-1, -1, -1):
             y += self.processing_stages[scale](x[scale])
-            buffers_list.append(y)
+            rgb_pred = self.refinement_auxiliary[scale](y)
+            buffers_list.append(rgb_pred)
             if scale <= 0:
                 break
             y = nn.functional.interpolate(y, scale_factor=2, mode="bilinear")
