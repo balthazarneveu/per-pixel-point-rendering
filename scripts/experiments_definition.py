@@ -1,6 +1,7 @@
 from pixr.properties import (NB_EPOCHS, TRAIN, VALIDATION, SCHEDULER, REDUCELRONPLATEAU,
                              MODEL, ARCHITECTURE, ID, NAME, SCHEDULER_CONFIGURATION, OPTIMIZER, PARAMS, LR,
-                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION, SCALE_LIST)
+                             LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION, 
+                             SCALE_LIST, RATIO_TRAIN)
 from pixr.synthesis.world_simulation import STAIRCASE
 from typing import List
 
@@ -59,7 +60,8 @@ def presets_experiments(
     pseudo_color_dimension: int = 3,
     scale_list: List[int] = [0, 1, 2, 3],
     lr: float = 1e-3,
-    k_size: int = 3
+    k_size: int = 3,
+    ratio_train: float = 0.8
 ) -> dict:
     config = {
         ID: exp,
@@ -77,7 +79,9 @@ def presets_experiments(
             TRAIN: b,
             VALIDATION: b
         },
+
     }
+    config[RATIO_TRAIN] = ratio_train
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
     config[SCALE_LIST] = scale_list
     k_size: int = 3
@@ -101,6 +105,9 @@ def get_experiment_from_id(exp: int):
     if exp == 1:
         conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
                                    scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
+    if exp == 2:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98) # Chekc
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)

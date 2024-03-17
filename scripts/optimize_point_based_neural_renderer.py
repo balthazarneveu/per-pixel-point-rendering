@@ -2,7 +2,9 @@ from pixr.learning.experiments import get_training_content
 import torch
 from pixr.learning.utils import prepare_dataset
 from config import OUT_DIR, TRAINING_DIR
-from pixr.properties import SCENE, DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST
+from pixr.properties import (SCENE, DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR,
+                             RATIO_TRAIN, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST
+                             )
 from tqdm import tqdm
 from experiments_definition import get_experiment_from_id
 from pathlib import Path
@@ -31,7 +33,7 @@ def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scal
         cc_normals,
         no_grad=no_grad,
         scale=scale,
-        normal_culling_flag=False # !WARNING
+        normal_culling_flag=False  # !WARNING DISABLED NORMAL CULLING TO MATCH BLENDER!
     )
     return img
 
@@ -96,25 +98,23 @@ def training_loop(
 
                     # >>> Multiscale supervision <<<
                     for scale_idx, scale in enumerate(scales_list):
-                        # if scale == 1:
-                        if True:
-                            per_scale_loss = compute_loss(image_pred[scale_idx], img_target[scale_idx],
-                                                          mode=config.get(LOSS, LOSS_MSE))
-                            # print(f"Loss at scale {scale} is {per_scale_loss}")
-                            loss += per_scale_loss
-                            current_metrics[f"{phase}_MSE_{scale}"] += per_scale_loss.item()
-                            # if phase == VALIDATION and n_epoch % 10 == 0:
-                            if phase == VALIDATION and n_epoch % 10 == 0:
-                                plt.figure(figsize=(10, 10))
-                                n_img = img_target[scale_idx].shape[0]
-                                for img_idx in range(n_img):
-                                    plt.subplot(n_img, 2, img_idx*2+1)
-                                    plt.imshow(img_target[scale_idx][img_idx].permute(1, 2, 0).clip(0, 1).cpu().numpy())
-                                    plt.subplot(n_img, 2, img_idx*2+2)
-                                    plt.imshow(image_pred[scale_idx][img_idx].permute(
-                                        1, 2, 0).clip(0, 1).cpu().detach().numpy())
-                                plt.savefig(output_dir/f"{phase}_{n_epoch:05d}_scale_{scale}.png")
-                                plt.close()
+                        per_scale_loss = compute_loss(image_pred[scale_idx], img_target[scale_idx],
+                                                      mode=config.get(LOSS, LOSS_MSE))
+                        # print(f"Loss at scale {scale} is {per_scale_loss}")
+                        loss += per_scale_loss
+                        current_metrics[f"{phase}_MSE_{scale}"] += per_scale_loss.item()
+                        # if phase == VALIDATION and n_epoch % 10 == 0:
+                        if n_epoch % 10 == 0:
+                            plt.figure(figsize=(10, 10))
+                            n_img = img_target[scale_idx].shape[0]
+                            for img_idx in range(n_img):
+                                plt.subplot(n_img, 2, img_idx*2+1)
+                                plt.imshow(img_target[scale_idx][img_idx].permute(1, 2, 0).clip(0, 1).cpu().numpy())
+                                plt.subplot(n_img, 2, img_idx*2+2)
+                                plt.imshow(image_pred[scale_idx][img_idx].permute(
+                                    1, 2, 0).clip(0, 1).cpu().detach().numpy())
+                            plt.savefig(output_dir/f"{phase}_{n_epoch:05d}_scale_{scale}.png")
+                            plt.close()
                     if torch.isnan(loss):
                         print(f"Loss is NaN at epoch {n_epoch} and phase {phase}!")
                         continue
@@ -168,7 +168,7 @@ def main(exp: int, out_root=OUT_DIR, device=DEVICE):
     pseudo_color_dim = config[PSEUDO_COLOR_DIMENSION]
     name = config[SCENE]
     train_material, valid_material, (w, h), point_cloud_material = prepare_dataset(
-        out_root, name, num_samples=num_samples
+        out_root, name, num_samples=num_samples, ratio_train=config.get(RATIO_TRAIN, 0.8)
     )
     # Move training data to GPU
     wc_points, wc_normals = point_cloud_material
