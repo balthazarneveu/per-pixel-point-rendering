@@ -1,0 +1,68 @@
+\documentclass[sigconf, nonacm]{acmart}
+\settopmatter{printfolios=true}
+\settopmatter{printacmref=false}
+%% PACKAGES
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{subcaption}
+\usepackage{natbib}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+%% COLORS
+\definecolor{darkgreen}{rgb}{0,0.8,0}
+
+%% TITLES
+\title{Review of ADOP: Approximate Differentiable One-Pixel Point Rendering}
+
+%% AUTHORS
+\author{Balthazar Neveu}
+\affiliation{%
+  \institution{ENS Paris-Saclay}
+  \city{Saclay}
+  \country{France}
+}
+\email{balthazar.neveu@ens-paris-saclay.fr}
+
+
+%% MAIN DOCUMENT
+\begin{document}
+
+  %% KEYWORDS
+  \keywords{Neural rendering, Differentiable rendering, Point-based rendering}
+
+  %% Teaser figure
+  \begin{teaserfigure}
+    \includegraphics[width=0.6\textwidth]{figures/pipeline.png}
+    \centering
+    \caption{Pipeline for pixel-based point neural rendering.
+    }
+    \label{fig:original_pipeline}
+  \end{teaserfigure}
+
+  %% TITLE
+  \maketitle
+
+
+
+
+  %% CONTENT
+  \input{content/1_introduction.tex}
+  \input{content/2_paper_presentation.tex}
+  \input{content/3_our_work.tex}
+  \input{content/4_discussion.tex}
+  \input{content/5_conclusion.tex}
+
+  \newpage
+
+  %% APPENDIX
+  \appendix
+  \input{content/appendix.tex}
+  
+  \newpage
+  %% BIBLIOGRAPHY
+  \bibliographystyle{ACM-Reference-Format}
+  \bibliography{references}
+
+\end{document}
