@@ -52,6 +52,7 @@ def define_default_sliders(orbit_mode=False, multiscale=None):
         interactive(
             scale=(0, [0, multiscale-1]),
             z_buffer_flag=(True,),
+            normal_culling_flag=(True,),
             fuzzy_depth_test=(0.01, [0., 0.1]),
         )(ms_splatting)
     else:

@@ -35,6 +35,15 @@ def model_configurations(config, model_preset="UNet", k_size=1) -> dict:
             ),
             NAME: model_preset
         }
+    elif model_preset == "TrueBypass":
+        assert config[PSEUDO_COLOR_DIMENSION] == 3, f"TrueBypass requires in_channels == out_channels"
+        config[MODEL] = {
+            ARCHITECTURE: dict(
+                in_channels=config[PSEUDO_COLOR_DIMENSION],
+                n_scales=len(config[SCALE_LIST]),
+            ),
+            NAME: model_preset
+        }
     else:
         raise ValueError(f"Unknown model preset {model_preset}")
 
@@ -86,40 +95,55 @@ def presets_experiments(
 
 
 def get_experiment_from_id(exp: int):
+    if exp == 0:
+        conf = presets_experiments(exp, b=4, n=100, model_preset="TrueBypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
     if exp == 1:
-        conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
-    elif exp == 2:
-        conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
-    elif exp == 3:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
-    elif exp == 4:
-        conf = presets_experiments(exp, b=4, n=200, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
-    elif exp == 5:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="UNet",
-                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
-    elif exp == 6:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions",
-                                   scene=STAIRCASE, pseudo_color_dimension=8, lr=0.001)
-    elif exp == 7:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", scene=STAIRCASE,
-                                   pseudo_color_dimension=3, k_size=9, lr=0.3)
-    elif exp == 8:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=1)  # + LOSS supervision scale 3
-    elif exp == 9:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=3)  # + LOSS supervision scale 3
-    elif exp == 10:
-        conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=3)  # + LOSS supervision scale 3
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
+    # if exp == 0:
+    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
+    # if exp == 13:
+    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
+    # elif exp == 1:
+    #     conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
+    # elif exp == 2:
+    #     conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
+    # elif exp == 3:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
+    # elif exp == 4:
+    #     conf = presets_experiments(exp, b=4, n=200, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
+    # elif exp == 5:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="UNet",
+    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
+    # elif exp == 6:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions",
+    #                                scene=STAIRCASE, pseudo_color_dimension=8, lr=0.001)
+    # elif exp == 7:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", scene=STAIRCASE,
+    #                                pseudo_color_dimension=3, k_size=9, lr=0.3)
+    # elif exp == 8:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=1)
+    # elif exp == 9:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=3)
+    # elif exp == 10:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=3)
 
-    elif exp == 11:
-        conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
-                                   scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=1)  # + LOSS supervision scale 3
+    # elif exp == 11:
+    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
+    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=1)
 
-    else:
-        raise NameError(f"Experiment {exp} not found!")
+    # elif exp == 12:
+    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", k_size=3,
+    #                                scene=STAIRCASE, pseudo_color_dimension=6, lr=0.01)
+    # else:
+    #     raise NameError(f"Experiment {exp} not found!")
     print(conf)
     return conf

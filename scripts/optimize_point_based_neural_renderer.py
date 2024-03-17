@@ -31,6 +31,7 @@ def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scal
         cc_normals,
         no_grad=no_grad,
         scale=scale,
+        normal_culling_flag=False # !WARNING
     )
     return img
 
