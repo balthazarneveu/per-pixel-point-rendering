@@ -104,7 +104,7 @@ def training_loop(
                         loss += per_scale_loss
                         current_metrics[f"{phase}_MSE_{scale}"] += per_scale_loss.item()
                         # if phase == VALIDATION and n_epoch % 10 == 0:
-                        if n_epoch % 10 == 0:
+                        if n_epoch % 20 == 0 and phase == VALIDATION:
                             plt.figure(figsize=(10, 10))
                             n_img = img_target[scale_idx].shape[0]
                             for img_idx in range(n_img):

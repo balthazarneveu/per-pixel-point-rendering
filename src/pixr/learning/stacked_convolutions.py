@@ -1,4 +1,4 @@
-from pixr.learning.base import BaseModel, ConvolutionStage
+from pixr.learning.base import BaseModel, ConvolutionStage, BaseConvolutionBlock
 from pixr.properties import SIGMOID, SIMPLE_GATE, RELU, LEAKY_RELU, IDENTITY
 import torch.nn as nn
 import torch
@@ -12,15 +12,25 @@ class StackedConvolutions(BaseModel):
         print(f"Number of scales {n_scales} , kernel size {k_size}")
         self.in_channels = in_channels
         self.n_scales = n_scales
+        # self.processing_stages = torch.nn.ModuleList(
+        #     [ConvolutionStage(
+        #         in_channels, out_channels,
+        #         h_dim=8,  # *(2**sc),
+        #         depth=2,
+        #         k_size=k_size,
+        #         activation=RELU,
+        #         # last_activation=SIGMOID
+        #         last_activation=IDENTITY
+        #     )
+        #         for sc in range(n_scales)]
+        # )
+
+        # EXP 11
         self.processing_stages = torch.nn.ModuleList(
-            [ConvolutionStage(
+            [BaseConvolutionBlock(
                 in_channels, out_channels,
-                h_dim=8,  # *(2**sc),
-                depth=2,
                 k_size=k_size,
-                activation=RELU,
-                # last_activation=SIGMOID
-                last_activation=IDENTITY
+                activation=IDENTITY
             )
                 for sc in range(n_scales)]
         )
@@ -28,7 +38,16 @@ class StackedConvolutions(BaseModel):
         self.out_channels = out_channels
 
     def forward(self, x: List[torch.Tensor]):
-        return [processing_stage(x[idx]) for idx, processing_stage in enumerate(self.processing_stages)]
+        y = 0
+        buffers_list = []
+        for scale in range(self.n_scales-1, -1, -1):
+            y += self.processing_stages[scale](x[scale])
+            buffers_list.append(y)
+            if scale <= 0:
+                break
+            y = nn.functional.interpolate(y, scale_factor=2, mode="bilinear")
+        return buffers_list[::-1]
+        # return [processing_stage(x[idx]) for idx, processing_stage in enumerate(self.processing_stages)]
 
 
 if __name__ == "__main__":

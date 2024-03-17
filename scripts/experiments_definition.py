@@ -117,6 +117,19 @@ def get_experiment_from_id(exp: int):
     if exp == 5:
         conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
                                    scene="volleyball", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)  # Optimize  with backface culling + 12 views!
+    if exp == 6:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="StackedConvolutions",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.001, k_size=5, ratio_train=0.98)
+    if exp == 7:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="Bypass",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.01, k_size=5, ratio_train=0.98)
+
+    if exp == 10:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)
+    elif exp == 11:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="StackedConvolutions",
+                                   scene="volleyball", pseudo_color_dimension=3, lr=0.1, k_size=5, ratio_train=0.98)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
