@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{1}
+\begin{thebibliography}{7}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -37,13 +37,61 @@
 \providecommand\natexlab[1]{#1}
 \providecommand\showeprint[2][]{arXiv:#2}
 
+\bibitem[Aliev et~al\mbox{.}(2020)]%
+        {Aliev2020}
+\bibfield{author}{\bibinfo{person}{Kara-Ali Aliev}, \bibinfo{person}{Artem Sevastopolsky}, \bibinfo{person}{Maria Kolos}, \bibinfo{person}{Dmitry Ulyanov}, {and} \bibinfo{person}{Victor Lempitsky}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Neural Point-Based Graphics}.
+\newblock  (\bibinfo{year}{2020}).
+\newblock
+\showeprint[arxiv]{1906.08240v3}~[cs.CV]
+
+
+\bibitem[Karpenko et~al\mbox{.}(2011)]%
+        {karpenko2011gyrostab}
+\bibfield{author}{\bibinfo{person}{Alexandre Karpenko}, \bibinfo{person}{David Jacobs}, \bibinfo{person}{Jongmin Baek}, {and} \bibinfo{person}{Marc Levoy}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Digital video stabilization and rolling shutter correction using gyroscopes}.
+\newblock \bibinfo{journal}{\emph{CSTR}} \bibinfo{volume}{1}, \bibinfo{number}{2} (\bibinfo{year}{2011}), \bibinfo{pages}{13}.
+\newblock
+
+
+\bibitem[Kolluri(2008)]%
+        {kolluri2008IMLS}
+\bibfield{author}{\bibinfo{person}{Ravikrishna Kolluri}.} \bibinfo{year}{2008}\natexlab{}.
+\newblock \showarticletitle{Provably good moving least squares}.
+\newblock \bibinfo{journal}{\emph{ACM Transactions on Algorithms (TALG)}} \bibinfo{volume}{4}, \bibinfo{number}{2} (\bibinfo{year}{2008}), \bibinfo{pages}{1--25}.
+\newblock
+
+
+\bibitem[Mildenhall et~al\mbox{.}(2020)]%
+        {mildenhall2020nerf}
+\bibfield{author}{\bibinfo{person}{Ben Mildenhall}, \bibinfo{person}{Pratul~P. Srinivasan}, \bibinfo{person}{Matthew Tancik}, \bibinfo{person}{Jonathan~T. Barron}, \bibinfo{person}{Ravi Ramamoorthi}, {and} \bibinfo{person}{Ren Ng}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis}.
+\newblock  (\bibinfo{year}{2020}).
+\newblock
+\showeprint[arxiv]{2003.08934}~[cs.CV]
+
+
 \bibitem[Rückert et~al\mbox{.}(2022)]%
         {ruckert2022adop}
 \bibfield{author}{\bibinfo{person}{Darius Rückert}, \bibinfo{person}{Linus Franke}, {and} \bibinfo{person}{Marc Stamminger}.} \bibinfo{year}{2022}\natexlab{}.
-\newblock \bibinfo{title}{ADOP: Approximate Differentiable One-Pixel Point Rendering}.
-\newblock
+\newblock \showarticletitle{ADOP: Approximate Differentiable One-Pixel Point Rendering}.
+\newblock  (\bibinfo{year}{2022}).
 \newblock
 \showeprint[arxiv]{2110.06635}~[cs.CV]
+
+
+\bibitem[Sch\"{o}nberger and Frahm(2016)]%
+        {schoenberger2016sfm}
+\bibfield{author}{\bibinfo{person}{Johannes~Lutz Sch\"{o}nberger} {and} \bibinfo{person}{Jan-Michael Frahm}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Structure-from-Motion Revisited}. In \bibinfo{booktitle}{\emph{Conference on Computer Vision and Pattern Recognition (CVPR)}}.
+\newblock
+
+
+\bibitem[Worchel et~al\mbox{.}(2022)]%
+        {worchel2022nds}
+\bibfield{author}{\bibinfo{person}{Markus Worchel}, \bibinfo{person}{Rodrigo Diaz}, \bibinfo{person}{Weiwen Hu}, \bibinfo{person}{Oliver Schreer}, \bibinfo{person}{Ingo Feldmann}, {and} \bibinfo{person}{Peter Eisert}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{Multi-View Mesh Reconstruction with Neural Deferred Shading}. In \bibinfo{booktitle}{\emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}}.
+\newblock
 
 
 \end{thebibliography}
