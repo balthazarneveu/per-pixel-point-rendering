@@ -142,13 +142,32 @@ def get_experiment_from_id(exp: int):
         conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
                                    scene="volleyball", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98,
                                    depth=4, h_dim=8)
-    elif exp == 14:  # 29.2db
+    elif exp == 14:  # 31.5db
         conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
                                    scene="volleyball", pseudo_color_dimension=8, lr=0.001, k_size=5, ratio_train=0.98,
                                    depth=4, h_dim=8)
-    elif exp == 15:  # 28.3db
+    elif exp == 15:  # 31.6db
         conf = presets_experiments(exp, b=8, n=400, model_preset="StackedConvolutions",
                                    scene="volleyball", pseudo_color_dimension=8, lr=0.005, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
+    # CHAIR IS TOO SMALL - alpha used in depth test probably hinders the learning process
+    elif exp == 20:
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="chair", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)
+    elif exp == 21:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="chair", pseudo_color_dimension=8, lr=0.005, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
+    elif exp == 30:  # 20db
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="material_balls", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)
+    elif exp == 31:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="material_balls", pseudo_color_dimension=8, lr=0.005, k_size=5, ratio_train=0.98,
+                                   depth=4, h_dim=8)
+    elif exp == 32:
+        conf = presets_experiments(exp, b=4, n=2000, model_preset="StackedConvolutions",
+                                   scene="material_balls", pseudo_color_dimension=8, lr=0.005, k_size=7, ratio_train=0.98,
                                    depth=4, h_dim=8)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",

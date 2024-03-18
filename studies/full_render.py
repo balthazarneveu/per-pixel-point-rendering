@@ -80,6 +80,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.scene == "volleyball":
         config = {"distance": 0.7, "altitude": 0.1}
-    if args.scene == "chair":
-        config = {"distance": 0.2, "altitude": 0.1}
+    elif args.scene == "chair":
+        config = {"distance": 0.15, "altitude": 0.02}
+    elif args.scene == "lego":
+        config = {"distance": 2.5, "altitude": 0.}
+    else:
+        config = {"distance": 4., "altitude": 0.}
     main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)
