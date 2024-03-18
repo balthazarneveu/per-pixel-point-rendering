@@ -48,7 +48,7 @@ This is where rendering a scene start to get difficult.
 \label{subsec:paper_overview}
 ADOP \cite{ruckert2022adop} is a novel view synthesis method based on point cloud representation. 
 
-\noindent\textbf{Geometry.} Pseudo-colors  \footnote{Pseudo-colors means a generic "feature" vector representation which can be more generic than three dimensional RGB components. A dimension 8 for instance.} assigned to each point are projected onto the camera screen at several scales. An environment map is used to model the scene background.
+\noindent\textbf{Geometry.} Pseudo-colors  \footnote{Pseudo-colors means a generic "feature" vector representation which can be more generic than three dimensional RGB components. A dimension 4 for instance.} assigned to each point are projected onto the camera screen at several scales. An environment map is used to model the scene background.
 
 \noindent\textbf{Neural rendering.} The multi-scale pyramid of pseudo images will be jointly decoded and inpainted into a RGB HDR \footnote{We define HDR as high dynamic range linear RGB images - as if they'd been retrieve from a RAW 12 or 14bit sensor with sole operations black point correction, demosaicing and potentially while balance/color matrix transforms.} image at full resolution, using a U-Net architecture.
 
@@ -76,6 +76,8 @@ The idea of filling the holes between projected points by using multi-scale conv
 \label{subsec:Point based Rendering}
 One of the major advantage of point based methods is that this technology is backed by years of prior industy work. Rendering point clouds can be hardware accelerated and is available to the mainstream public on basically any computer (without NVidia GPU). Libraries such as OpenGL offer the option to render points \texttt{GL\_Points} (and even specify the size of the splat \texttt{glPointSize(1);})... Point clouds can even be rendered in a web browser as shown in figure \ref{fig:potree}.
 
+% https://github.com/rougier/python-opengl/blob/master/07-points.rst
+% https://glumpy.github.io/
 
 \begin{figure}[htbp]
     \centering

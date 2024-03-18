@@ -215,3 +215,7 @@ build/**/*
 include/*
 lib/*
 bin/*
+report/report.synctex.gz
+report/report.fls
+report/report.aux
+report/report.fdb_latexmk
