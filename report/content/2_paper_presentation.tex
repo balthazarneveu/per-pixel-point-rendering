@@ -8,19 +8,36 @@
 \label{sec:novel_view_synthesis}
 
 
+\subsubsection*{Real scenes}
+\label{sec:real_scenes}
 Novel view synthesis is a standard computer vision task which consists in generating new viewpoints of a scene after capturing a set of images.
-When taking real photographs of a scene by walking around (or using a drone), the exact pose of the camera is not perfectly known. 
+The concept is simple, take photographs or video of a scene by walking around it or by flying a drone.
 
-\noindent Even if an IMU (inertial measurement unit) is attached to the camera which allows later to have an estimation of the camera pose, there will be measurement errors (sensor noise, calibration error, sensor fusion errors) \footnote{Please note that efforts can be made, such as calibrating camera/IMU misalignment \cite{karpenko2011gyrostab}}
+\noindent \textbf{Camera pose estimation.} The first step is to get the camera parameters which are not necessarily known: 
 
-\noindent So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation intialization.
-The traditional pipeline consists in using Structure from Motion (SfM) like the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory and sparse point cloud. A side product of running this algorithm is getting a densor colored 3D point cloud of the scene (\textit{multi-view stereo being the seconde part of the COLMAP software}). 
+\begin{itemize}
+    \item pose for each capture= 6 degrees of freedom - 3 rotations and 3 translations
+    \item camera intrinsics : focal length, principal point (projection of the lens optical center onto the sensor), lens distortion.
+\end{itemize}
+
+\noindent \textbf{External intialization.} Some of these variables can be pre-estimated, for instance intrinsic camera parameters can usually be pre-calibrated using the Zhang method \cite{Zhang00calib} and are assumed to be constant for the whole sequence of images \footnote{Fixed calibration is not possible when the camera has a zoom-in capabilities or auto-focus. Variable focus may also affect the focal length.}.
+
+\noindent An IMU (inertial measurement unit) can be attached to the camera which allows later to have an estimation of the camera pose after running a sensor fusion algorithm.
+
+\noindent But there will always be measurement errors (sensor noise, calibration error, sensor fusion errors) \footnote{Please note that efforts can be made, such as calibrating camera/IMU misalignment \cite{karpenko2011gyrostab}}.
+
+So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation intialization.
+
+\noindent \textbf{Structure from motion.} The traditional approach consists in using the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory and sparse point cloud. A side product of running this algorithm is getting a densor colored 3D point cloud of the scene (\textit{multi-view stereo being the seconde part of the COLMAP software}). 
 The second step is to reconstruct a flexible representation of the scene so it can be rendered from new viewpoints. One of the technical challenge is to find the most suited data structure to represent the 3D scene subject to constraints such as: 
 \begin{itemize}
     \item image / 3D structure quality: for cultural heritage or industrial monitoring applications for instance. 
     \item reconstruction time and memory consumption. Real time for AR/VR applications is a constraint. \textit{For instance, ADOP seems to take advantage of point cloud rendering hardware acceleration available in any computer using OpenGL (not necessarily with the need of a massive NVidia GPU)}. 
     \item preprocessing time: in case users want to recreate their own scenes, they may not have access to powerful GPU 
 \end{itemize}
+
+\subsubsection*{Calibrated scenes}
+\label{sec:calibrated_scenes}
 There's another usecase where the camera poses and scenes are perfectly known and controlled by using 3D scene synthesis. This is an easier setup to study novel view synthesis as you can truly evaluate the rendering quality of the algorithm without doubts on the quality of pose estimation (or camera photometry). This setup is sometimes refered as "calibrated scenes". One could say that representing scenes with sophisticated neural rendering is useless when you have the underlying 3D model and Blender available. Nevertheless, novel view synthesis on calibrated scenes is a good framework to test a method before deploying on real scenes.
 
 \subsection{Representations of the scene}
