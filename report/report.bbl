@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{11}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -63,12 +63,29 @@
 \newblock
 
 
+\bibitem[Knapitsch et~al\mbox{.}(2017)]%
+        {Knapitsch2017TanksAndTemples}
+\bibfield{author}{\bibinfo{person}{Arno Knapitsch}, \bibinfo{person}{Jaesik Park}, \bibinfo{person}{Qian-Yi Zhou}, {and} \bibinfo{person}{Vladlen Koltun}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction}.
+\newblock \bibinfo{journal}{\emph{ACM Transactions on Graphics}} \bibinfo{volume}{36}, \bibinfo{number}{4} (\bibinfo{year}{2017}).
+\newblock
+
+
 \bibitem[Kolluri(2008)]%
         {kolluri2008IMLS}
 \bibfield{author}{\bibinfo{person}{Ravikrishna Kolluri}.} \bibinfo{year}{2008}\natexlab{}.
 \newblock \showarticletitle{Provably good moving least squares}.
 \newblock \bibinfo{journal}{\emph{ACM Transactions on Algorithms (TALG)}} \bibinfo{volume}{4}, \bibinfo{number}{2} (\bibinfo{year}{2008}), \bibinfo{pages}{1--25}.
 \newblock
+
+
+\bibitem[Lehtinen et~al\mbox{.}(2018)]%
+        {lehtinen2018noise2noise}
+\bibfield{author}{\bibinfo{person}{Jaakko Lehtinen}, \bibinfo{person}{Jacob Munkberg}, \bibinfo{person}{Jon Hasselgren}, \bibinfo{person}{Samuli Laine}, \bibinfo{person}{Tero Karras}, \bibinfo{person}{Miika Aittala}, {and} \bibinfo{person}{Timo Aila}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{title}{Noise2Noise: Learning Image Restoration without Clean Data}.
+\newblock
+\newblock
+\showeprint[arxiv]{1803.04189}~[cs.CV]
 
 
 \bibitem[Mildenhall et~al\mbox{.}(2020)]%
