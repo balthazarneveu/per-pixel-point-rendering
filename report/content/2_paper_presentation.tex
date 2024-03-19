@@ -9,12 +9,15 @@
 
 
 Novel view synthesis is a standard computer vision task which consists in generating new viewpoints of a scene after capturing a set of images.
-When taking real photographs of a scene by walking around (or using a drone), the exact pose of the camera is not perfectly known. Even if an inertial measurement unit is attached to the camera which allows later to have an estimation of the camera pose, there will be measurement errors (sensor noise, calibration error, sensor fusion errors). \textit{Please not that efforts can be made, such as calibrating camera/IMU misalignment} \cite*{karpenko2011gyrostab}. 
-So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation intialization.
-The traditional pipeline consists in using Structure from Motion (SfM) like the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory. A side product of running this algorithm is getting a colored 3D point cloud of the scene. 
-The second step is to reconstruct a flexible representation of the scene so it can be rendered from new viewpoint. The technical challenge is to find the most suited data structure to represent the scene subject to constraints such as: 
+When taking real photographs of a scene by walking around (or using a drone), the exact pose of the camera is not perfectly known. 
+
+\noindent Even if an IMU (inertial measurement unit) is attached to the camera which allows later to have an estimation of the camera pose, there will be measurement errors (sensor noise, calibration error, sensor fusion errors) \footnote{Please note that efforts can be made, such as calibrating camera/IMU misalignment \cite{karpenko2011gyrostab}}
+
+\noindent So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation intialization.
+The traditional pipeline consists in using Structure from Motion (SfM) like the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory and sparse point cloud. A side product of running this algorithm is getting a densor colored 3D point cloud of the scene (\textit{multi-view stereo being the seconde part of the COLMAP software}). 
+The second step is to reconstruct a flexible representation of the scene so it can be rendered from new viewpoints. One of the technical challenge is to find the most suited data structure to represent the 3D scene subject to constraints such as: 
 \begin{itemize}
-    \item image / 3D structure quality: for cultural heritage applications for instance. 
+    \item image / 3D structure quality: for cultural heritage or industrial monitoring applications for instance. 
     \item reconstruction time and memory consumption. Real time for AR/VR applications is a constraint. \textit{For instance, ADOP seems to take advantage of point cloud rendering hardware acceleration available in any computer using OpenGL (not necessarily with the need of a massive NVidia GPU)}. 
     \item preprocessing time: in case users want to recreate their own scenes, they may not have access to powerful GPU 
 \end{itemize}
