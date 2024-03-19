@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{12}
+\begin{thebibliography}{13}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -44,6 +44,17 @@
 \newblock  (\bibinfo{year}{2020}).
 \newblock
 \showeprint[arxiv]{1906.08240v3}~[cs.CV]
+
+
+\bibitem[Denninger et~al\mbox{.}(2023)]%
+        {Denninger2023}
+\bibfield{author}{\bibinfo{person}{Maximilian Denninger}, \bibinfo{person}{Dominik Winkelbauer}, \bibinfo{person}{Martin Sundermeyer}, \bibinfo{person}{Wout Boerdijk}, \bibinfo{person}{Markus Knauer}, \bibinfo{person}{Klaus~H. Strobl}, \bibinfo{person}{Matthias Humt}, {and} \bibinfo{person}{Rudolph Triebel}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{BlenderProc2: A Procedural Pipeline for Photorealistic Rendering}.
+\newblock \bibinfo{journal}{\emph{Journal of Open Source Software}} \bibinfo{volume}{8}, \bibinfo{number}{82} (\bibinfo{year}{2023}), \bibinfo{pages}{4901}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.21105/joss.04901}
+\showDOI{\tempurl}
 
 
 \bibitem[Johnson et~al\mbox{.}(2016)]%

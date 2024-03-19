@@ -10,6 +10,20 @@ Local install of `pixr`
 pip install -e .
 ```
 
+#### Generating calibrated scenes
+- 1/ download and put [NERF's Blender scenes on Google Drive](https://drive.google.com/file/d/1RjwxZCUoPlUgEWIUiuCmMmG0AhuV8A2Q/view?usp=drive_link) in the `__data` folder.
+- 2/ get Blender Proc `pip install blenderproc`
+- 3/ optional: get a few environment maps textures (e.g. from [PolyHaven](https://polyhaven.com/hdris) ).
+- 4/ `python studies/full_render.py -s material_balls -n 4 -m orbit`
+
+```python
+if args.scene == "material_balls":
+  config = {
+      "distance": 4.,
+      "altitude": 0.,
+      "background_map": "__world_maps/city.exr"
+  }
+```
 
 #### Code structure
 - rendering:
@@ -24,6 +38,8 @@ pip install -e .
   - [interactive visualization](studies/interactive_projections.py)
   - [rasterizer check](studies/interactive_rasterizer.py)
   - [differentiability check of splatting](studies/differentiate_forward_project.py) . :warning: so far splatting is not differentiable with regard to camera.
+
+
 
 
 #### Tensor convention
