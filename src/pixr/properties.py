@@ -5,6 +5,7 @@ CAMERA = "camera"
 MESH_PATH = Path('__data')
 CAMERA_PARAMS_FILE = "camera_params.json"
 RGB_VIEW_FILE = "view.png"
+MASK_VIEW_FILE = "mask.png"
 X = 0
 Y = 1
 Z = 2

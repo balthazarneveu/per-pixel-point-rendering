@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import json
 from config import SAMPLE_SCENES, OUT_DIR
-from pixr.properties import CAMERA_PARAMS_FILE, RGB_VIEW_FILE
+from pixr.properties import CAMERA_PARAMS_FILE, RGB_VIEW_FILE, MASK_VIEW_FILE
 import subprocess
 import h5py
 import shutil
@@ -38,7 +38,12 @@ def prepare_multiviews_on_disk_for_blender_proc(
     return full_camera_paths, full_output_paths
 
 
-def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000, debug=False, mode="random", num_view=4, config=None):
+def main(
+    out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000,
+    debug=False, mode="random", num_view=4,
+    config=None,
+):
+    background_map = config.get("background_map", None)
     scene_path = scene_root/f"{name}.blend"
     if not scene_path.exists():
         scene_path = scene_root/f"{name}.obj"
@@ -60,15 +65,20 @@ def main(out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=
         "studies/blender_proc_exports.py",
         "--scene", str(scene_path),
         "--output-dir", str(out_dir),
-        "--camera",] + full_camera_paths
+        "--camera",] + full_camera_paths +
+        (["--background-map", background_map] if background_map is not None else [])
     )
 
     for idx, pth in enumerate(full_output_paths):
         out_view = pth/"view.hdf5"
-        shutil.move(out_dir/f"{idx}.hdf5", out_view)
+        shutil.copy(out_dir/f"{idx}.hdf5", out_view)
         f = h5py.File(out_view, 'r')
-        Image(np.array(f["colors"])/255.).save(out_view.parent/RGB_VIEW_FILE)
-        Image(np.array(f["colors"])/255.).save(out_dir/f"{idx:04d}.png")
+        rgba = np.array(f["colors"], dtype=np.uint8)
+        mask = rgba[:, :, -1:] / 255.
+        Image((rgba[:, :, :3] / 255)*mask).save(out_view.parent/RGB_VIEW_FILE)
+        Image(np.repeat(mask, 3, -1)).save(out_view.parent/MASK_VIEW_FILE)
+        shutil.copy(out_view.parent/RGB_VIEW_FILE, out_dir/f"{idx:04d}.png")
+        # Image(np.array(f["colors"], dtype=np.uint8)[:,:, :3] /255.).save(
 
 
 if __name__ == "__main__":
@@ -84,6 +94,14 @@ if __name__ == "__main__":
         config = {"distance": 0.15, "altitude": 0.02}
     elif args.scene == "lego":
         config = {"distance": 2.5, "altitude": 0.}
-    else:
-        config = {"distance": 4., "altitude": 0.}
+    elif args.scene == "material_balls":
+        config = {
+            "distance": 4., "altitude": 0.,
+            "background_map": "__world_maps/city.exr"
+        }
+    elif args.scene == "ficus":
+        config = {
+            "distance": 5., "altitude": 0.,
+            # "background_map": "__world_maps/city.exr"
+        }
     main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)
