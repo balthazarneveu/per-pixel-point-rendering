@@ -133,7 +133,7 @@ def generate_3d_scene_sample_test_alias(z: float = 0, delta_z: float = 0.) -> Tu
     wc_triangles = []
     colors_nodes = []
     offset_y = 0.
-    num_steps = 100
+    num_steps = 50
     current_z = z
     for i in range(num_steps):
         # color = np.array(rainbow_color(i % 3))

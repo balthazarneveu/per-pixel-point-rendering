@@ -106,7 +106,7 @@ def main(argv):
 
     import logging
     logging.basicConfig(level=logging.INFO)
-    define_default_sliders(orbit_mode=True, max_samples=200000, default_num_samples=args.num_samples, default_scene=args.scene)
+    define_default_sliders(orbit_mode=True, max_samples=500000, default_num_samples=args.num_samples, default_scene=args.scene)
 
     interactive_pipeline(
         gui="qt",

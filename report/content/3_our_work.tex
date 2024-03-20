@@ -107,6 +107,13 @@ Visible points's colors are copied into corresponding pixels on the 2D image. A 
 That last condition requires some work:
 Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work \cite{schutz2021rendering} to average pixels in a tiny range of depths behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/fuzzy_depth_test_aliasing_large.png}
+    \caption{Fuzzy depth test acts as an anti-aliasing filter. On this test scene, a point cloud made of 500.000 point located in the same plane with an alternate vertical red an blue stripes on . We use $\alpha=0$ on the top (hard depth test) and $\alpha=0.01$ on the bottom (soft depth test). On the right side, when using larger scales (lower resolutions), aliasing effect if naturally amplified.}
+    \label{fig:fuzzy_depth_test_AA}
+\end{figure}
+
 Soft depth test $Z \leq (1 + \alpha) * \textrm{min}_{Z_{j}}$ requires two passes. First compute the closest point to the camera for each pixel. Then, for each pixel, average the colors of the points that are close enough to the closest point. As we'll perform the first pass, we'll keep track of conditions $(C1)$, $(C2)$ and $(C3)$ to avoid recomputing them during the second pass.
 
 \noindent \textbf{First pass: Hard depth test.}
@@ -124,7 +131,7 @@ My first ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob
 In the second pass  ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/colors\_aggregation.py}{rendering/colors\_aggregation.py}, we are now capable to apply the soft depth test as we have already computed the closest distance of the point cloud to the camera for each pixel. We'll modify the point index mapping $k[i]$ to only keep indices which satisfy the soft depth test: 
 $$ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$$.
 Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the invalid pixel and will be discarded.
-Finally, we average the colors of the points that satisfy the soft depth test, at each pixel location, using \texttt{torch.scatter\_reduce\_} operator with the \texttt{reduce=`mean`}.
+Finally, we average the colors of the points that satisfy the soft depth test, at each pixel location, using \texttt{torch.scatter\_reduce\_} operator with the \texttt{reduce=`mean`}. It is possible to keep a background
 
 \begin{figure*}[h]
     \centering
