@@ -34,9 +34,11 @@
 
   %% Teaser figure
   \begin{teaserfigure}
-    \includegraphics[width=0.6\textwidth]{figures/pipeline.png}
+    \includegraphics[width=1.\textwidth]{figures/teaser_figure.png}
     \centering
-    \caption{Pipeline for pixel-based point neural rendering.
+    \caption{Overview of our partial re-implementation of the ADOP \cite{ruckert2022adop} paper. \\
+      \textit{Left}: Point based neural rendering reconstructs novel view from a point cloud. Original paper implementation in ADOP  works on real photos of large scale scenes. It therefore tries to model camera exposure and non linear tone mapping to adapt to each camera rendering. \\
+      \textit{Right}: We simulate real world photo captures by using calibrated scenes and cameras to be in the most simple conditions to review point based rendering. Point cloud is sampled randomly from the mesh with perfect normals, camera parameters are perfectly known and we do not vary exposure or perform tone mapping.
     }
     \label{fig:original_pipeline}
   \end{teaserfigure}

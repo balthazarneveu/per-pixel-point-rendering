@@ -46,7 +46,7 @@ It is first possible to generate a set of viewpoints configurations to orbit aro
 
 The environment map does not appear as a backround (although it is possible in the current code) as it would allow to simplify and remove one of the extra components of the ADOP paper (e.g. it allows rendering the point cloud without using the neural environment map trick).
 
-We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. When we project a point onto the image plane, we build the extrinsic camera matrix from the 3 angles. We use a pinhole camera model.
+We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. We build the extrinsic camera matrix from the 3 angles and use a pinhole camera model to project 3D points onto the image plane as we'll see in ~\cref{sec:projecting_the_point_cloud_onto_the_image_plane}. There's a perfect equivalence between the camera parameters used in Blender and the ones used in my Pytorch renderer.
 
 One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. Since our rendering pipeline is using normal culling, we end up with an issue: points with normals not pointing towards the camera are not rendered. So on the ficus scene for instance, if we look "at the green leafs" from the bottom, the green leaves will become transparent so the renderer will have a hard time during reconstruction. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. This is illustrated in \cref{fig:ficus_culling_issue}.
 

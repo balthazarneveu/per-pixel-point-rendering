@@ -75,3 +75,11 @@ To each point of the point cloud, we associate a color vector (*later this vecto
 | Rendered colored point cloud - novel view synthesis| Groundtruth shaded images used to get colors per point so that the final rendering is faithful | 
 |:---: | :---: |
 | ![](/report/figures/non_neuronal_render.gif) | ![](report/figures/non_neuronal_rendering.png) |
+
+#### Using a fuzzy depth test
+| Closest point | Fuzzy depth test |
+|:---: | :---: |
+| ![](/report/figures/aliasing_hard_depth.gif) | ![](/report/figures/aliasing_fuzzy_depth.gif) |
+
+To reproduce this demo? `python studies/interactive_projections.py -n 200000 -s test_aliasing`.
+*Can take some time to sample the point cloud from triangles*
