@@ -214,17 +214,17 @@ def get_experiment_from_id(exp: int):
                                    scene="old_chair", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
                                    depth=2, h_dim=8,
                                    nb_points=100000)
-    elif exp == 53:  # Redo 52 - longer
+    elif exp == 53:  # Redo 52 - longer - 27.7db
         conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
                                    scene="old_chair", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
                                    depth=2, h_dim=8,
                                    nb_points=100000)
-    elif exp == 54:  # Redo 52 - longer + slower LR
+    elif exp == 54:  # Redo 52 - longer + slower LR - 29.1db
         conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
                                    scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
                                    depth=2, h_dim=8,
                                    nb_points=100000)
-    elif exp == 55:
+    elif exp == 55:  # 29.9db
         conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
                                    scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
                                    depth=4, h_dim=8,

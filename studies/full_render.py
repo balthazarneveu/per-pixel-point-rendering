@@ -103,4 +103,14 @@ if __name__ == "__main__":
             "distance": 5., "altitude": 0.,
             "background_map": "__world_maps/forest.exr"
         }
+    elif args.scene == "old_chair":
+        config = {
+            "distance": 6., "altitude": 0.,
+            "background_map": "__world_maps/city.exr"
+        }
+    elif args.scene == "lego":
+        config = {
+            "distance": 6., "altitude": 0.,
+            "background_map": "__world_maps/city.exr"
+        }
     main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)
