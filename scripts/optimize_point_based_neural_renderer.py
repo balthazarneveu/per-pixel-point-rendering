@@ -1,7 +1,7 @@
 from pixr.learning.experiments import get_training_content
 import torch
 from pixr.learning.utils import prepare_dataset
-from config import OUT_DIR, TRAINING_DIR
+from config import RENDERED_DIR, TRAINING_DIR
 from pixr.properties import (SCENE, DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR,
                              RATIO_TRAIN, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST
                              )
@@ -162,7 +162,7 @@ def training_loop(
     return model
 
 
-def main(exp: int, out_root=OUT_DIR, device=DEVICE):
+def main(exp: int, out_root=RENDERED_DIR, device=DEVICE):
     config = get_experiment_from_id(exp)
     num_samples = config[NB_POINTS]
     pseudo_color_dim = config[PSEUDO_COLOR_DIMENSION]

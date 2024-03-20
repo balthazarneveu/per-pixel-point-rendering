@@ -169,6 +169,66 @@ def get_experiment_from_id(exp: int):
         conf = presets_experiments(exp, b=4, n=2000, model_preset="StackedConvolutions",
                                    scene="material_balls", pseudo_color_dimension=8, lr=0.005, k_size=7, ratio_train=0.98,
                                    depth=4, h_dim=8)
+    elif exp == 40:  # 20.5db
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="ficus", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98)
+    elif exp == 41:  # 22.7db
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="ficus", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98,
+                                   nb_points=100000)
+    elif exp == 42:  # ??
+        conf = presets_experiments(exp, b=8, n=100, model_preset="Bypass",
+                                   scene="ficus", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98,
+                                   nb_points=100000)
+    elif exp == 43:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="ficus", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=20000)
+    elif exp == 44:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="ficus", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 45:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="ficus", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=4, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 46:
+        conf = presets_experiments(exp, b=8, n=300, model_preset="StackedConvolutions",
+                                   scene="ficus", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=8, h_dim=8,
+                                   nb_points=100000)
+
+    elif exp == 50:  # 16.7db
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98,
+                                   nb_points=100000)
+    elif exp == 51:  # 21.2db ??
+        conf = presets_experiments(exp, b=8, n=100, model_preset="Bypass",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01, k_size=5, ratio_train=0.98,
+                                   nb_points=100000)
+    elif exp == 52:  # 28.6db -> not bad
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 53:  # Redo 52 - longer
+        conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 54:  # Redo 52 - longer + slower LR
+        conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 55:
+        conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
+                                   depth=4, h_dim=8,
+                                   nb_points=100000)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)

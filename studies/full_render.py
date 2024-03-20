@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 import json
-from config import SAMPLE_SCENES, OUT_DIR
+from config import SAMPLE_SCENES, RENDERED_SCENES
 from pixr.properties import CAMERA_PARAMS_FILE, RGB_VIEW_FILE, MASK_VIEW_FILE
 import subprocess
 import h5py
@@ -39,7 +39,7 @@ def prepare_multiviews_on_disk_for_blender_proc(
 
 
 def main(
-    out_root=OUT_DIR, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000,
+    out_root=RENDERED_SCENES, scene_root=SAMPLE_SCENES, name=NAME, w=640, h=480, f=1000,
     debug=False, mode="random", num_view=4,
     config=None,
 ):
@@ -71,14 +71,13 @@ def main(
 
     for idx, pth in enumerate(full_output_paths):
         out_view = pth/"view.hdf5"
-        shutil.copy(out_dir/f"{idx}.hdf5", out_view)
+        shutil.move(out_dir/f"{idx}.hdf5", out_view)
         f = h5py.File(out_view, 'r')
         rgba = np.array(f["colors"], dtype=np.uint8)
         mask = rgba[:, :, -1:] / 255.
         Image((rgba[:, :, :3] / 255)*mask).save(out_view.parent/RGB_VIEW_FILE)
         Image(np.repeat(mask, 3, -1)).save(out_view.parent/MASK_VIEW_FILE)
         shutil.copy(out_view.parent/RGB_VIEW_FILE, out_dir/f"{idx:04d}.png")
-        # Image(np.array(f["colors"], dtype=np.uint8)[:,:, :3] /255.).save(
 
 
 if __name__ == "__main__":
@@ -96,12 +95,12 @@ if __name__ == "__main__":
         config = {"distance": 2.5, "altitude": 0.}
     elif args.scene == "material_balls":
         config = {
-            "distance": 4., "altitude": 0.,
+            "distance": 5., "altitude": 0.,
             "background_map": "__world_maps/city.exr"
         }
     elif args.scene == "ficus":
         config = {
             "distance": 5., "altitude": 0.,
-            # "background_map": "__world_maps/city.exr"
+            "background_map": "__world_maps/forest.exr"
         }
     main(name=args.scene, debug=args.debug, mode=args.mode, num_view=args.num_view, config=config)
