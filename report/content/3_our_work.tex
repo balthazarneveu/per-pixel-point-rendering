@@ -64,8 +64,19 @@ I first notticed this effect on my synthetic \texttt{stair case} scene which was
 \subsection{Projecting the point cloud onto the image plane}
 \label{sec:projecting_the_point_cloud_onto_the_image_plane}
 
-\noindent \textbf{Coordinates.} To project a 3D point of index $j$ located at $\vec{P_{\textrm{3D}}}^{(j)}$ in world coordinates onto the image sensor,
-we use the pinhole projection model.
+\subsubsection{Coordinates projection}
+\label{sec:coordinates_projection}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{figures/pihole_camera.png}
+    \caption{Pinhole camera model.}
+    \label{fig:pinhole_camera}
+\end{figure}
+
+
+To project a 3D point of index $j$ located at $\vec{P_{\textrm{3D}}}^{(j)}$ in world coordinates onto the image sensor,
+we use the pinhole projection model as illustrated in \ref{fig:pinhole_camera}.
 
 $$\vec{p_{\textrm{2D}}}^{(j)} = K\cdot\left[Q_{\text{cam}} | T_{\text{cam}}\right]^{i}\vec{P_{\textrm{3D}}}^{(j)}$$
 where
@@ -74,36 +85,52 @@ where
     \item $Q_{\textrm{cam}}^{i}$ is the camera orientation for view $i$, this matrix is created from the yaw, pitch, roll angles.
     \item $T_{\textrm{cam}}^{i}$ is the 3D camera position for view $i$ in the world frame (meters)
     \item $\vec{P_{\textrm{3D}}}^{(j)} \in \mathbb{R}^{4}$ are the homogeneous 3D coordinates of point $j$
-    \item $\vec{p_{\textrm{2D}}}^{(j)} \in \mathbb{R}^{3}$ are the homogeneous 2D coordinates of point $j$ projected in the sensor frame (pixels).
+    \item $\vec{p_{\textrm{2D}}}^{(i,j)} \in \mathbb{R}^{3}$ are the homogeneous 2D coordinates of point $j$ projected in the sensor frame $i$ (pixel coordinates).
 \end{itemize}
 
 This operation is performed in ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/forward_project.py}{\texttt{forward\_project.py}} in parallel over all points $j$ , using \texttt{torch.matmul} operation
 
 \noindent \textit{Points coordinates could probably be projected all at once for all camera view using \texttt{torch.bmm}.}
 
-\noindent \textbf{Scatter operation.} Visible points's colors are copied into corresponding pixels on the 2D image. A point only leads to a single pixel color update by taking the nearest pixel coordinate of $\lceil\vec{p_{\textrm{2D}}}^{(j)}\rfloor$. There are conditions to satisfy for each point to be valid. 
+\subsubsection{Scatter operation.}
+\label{sec:scatter_op}
+
+Visible points's colors are copied into corresponding pixels on the 2D image. A point only leads to a single pixel color update by taking the nearest pixel coordinate of $\lceil\vec{p_{\textrm{2D}}}^{(j)}\rfloor$. There are conditions to satisfy for each point to be valid. 
 \begin{itemize}
-    \item $C1$ The point must be inside the image frame $0\leq x<W$ and $0\leq y <H$.
-    \item $C2$ The point must be in front of the camera ($Z>0$).
-    \item $C3$ The normal of the point must be facing the camera.
-    \item $C4$ The point must not be occluded by another point.
+    \item $(C1)$ The point must be inside the image frame $0\leq x<W$ and $0\leq y <H$.
+    \item $(C2)$ The point must be in front of the camera ($Z>0$).
+    \item $(C3)$ The normal of the point must be facing the camera.
+    \item $(C4)$ The point must not be occluded by another point.
 \end{itemize}
-That last condition requires some work:
-Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work to average pixels in a tiny range of depths around the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
 
 \noindent \textbf{Soft depth test.} 
-Soft depth test $Z \leq (1 + \alpha) * \textrm{min}_{Z_{j}}$ requires two passes. First compute the closest point to the camera for each pixel. Then, for each pixel, average the colors of the points that are close enough to the closest point.
+That last condition requires some work:
+Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work to average pixels in a tiny range of depths behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
 
-\noindent ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/zbuffer\_pass.py#L5}{\texttt{zbuffer\_pass.py}} is the first pass. It allows to find the closest point to the camera for each pixel. Depth values are initialized at $\inf$ and will remain $\inf$ when a pixel has not been filled. A first implementation trick is for each point of index $j$ to keep a linear index $k$ of its coordinate position in the image $k[i] = 1+ u*W+v$ if the point is valid regarding conditions $C1$, $C2$ and $C3$ and set this index to $k[i]=0$ otherwise. This allows to avoid recomputing the same test conditions during the second pass.
+Soft depth test $Z \leq (1 + \alpha) * \textrm{min}_{Z_{j}}$ requires two passes. First compute the closest point to the camera for each pixel. Then, for each pixel, average the colors of the points that are close enough to the closest point. As we'll perform the first pass, we'll keep track of conditions $(C1)$, $(C2)$ and $(C3)$ to avoid recomputing them during the second pass.
 
-\noindent Now we can use the ~\href{https://pytorch.org/docs/stable/generated/torch.Tensor.scatter\_reduce\_.html#torch.Tensor.scatter\_reduce\_}{\texttt{torch.scatter\_reduce\_}} operation to take the minimum of depth values for each pixel in a 1D tensor of size $1+W*H$ by taking the minimum value for each pixel. We can then use the linear index to find the closest point to the camera for each pixel.
+\noindent \textbf{First pass: Hard depth test.}
 
+\noindent ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/zbuffer\_pass.py#L5}{\texttt{zbuffer\_pass.py}} is the first pass. It allows to find the closest point to the camera for each pixel. Depth values are initialized at $\inf$ and will remain $\inf$ when a pixel has not been filled. A first implementation trick is for each point of index $j$ to keep a linear index $k$ of its coordinate position in the image $k[j] = 1+ u*W+v$ if the point is valid regarding conditions $(C1)$, $(C2)$ and $(C3)$ and set this index to $k[j]=0$ otherwise. This allows to avoid recomputing the same test conditions during the second pass.
+
+We then obtain the closest depth image for each pixel. $\forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$:
+$$Z^{\texttt{min}}_{(u,v)} = min_{\left\{j  \text{ s.t. } k[j]=1+u*W+v\right\}} \left(Z[j]\right)$$
+\noindent Although this index mapping looks unnatural, it allows to use the ~\href{https://pytorch.org/docs/stable/generated/torch.Tensor.scatter\_reduce\_.html#torch.Tensor.scatter\_reduce\_}{\texttt{torch.scatter\_reduce\_}} operation to take the minimum of depth values for each pixel in a 1D tensor of size $1+W*H$.
+
+My first ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/legacy\_splatting.py}{\texttt{legacy\_splatting.py} implementation with a for loop} was way too slow and using native torch operators allowed me to get fast point cloud rendering (and save some development time to avoid rewriting a custom CUDA kernel).
+
+\noindent \textbf{Second pass. Soft depth test and color aggregation}
+
+In the second pass  ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/colors\_aggregation.py}{rendering/colors\_aggregation.py}, we are now capable to apply the soft depth test as we have already computed the closest distance of the point cloud to the camera for each pixel. We'll modify the point index mapping $k[i]$ to only keep indices which satisfy the soft depth test: 
+$$ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$$.
+Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the invalid pixel and will be discarded.
+Finally, we average the colors of the points that satisfy the soft depth test, at each pixel location, using \texttt{torch.scatter\_reduce\_} operator with the \texttt{reduce=`mean`}.
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/soft_depth_test_two_pixels.png}
     \caption{Soft depth test illustration: 
-    $P^{(0)}$ is the closest point to the camera for pixel $(u,v)$. We will average the colors of the points $(P^{(0)}, P^{(5)}, P^{(6)})$. During the first pass, we'll keep track of the mapping between point indices and projected coordinates (in a 1D fashion). $k[0]=k[4]=k[5]=k[6]=1+u*W+v$ and $k[1]=k[2]=k[3]=0$, $k[7] = 1+u'*W+v'$. First pass will find the minimum of depths for each pixel $Z^{\texttt{min}}_{(u,v)} = min_{k[j]=1+u*W+v}(Z[j]), \forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$. For instance $Z^{\texttt{min}}_{(u,v)} = Z^{(0)}$ and $Z^{\texttt{min}}_{(u',v')} = Z^{(7)}$. During the second pass, we'll only keep indices which satisfy the soft depth test: $ k'[j] = k[j] * (Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]})$.
-    During this second pass, point 4 is considered to far away and discared e.g. $k[4]=0$. Finally, colors are averaged $I_{u, v} \propto \sum_{j \texttt{ s.t  } k'[j]=1+u.W+v}{I(j)}$. For instance $I_{(u, v)} = \frac{I(0) + I(5) + I(6)}{3}$ and $I_{(u', v')} = I(7)$.}
+    $P^{(0)}$ is the closest point to the camera for pixel $(u,v)$. We will average the colors of the points $(P^{(0)}, P^{(5)}, P^{(6)})$. During the first pass, we'll keep track of the mapping between point indices and projected coordinates (in a 1D fashion). $k[0]=k[4]=k[5]=k[6]=1+u*W+v$ and $k[1]=k[2]=k[3]=0$, $k[7] = 1+u'*W+v'$. First pass will find the minimum of depths for each pixel $Z^{\texttt{min}}_{(u,v)} = min_{\left\{j  \text{ s.t. } k[j]=1+u*W+v\right\}} \left(Z[j]\right), \forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$. For instance $Z^{\texttt{min}}_{(u,v)} = Z^{(0)}$ and $Z^{\texttt{min}}_{(u',v')} = Z^{(7)}$. \\ During the second pass, we'll only keep indices which satisfy the soft depth test: $ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$.
+   For instance, point 4 is considered too far away and discared e.g. $k[4]=0$. \\Finally, colors are averaged $I_{u, v} \propto \sum_{j \texttt{ s.t  } k'[j]=1+u.W+v}{I(j)}$. For instance $I_{(u, v)} = \frac{I(0) + I(5) + I(6)}{3}$ and $I_{(u', v')} = I(7)$.}
     \label{fig:soft_depth_test}
 \end{figure*}
