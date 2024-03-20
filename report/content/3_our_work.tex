@@ -48,16 +48,44 @@ The environment map does not appear as a backround (although it is possible in t
 
 We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. When we project a point onto the image plane, we build the extrinsic camera matrix from the 3 angles. We use a pinhole camera model.
 
-One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. Since our rendering pipeline is using normal culling, we end up with an issue: points with normals not pointing towards the camera are not rendered. So on the ficus scene for instance, if we look "at the green leafs" from the bottom, the green leaves will become transparent so the renderer will have a hard time during reconstruction. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. 
+One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. Since our rendering pipeline is using normal culling, we end up with an issue: points with normals not pointing towards the camera are not rendered. So on the ficus scene for instance, if we look "at the green leafs" from the bottom, the green leaves will become transparent so the renderer will have a hard time during reconstruction. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. This is illustrated in \cref{fig:ficus_culling_issue}.
+
+When working on natural scenes, the points will most probably be duplicated on both sides of the surface by COLMAP with the normals in both ways. In my case, I sampling points randomly from the mesh and I simply take the normal of the triangle to which the point belongs without considering it double sided.
+
 I first notticed this effect on my synthetic \texttt{stair case} scene which was only made of planes and that could not be optimized in the trivial "Bypass" case.
 
-\begin{figure}[H]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/ficus_culling_issue_3.png}
-    \caption{On the left, image from the Blender render of the ficus scene, seen slightly from below where the leases look brighter than when looked from above. On the right side, we check the rendering of the point cloud with the "Bypass" option which allows ajusting the colors points to the scene. The optimization process has }
+    \includegraphics[width=0.8\textwidth]{figures/double_sided_surfaces_issues.png}
+    \caption{On the left, image from the Blender render of the ficus scene, seen slightly from below where the leaves look brighter than when looked from above. On the right side, we check the rendering of the point cloud with the "Bypass" mode (which allows ajusting the colors points to the scene). Most leaves are oriented upwards so normal culling does not render these points when seen from below. The optimization process has trouble to reconstruct correct colors for the leaves. On the right side, the blender face orientation (blue front facing the camera/red back facing the camera) fully reveals that the leaves of the \texttt{ficus} scene are made of double sided triangles.}
     \label{fig:ficus_culling_issue}
-\end{figure}
+\end{figure*}
 
 \subsection{Projecting the point cloud onto the image plane}
 \label{sec:projecting_the_point_cloud_onto_the_image_plane}
-To project the points onto the plain
+
+\noindent \textbf{Coordinates.} To project a 3D point of index $j$ located at $\vec{P_{\textrm{3D}}}^{(j)}$ in world coordinates onto the image sensor,
+we use the pinhole projection model.
+
+$$\vec{p_{\textrm{2D}}}^{(j)} = K\cdot\left[Q_{\text{cam}} | T_{\text{cam}}\right]^{i}\vec{P_{\textrm{3D}}}^{(j)}$$
+where
+\begin{itemize}
+    \item $K$ is the camera 3x3 intrinsic matrix.
+    \item $Q_{\textrm{cam}}^{i}$ is the camera orientation for view $i$, this matrix is created from the yaw, pitch, roll angles.
+    \item $T_{\textrm{cam}}^{i}$ is the 3D camera position for view $i$ in the world frame (meters)
+    \item $\vec{P_{\textrm{3D}}}^{(j)} \in \mathbb{R}^{4}$ are the homogeneous 3D coordinates of point $j$
+    \item $\vec{p_{\textrm{2D}}}^{(j)} \in \mathbb{R}^{3}$ are the homogeneous 2D coordinates of point $j$ projected in the sensor frame (pixels).
+\end{itemize}
+
+This operation is performed in ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/forward_project.py}{\texttt{forward\_project.py}} in parallel over all points $j$ , using \texttt{torch.matmul} operation
+
+\noindent \textit{Points coordinates could probably be projected all at once for all camera view using \texttt{torch.bmm}.}
+
+\noindent \textbf{Scatter operation.} Visible points's colors are copied into corresponding pixels on the 2D image. A point only leads to a single pixel color update by taking the nearest pixel coordinate of $\lceil\vec{p_{\textrm{2D}}}^{(j)}\rfloor$. There are conditions to satisfy for each point to be valid. 
+\begin{itemize}
+    \item The point must be in front of the camera ($Z>0$).
+    \item The point must be inside the image frame $0\leq x<w$ and $0\leq y <h$.
+    \item The point must not be occluded by another point.
+\end{itemize}
+That last condition requires some work:
+Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work to average pixels in a tiny range of depths around the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
