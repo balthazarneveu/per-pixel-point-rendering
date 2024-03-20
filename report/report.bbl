@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{13}
+\begin{thebibliography}{14}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -122,6 +122,15 @@
 \bibfield{author}{\bibinfo{person}{Johannes~Lutz Sch\"{o}nberger} {and} \bibinfo{person}{Jan-Michael Frahm}.} \bibinfo{year}{2016}\natexlab{}.
 \newblock \showarticletitle{Structure-from-Motion Revisited}. In \bibinfo{booktitle}{\emph{Conference on Computer Vision and Pattern Recognition (CVPR)}}.
 \newblock
+
+
+\bibitem[Schütz et~al\mbox{.}(2021)]%
+        {schutz2021rendering}
+\bibfield{author}{\bibinfo{person}{Markus Schütz}, \bibinfo{person}{Bernhard Kerbl}, {and} \bibinfo{person}{Michael Wimmer}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{Rendering Point Clouds with Compute Shaders and Vertex Order Optimization}.
+\newblock
+\newblock
+\showeprint[arxiv]{2104.07526}~[cs.GR]
 
 
 \bibitem[Schütz et~al\mbox{.}(2020)]%
