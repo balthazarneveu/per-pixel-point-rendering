@@ -6,7 +6,7 @@ from pixr.rendering.splatting import splat_points
 from pixr.interactive.interactive_plugins import define_default_sliders
 # from novel_views import load_colored_point_cloud_from_files
 from pixr.learning.utils import load_model
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from interactive_pipe import interactive_pipeline
 from pixr.interactive.utils import tensor_to_image, rescale_image
 from pixr.properties import DEVICE, SCALE_LIST

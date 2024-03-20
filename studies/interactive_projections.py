@@ -5,7 +5,7 @@ from interactive_pipe import interactive_pipeline
 from interactive_pipe.data_objects.curves import Curve, SingleCurve
 import numpy as np
 from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from pixr.camera.camera import linear_rgb_to_srgb
 from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.camera.camera_geometry import set_camera_parameters

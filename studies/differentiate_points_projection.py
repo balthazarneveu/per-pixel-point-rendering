@@ -1,5 +1,5 @@
 from pixr.camera.camera_geometry import get_camera_intrinsics, get_camera_extrinsics
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from pixr.synthesis.world_simulation import generate_simulated_world, TEST_TRIANGLES
 from pixr.camera.camera_geometry import set_camera_parameters
 from pixr.rendering.splatting import splat_points

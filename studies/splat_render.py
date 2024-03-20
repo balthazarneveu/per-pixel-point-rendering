@@ -1,7 +1,7 @@
 from pixr.synthesis.world_simulation import generate_simulated_world, STAIRCASE
 from pixr.synthesis.normals import extract_normals
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 from pixr.rasterizer.rasterizer import shade_screen_space

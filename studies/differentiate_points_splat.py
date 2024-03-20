@@ -1,5 +1,5 @@
 from pixr.synthesis.world_simulation import STAIRCASE
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from interactive_pipe.data_objects.image import Image
 from pixr.rendering.splatting import splat_points
 # from pixr.rendering.legacy_splatting import splat_points as splat_points  # Run the for loop

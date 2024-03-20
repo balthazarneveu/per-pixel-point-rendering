@@ -15,7 +15,7 @@ import json
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from pixr.learning.dataloader import get_data_loader
 from pixr.rendering.splatting import splat_points
-from pixr.synthesis.forward_project import project_3d_to_2d
+from pixr.rendering.forward_project import project_3d_to_2d
 from shared_parser import get_shared_parser
 from typing import List
 from pixr.learning.utils import save_model
