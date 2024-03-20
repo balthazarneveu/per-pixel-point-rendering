@@ -12,7 +12,11 @@ I decided to code everything from scratch knowing since the start that I would a
 Each element has been carefully tested by mostly visual tests.
 
 
-
+Assumptions for simplification compared to the original ADOP paper. 
+% TODO: FINISH
+\begin{itemize}
+    \item 
+\end{itemize}
 
 
 
@@ -22,9 +26,10 @@ In order to avoid dealing with large real scenes with millions of points and hav
 
 It is first possible to generate a set of viewpoints configurations to orbit around the scene. It is also possible to generate an environment map (e.g. a skybox). We render with the background transparency option so the rendering results is a RGB PNG. 
 % 1532.9s for 60 views of the \texttt{material balls}.
+% 753.869 ficus
 
-Rendering is peformed using GPU and requires 25 seconds per view with a resolution 640x480 for the \texttt{material balls}. scene on a laptop Nvidia T500.
-
+% Rendering is peformed using GPU and requires 25 seconds per view with a resolution 640x480 for the \texttt{material balls}. scene on a laptop Nvidia T500.
+% 27 minutes are needed to generate 64 viewpoints
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{figures/blenderproc_renders.png}
@@ -32,8 +37,27 @@ Rendering is peformed using GPU and requires 25 seconds per view with a resoluti
     \label{fig:blenderproc_renders}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/ficus_and_matballs.png}
+    \caption{60 views of resolution 640x480 of the \texttt{Ficus} scene rendered in 12 minutes On the right, \texttt{material balls} scene rendered in a total of 25 minutes on a laptop equipped with a Nvidia T500.}
+    \label{fig:multiview}
+\end{figure}
 
-% 27 minutes are needed to generate 64 viewpoints
 The environment map does not appear as a backround (although it is possible in the current code) as it would allow to simplify and remove one of the extra components of the ADOP paper (e.g. it allows rendering the point cloud without using the neural environment map trick).
 
-We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. When we project a point onto the image plane, we build the extrinsic camera matrix from the. We use a pinhole camera model.
+We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. When we project a point onto the image plane, we build the extrinsic camera matrix from the 3 angles. We use a pinhole camera model.
+
+One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. Since our rendering pipeline is using normal culling, we end up with an issue: points with normals not pointing towards the camera are not rendered. So on the ficus scene for instance, if we look "at the green leafs" from the bottom, the green leaves will become transparent so the renderer will have a hard time during reconstruction. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. 
+I first notticed this effect on my synthetic \texttt{stair case} scene which was only made of planes and that could not be optimized in the trivial "Bypass" case.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/ficus_culling_issue_3.png}
+    \caption{On the left, image from the Blender render of the ficus scene, seen slightly from below where the leases look brighter than when looked from above. On the right side, we check the rendering of the point cloud with the "Bypass" option which allows ajusting the colors points to the scene. The optimization process has }
+    \label{fig:ficus_culling_issue}
+\end{figure}
+
+\subsection{Projecting the point cloud onto the image plane}
+\label{sec:projecting_the_point_cloud_onto_the_image_plane}
+To project the points onto the plain
