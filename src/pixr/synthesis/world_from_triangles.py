@@ -127,6 +127,45 @@ def generate_3d_scene_sample_test_triangles(z: float = 0, delta_z: float = 0.) -
     return wc_triangles, colors_nodes
 
 
+def generate_3d_scene_sample_test_alias(z: float = 0, delta_z: float = 0.) -> Tuple[torch.Tensor, torch.Tensor]:
+    step_x, step_y = (0.5, 5)
+    step_x = step_x + delta_z
+    wc_triangles = []
+    colors_nodes = []
+    offset_y = 0.
+    num_steps = 100
+    current_z = z
+    for i in range(num_steps):
+        # color = np.array(rainbow_color(i % 3))
+        # color = np.array([0.9, 0.9, 0.9]) if i % 2 == 0 else np.array([0., 0.5, 0.5])
+        color = np.array([0.9, 0.5, 0.5]) if i % 2 == 0 else np.array([0.5, 0.5, 0.9])
+        x_stair_start = (i-num_steps//2) * step_x/num_steps
+        x_stair_end = x_stair_start + step_x/num_steps
+        if True:
+            # Original step
+            wc_triangles.extend([
+                [
+                    [x_stair_start, -step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_start, step_y/2.+offset_y, current_z, 1.]
+                ],  # [::-1],
+                [
+                    [x_stair_end, -step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_end, step_y/2.+offset_y, current_z, 1.],
+                    [x_stair_start, step_y/2.+offset_y, current_z, 1.]
+                ]  # [::-1]
+            ])
+
+            for _ in range(2):  # Add the same color for the four triangles that form a step
+                colors_nodes.append([color, color, color])
+
+    wc_triangles = torch.Tensor(wc_triangles)
+    wc_triangles = wc_triangles.permute(0, 2, 1)  # Adjusting dimensions to match your format
+    colors_nodes = torch.Tensor(colors_nodes)
+
+    return wc_triangles, colors_nodes
+
+
 def generate_3d_staircase_scene(
     num_steps: int = 5,
     step_size: Tuple[float, float, float] = (0.5, 5, 0.5),

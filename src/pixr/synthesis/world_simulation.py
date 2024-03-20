@@ -1,15 +1,18 @@
 import torch
 from typing import Tuple
 from pixr.synthesis.world_from_triangles import (
-    generate_3d_scene_sample_test_triangles, generate_3d_staircase_scene, generate_rect
+    generate_3d_scene_sample_test_triangles, generate_3d_staircase_scene, generate_rect,
+    generate_3d_scene_sample_test_alias
 )
 
 from pixr.synthesis.world_from_mesh import generate_3d_scene_sample_from_mesh
 from pixr.properties import DEVICE
 TEST_RECT = "test_rect"
 TEST_TRIANGLES = "test_triangles"
+TEST_ALIASING = "test_aliasing"
 STAIRCASE = "staircase"
-ALL_SCENE_MODES = [TEST_RECT, TEST_TRIANGLES, STAIRCASE]
+
+ALL_SCENE_MODES = [TEST_RECT, TEST_TRIANGLES, TEST_ALIASING,  STAIRCASE]
 
 
 def generate_simulated_world(
@@ -23,6 +26,8 @@ def generate_simulated_world(
         wc_triangles, colors_nodes = generate_rect(z=z, delta_z=delta_z)
     elif scene_mode == TEST_TRIANGLES:
         wc_triangles, colors_nodes = generate_3d_scene_sample_test_triangles(z=z, delta_z=delta_z)
+    elif scene_mode == TEST_ALIASING:
+        wc_triangles, colors_nodes = generate_3d_scene_sample_test_alias(z=z, delta_z=delta_z)
     elif scene_mode == STAIRCASE:
         wc_triangles, colors_nodes = generate_3d_staircase_scene(num_steps=5, z=z, delta_z=delta_z)
     else:

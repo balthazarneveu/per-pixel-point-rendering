@@ -4,11 +4,11 @@ from pixr.camera.camera_geometry import set_camera_parameters, set_camera_parame
 from pixr.synthesis.extract_point_cloud import pick_point_cloud_from_triangles
 from pixr.rasterizer.rasterizer import shade_screen_space
 from pixr.rendering.splatting import splat_points, ms_splatting
-from pixr.synthesis.world_simulation import generate_simulated_world, TEST_RECT, TEST_TRIANGLES, STAIRCASE
+from pixr.synthesis.world_simulation import generate_simulated_world, ALL_SCENE_MODES, STAIRCASE
 from pixr.properties import MESH_PATH
 
 
-def define_default_sliders(orbit_mode=False, multiscale=None):
+def define_default_sliders(orbit_mode=False, multiscale=None, max_samples=10000, default_num_samples=100, default_scene=STAIRCASE):
     interactive(
         exposure=(1., [0., 5.]),
         gamma=(2.2, [1., 4.]),
@@ -33,13 +33,13 @@ def define_default_sliders(orbit_mode=False, multiscale=None):
         )(set_camera_parameters)
 
     interactive(
-        num_samples=(100, [100, 10000])
+        num_samples=(default_num_samples, [100, max_samples])
     )(pick_point_cloud_from_triangles)
     interactive(
         z=(0., [-10., 10.]),
         delta_z=(2., [-5., 5.]),
-        scene_mode=(STAIRCASE,
-                    [STAIRCASE, TEST_TRIANGLES, TEST_RECT] +
+        scene_mode=(default_scene,
+                    ALL_SCENE_MODES +
                     [pth.stem for pth in MESH_PATH.glob("*.obj")]),
         normalize=(False,),
     )(generate_simulated_world)
