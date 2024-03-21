@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{16}
+\begin{thebibliography}{19}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -66,6 +66,15 @@
 \showDOI{\tempurl}
 
 
+\bibitem[Ignatov et~al\mbox{.}(2020)]%
+        {ignatov2020replacing}
+\bibfield{author}{\bibinfo{person}{Andrey Ignatov}, \bibinfo{person}{Luc~Van Gool}, {and} \bibinfo{person}{Radu Timofte}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{Replacing Mobile Camera ISP with a Single Deep Learning Model}.
+\newblock
+\newblock
+\showeprint[arxiv]{2002.05509}~[cs.CV]
+
+
 \bibitem[Johnson et~al\mbox{.}(2016)]%
         {johnson2016perceptual}
 \bibfield{author}{\bibinfo{person}{Justin Johnson}, \bibinfo{person}{Alexandre Alahi}, {and} \bibinfo{person}{Li Fei-Fei}.} \bibinfo{year}{2016}\natexlab{}.
@@ -125,6 +134,15 @@
 \showeprint[arxiv]{2003.08934}~[cs.CV]
 
 
+\bibitem[Ronneberger et~al\mbox{.}(2015)]%
+        {ronneberger2015unet}
+\bibfield{author}{\bibinfo{person}{Olaf Ronneberger}, \bibinfo{person}{Philipp Fischer}, {and} \bibinfo{person}{Thomas Brox}.} \bibinfo{year}{2015}\natexlab{}.
+\newblock \bibinfo{title}{U-Net: Convolutional Networks for Biomedical Image Segmentation}.
+\newblock
+\newblock
+\showeprint[arxiv]{1505.04597}~[cs.CV]
+
+
 \bibitem[Rückert et~al\mbox{.}(2022)]%
         {ruckert2022adop}
 \bibfield{author}{\bibinfo{person}{Darius Rückert}, \bibinfo{person}{Linus Franke}, {and} \bibinfo{person}{Marc Stamminger}.} \bibinfo{year}{2022}\natexlab{}.
@@ -166,6 +184,15 @@
 \bibfield{author}{\bibinfo{person}{Markus Worchel}, \bibinfo{person}{Rodrigo Diaz}, \bibinfo{person}{Weiwen Hu}, \bibinfo{person}{Oliver Schreer}, \bibinfo{person}{Ingo Feldmann}, {and} \bibinfo{person}{Peter Eisert}.} \bibinfo{year}{2022}\natexlab{}.
 \newblock \showarticletitle{Multi-View Mesh Reconstruction with Neural Deferred Shading}. In \bibinfo{booktitle}{\emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}}.
 \newblock
+
+
+\bibitem[Yu et~al\mbox{.}(2019)]%
+        {yu2019freeform}
+\bibfield{author}{\bibinfo{person}{Jiahui Yu}, \bibinfo{person}{Zhe Lin}, \bibinfo{person}{Jimei Yang}, \bibinfo{person}{Xiaohui Shen}, \bibinfo{person}{Xin Lu}, {and} \bibinfo{person}{Thomas Huang}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{title}{Free-Form Image Inpainting with Gated Convolution}.
+\newblock
+\newblock
+\showeprint[arxiv]{1806.03589}~[cs.CV]
 
 
 \bibitem[Zhang(2000)]%
