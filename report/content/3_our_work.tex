@@ -6,17 +6,26 @@ I decided to code everything from scratch knowing since the start that I would a
 \begin{itemize}
     \item I used BlenderProc \cite{Denninger2023} to script and generate multiple synthetic scenes from the samples used in the NerF paper. All camera positions are known and share the same referential as my pytorch point renderer.
     \item A perfect point cloud is sampled at random from the mesh (through the .obj file).
-    \item A pytorch function allows to project the points onto the image plane and includes soft depth test and normal culling.
+    \item A few pytorch based function allows to project the points onto the image plane and include soft depth test and normal culling.
     \item A CNN is trained to predict the right dense color of the points in the image space.
 \end{itemize}
 
 Each element has been carefully tested by mostly visual tests.
+Below is the list of all simplifications that have been made compared to the original ADOP paper.
+\begin{itemize}
+    \item We assume linear RGB cameras without tone mappings.
+    \item We discard environment map (e.g. our background is black).
+    \item We generate photorealistic renders of synthetic meshes instead of using real photos. 
+    \item Camera poses are perfectly known.
+    \item Using meshes allows us sampling point clouds with normals without estimation errors such as the one we'd face with COLMAP.
+    \item We can easily control the number of points to be able to tests on limited capacity GPU.
+\end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{figures/data_prep_and_training.png}
-    \caption{Workflow: A python script allows preparing camera multiviews positions saved as \texttt{.json} files in order to render photorealistic views of a \texttt{.blend} or  \texttt{.obj} files which come from internet resources or test scenes generated in python.
-    The .obj and view .json files tie together the BlenderProc rendering and my Pytorch point rendering implementation: The point cloud is sampled from the mesh and the camera poses are known. A neural network is trained to predict colors of the points by trying to match the multiple photorealistic renderings of BlenderProc.}
+    \caption{Workflow: \href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/studies/photorealistic\_rendering.py}{\texttt{photorealistic\_rendering.py}} allows preparing camera multiviews positions saved as \texttt{.json} files in order to render photorealistic views of a \texttt{.blend} or  \texttt{.obj} files which come from internet resources or test scenes generated in python.
+    The .obj and view .json files tie together the BlenderProc rendering and my Pytorch point rendering implementation: The point cloud is sampled from the mesh and the camera poses are known. A neural network is trained using \href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/scripts/optimize\_point\_based\_neural\_renderer.py}{\texttt{optimize\_point\_based\_neural\_renderer.py}} to predict colors of the points by trying to match the multiple photorealistic renderings. CNN weights, pointcloud, normals and pseudo-colors are all saved along in a \texttt{.pt} file which later allows performing live novel view synthesis \href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/scripts/novel\_views\_interactive.py}{\texttt{novel\_views\_interactive.py}} based on the self developped \href{https://github.com/balthazarneveu/interactive\_pipe}{interactive\_pipe} library}.
     \label{fig:data_and_train}
 \end{figure}
 
@@ -110,17 +119,26 @@ Visible points's colors are copied into corresponding pixels on the 2D image. A 
 \begin{itemize}
     \item $(C1)$ The point must be inside the image frame $0\leq x<W$ and $0\leq y <H$.
     \item $(C2)$ The point must be in front of the camera ($Z>0$).
-    \item $(C3)$ The normal of the point must be facing the camera.
+    \item $(C3)$ The normal of the point must face the camera - see ~\cref{fig:normal_culling_validation}.
     \item $(C4)$ The point must not be occluded by another point.
 \end{itemize}
 
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/normal_culling_validation.png}
+    \caption{Validation of normal culling. We do not render points with normals pointing away from the camera.}
+    \label{fig:normal_culling_validation}
+\end{figure}
+
+
+
 \noindent \textbf{Soft depth test.} 
 That last condition requires some work:
-Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work \cite{schutz2021rendering} to average pixels in a tiny range of depths behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
+Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work \cite{schutz2021rendering} to average point colors in a tiny range of depths located behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/fuzzy_depth_test_aliasing_large.png}
+    \includegraphics[width=0.45\textwidth]{figures/fuzzy_depth_test_aliasing_large.png}
     \caption{Fuzzy depth test acts as an anti-aliasing filter. On this test scene, a point cloud made of 500.000 point located in the same plane with an alternate vertical red an blue stripes on . We use $\alpha=0$ on the top (hard depth test) and $\alpha=0.01$ on the bottom (soft depth test). On the right side, when using larger scales (lower resolutions), aliasing effect if naturally amplified.}
     \label{fig:fuzzy_depth_test_AA}
 \end{figure}

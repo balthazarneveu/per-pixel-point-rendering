@@ -1,18 +1,16 @@
 \section{Introduction}
 \label{sec:intro}
-The purpose of this report is a review of the paper ADOP: Approximate Differentiable One-Pixel Point Rendering by \citet{ruckert2022adop}. 
-Since the NERF paper published at ECCV 2020, there's been an incredible number of papers on neural rendering . Different approaches have been proposed with an underlying 3D data structure which allows rendering novel views of a scene. Neural radiance fields use a volumetric representation but other families of methods use a "proxy" such as a point clouds \cite{Aliev2020} or even meshes \cite{worchel2022nds}. \\
+The purpose of this report is a review of the paper ADOP: Approximate Differentiable One-Pixel Point Rendering by \citet{ruckert2022adop}.
+Novel view synthesis is an intense topic of research since Neural Radiance Fields (NERF \cite{mildenhall2020nerf}) showed that a neural network could model a complex radiance field and lead to impressive novel view synthesis using volumetric rendering. NERF jointly recovers geometry and object appearace without any prior knowledge on the geometry. 
+Other families of methods use a geometric "proxy" of the scene such as a point cloud \cite{Aliev2020} (or even meshes \cite{worchel2022nds}). \\
 Let's put things simply: Point based rendering leads to images filled with holes and at first sight does not really look like an appropriate data structure to render continuous surfaces of objects.
-We'll see how ADOP manages to use a point cloud structure jointly with an CNN (processing in the image space) to sample dense novel views of large real scenes.
-
-A re-implementation from scratch in Pytorch of some of the key elements of the paper has been made in order to understand the most important points of the ADOP paper. To simplify the study, it seemed like a good idea to work on calibrated synthetic scenes. This way, we can focus on trying to evaluate the relevance of point based rendering and avoid the difficulties inherent to working with real world scenes, most nottably:
+We'll see how ADOP:
 \begin{itemize}
-    \item We assume linear RGB cameras without tone mappings.
-    \item We discard environment map (e.g. our background is black).
-    \item We generate photorealistic renders of synthetic meshes. 
-    \item Camera poses are perfectly known.
-    \item Using meshes allows us sampling point clouds with normals without estimation errors such as the one we'd face with COLMAP.
-    \item We can easily control the number of points to be able to tests on limited capacity GPU.
+    \item manages to use a point cloud structure jointly with a CNN (processing in the image space) to sample dense novel views of large real scenes.
+    \item makes a special effort to try to model the camera pipeline to improve the quality of the rendered images.
+    \item does not inherently have an ability to model view dependent effects such as specularities or reflections.
 \end{itemize}
 
-\noindent Our code is available on ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering}{GitHub}.
+A re-implementation from scratch in Pytorch of some of the key elements of the paper has been made in order to understand the core aspects of the ADOP paper (which were already present in a previous paper named Neural Point Based Graphics \cite{Aliev2020}). To simplify the study, it seemed like a good idea to work on \textbf{calibrated synthetic scenes}. This way, I have been able to focus on trying to evaluate the relevance of point based rendering, see their limitations and avoid the difficulties inherent to working with real world scenes (large data and point cloud, imperfect).
+
+\noindent Finally, my code is fully available on ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering}{GitHub} and offers the possibility to generate novel views interactively.
