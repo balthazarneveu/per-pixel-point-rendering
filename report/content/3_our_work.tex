@@ -153,8 +153,9 @@ My first ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob
 \noindent \textbf{Second pass. Soft depth test and color aggregation}
 
 In the second pass  ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/colors\_aggregation.py}{rendering/colors\_aggregation.py}, we are now capable to apply the soft depth test as we have already computed the closest distance of the point cloud to the camera for each pixel. We'll modify the point index mapping $k[i]$ to only keep indices which satisfy the soft depth test: 
-$$ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$$.
-Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the invalid pixel and will be discarded.
+$$ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$$
+
+\noindent Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the invalid pixel and will be discarded.
 Finally, we average the colors of the points that satisfy the soft depth test, at each pixel location, using \texttt{torch.scatter\_reduce\_} operator with the \texttt{reduce=`mean`}. It is possible to keep a background
 
 \begin{figure*}[h]
@@ -175,3 +176,11 @@ ADOP \cite{ruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \
     \item Convolution operator is a gated convolution proposed in a 2019 NVidia paper dedicated to image inpainting \cite{yu2019freeform}. This operator requires knowing the mask (e.g. which pixels are valid).
     \item At each scale, the UNET encoder takes pseudo-colored renders of the point cloud. Note that, at low resolution (higher levels of the pyramid), many points end up being averaged in the same pixel as described in the soft depth test. We end up with thumbnails with not much holes which will intuitively simplify rendering (this is not equivalent to downsampling the full resolution images filled with holes). 
 \end{itemize}
+
+I started implementing a Vanilla architecture shown in ~\href{fig:decoders} to make sure I could improve the point cloud rendering right.architecture in the next section. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. We can see on the right side that I have added an auxiliary decoder at each scale to be able to add a multiscale supervision loss (not mentioned in the original ADOP paper).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/multiscale_decoders_only.png}
+    \caption{Vanilla architecture: Multiscale CNN with decoders only. }
+    \label{fig:decoders}
+\end{figure}
