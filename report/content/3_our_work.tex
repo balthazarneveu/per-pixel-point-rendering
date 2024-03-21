@@ -167,6 +167,25 @@ Finally, we average the colors of the points that satisfy the soft depth test, a
     \label{fig:soft_depth_test}
 \end{figure*}
 
+Since this rendering pipeline is fully differentiable with regard to the point cloud colors, we refer as the "bypass" mode a minimalistic training process: 
+\begin{itemize}
+    \item initialize the point cloud pseudo colors with random values.
+    \item at each scale, compute a linear combination (conv1x1) of the pseudo colors to get the RGB rendered colors.
+    \item the bias allows to fix a uniform background color.
+    \item minimize the MSE loss between the rendered image and the target image at all scales using the ADAM optimizer with a learning rate of $0.3$ for 100 epochs using a 55 views for training and 5 views for validation.
+\end{itemize} 
+
+This simple use case already revealed some issues that I couldn't properly render the \texttt{ficus} scene due to the double sided triangles issue. The \texttt{material balls} scene cannot be properly with the reflective materials.
+On the \texttt{old chair} scene we obtain a PSNR of 16.7dB and correct colors when visualizing reconstructions (see ~\href{fig:results_vanilla}) If we replace the 1x1 convolution by a 5x5 convolution to allow a bit of hole filling, we immediately see an improvement up to 21.2dB.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/vanilla_architectures.png}
+    \caption{Two validation novel views using various training options (including the "bypass" mode and vanilla multiscale decoders by stacking Conv5x5+Relu).}
+    \label{fig:results_vanilla}
+\end{figure}
+
+
 
 \subsubsection{Pixel rendering.}
 \label{sec:pixel rendering}
@@ -181,6 +200,6 @@ I started implementing a Vanilla architecture shown in ~\href{fig:decoders} to m
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/multiscale_decoders_only.png}
-    \caption{Vanilla architecture: Multiscale CNN with decoders only. }
+    \caption{Vanilla architecture: Multiscale CNN with decoders only.}
     \label{fig:decoders}
 \end{figure}
