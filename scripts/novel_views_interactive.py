@@ -105,8 +105,8 @@ def splat_pipeline_novel_view(wc_points, wc_normals, points_colors, model, scale
 def main_interactive_version(exp, training_dir):
     config = get_experiment_from_id(exp)
     model, optim = get_training_content(config, training_mode=False)
-    model_path = training_dir / f"__{exp:04d}" / "best_model.pt"
-    # model_path = training_dir / f"__{exp:04d}" / "last_model.pt"
+    # model_path = training_dir / f"__{exp:04d}" / "best_model.pt"
+    model_path = training_dir / f"__{exp:04d}" / "last_model.pt"
     # wc_points, wc_normals, color_pred = load_colored_point_cloud_from_files(splat_scene_path)
     model_state_dict, wc_points, wc_normals, color_pred = load_model(model_path)
     wc_points = wc_points.detach().to(DEVICE)

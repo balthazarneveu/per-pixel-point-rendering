@@ -3,7 +3,7 @@ import torch
 from pixr.learning.utils import prepare_dataset
 from config import RENDERED_DIR, TRAINING_DIR
 from pixr.properties import (SCENE, DEVICE, TRAIN, VALIDATION, METRIC_PSNR, LOSS, LOSS_MSE, NB_EPOCHS, LR,
-                             RATIO_TRAIN, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST
+                             RATIO_TRAIN, PSEUDO_COLOR_DIMENSION, NB_POINTS, SCALE_LIST, MULTISCALE_SUPERVISION
                              )
 from tqdm import tqdm
 from experiments_definition import get_experiment_from_id
@@ -19,6 +19,7 @@ from pixr.rendering.forward_project import project_3d_to_2d
 from shared_parser import get_shared_parser
 from typing import List
 from pixr.learning.utils import save_model
+from matplotlib import pyplot as plt
 
 
 def infer_function(point_cloud, cam_int, cam_ext, wc_normals, colors, w, h, scale=0, no_grad=False):
@@ -53,6 +54,7 @@ def training_loop(
 ):
     best_accuracy = 0
     scales_list = config[SCALE_LIST]
+    multiscale_supervision = config.get(MULTISCALE_SUPERVISION, True)
     model.to(device)
     for n_epoch in tqdm(range(config[NB_EPOCHS])):
         current_metrics = {
@@ -90,7 +92,7 @@ def training_loop(
 
                     img_target = [torch.nn.functional.avg_pool2d(
                         target_view, 2**sc) if sc > 0 else target_view for sc in scales_list]
-                    from matplotlib import pyplot as plt
+
                     # plt.imshow(img_target[0][0].permute(1, 2, 0).cpu().numpy())
                     # plt.show()
                     # plt.imshow(img_target[1][0].permute(1, 2, 0).cpu().numpy())
@@ -101,7 +103,8 @@ def training_loop(
                         per_scale_loss = compute_loss(image_pred[scale_idx], img_target[scale_idx],
                                                       mode=config.get(LOSS, LOSS_MSE))
                         # print(f"Loss at scale {scale} is {per_scale_loss}")
-                        loss += per_scale_loss
+                        if not multiscale_supervision and scale_idx == 0:
+                            loss += per_scale_loss
                         current_metrics[f"{phase}_MSE_{scale}"] += per_scale_loss.item()
                         # if phase == VALIDATION and n_epoch % 10 == 0:
                         if n_epoch % 20 == 0 and phase == VALIDATION:

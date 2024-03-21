@@ -1,7 +1,7 @@
 from pixr.properties import (NB_EPOCHS, TRAIN, VALIDATION, SCHEDULER, REDUCELRONPLATEAU,
                              MODEL, ARCHITECTURE, ID, NAME, SCHEDULER_CONFIGURATION, OPTIMIZER, PARAMS, LR,
                              LOSS, LOSS_MSE, DATALOADER, BATCH_SIZE, SCENE, NB_POINTS, SEED, PSEUDO_COLOR_DIMENSION,
-                             SCALE_LIST, RATIO_TRAIN)
+                             SCALE_LIST, RATIO_TRAIN, MULTISCALE_SUPERVISION)
 from pixr.synthesis.world_simulation import STAIRCASE
 from typing import List
 
@@ -65,7 +65,8 @@ def presets_experiments(
     k_size: int = 3,
     ratio_train: float = 0.8,
     depth: int = 2,
-    h_dim: int = 8
+    h_dim: int = 8,
+    ms_supervision: bool = True
 ) -> dict:
     config = {
         ID: exp,
@@ -85,6 +86,7 @@ def presets_experiments(
         },
 
     }
+    config[MULTISCALE_SUPERVISION] = ms_supervision
     config[RATIO_TRAIN] = ratio_train
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
     config[SCALE_LIST] = scale_list
@@ -230,10 +232,50 @@ def get_experiment_from_id(exp: int):
                                    nb_points=100000)
     elif exp == 56:
         conf = presets_experiments(exp, b=8, n=100, model_preset="Bypass",
-                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01, 
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01,
                                    k_size=1,
                                    ratio_train=0.98,
                                    nb_points=100000)
+    elif exp == 57:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="Bypass",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.3,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=100000)
+    elif exp == 58:  # 21.5db - 400k points!
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.3,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=400000)
+    elif exp == 59:  # 23dB - 400k points -> no MS supervision
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.3,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=400000,
+                                   ms_supervision=False)
+    elif exp == 60:  # 22.8 - 400k points + LR 0.01 -> no MS supervision
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.01,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=400000,
+                                   ms_supervision=False)
+    elif exp == 61:  # 25db - 800k points + LR 0.01 -> no MS supervision
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.01,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=800000,
+                                   ms_supervision=False)
+    elif exp == 62:  # 25db - 800k points + LR 0.01 -> no MS supervision
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.01,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=100000,
+                                   ms_supervision=False)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
     #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
