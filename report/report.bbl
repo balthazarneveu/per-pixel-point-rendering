@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{14}
+\begin{thebibliography}{16}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -44,6 +44,15 @@
 \newblock  (\bibinfo{year}{2020}).
 \newblock
 \showeprint[arxiv]{1906.08240v3}~[cs.CV]
+
+
+\bibitem[Brooks et~al\mbox{.}(2018)]%
+        {brooks2018unprocessing}
+\bibfield{author}{\bibinfo{person}{Tim Brooks}, \bibinfo{person}{Ben Mildenhall}, \bibinfo{person}{Tianfan Xue}, \bibinfo{person}{Jiawen Chen}, \bibinfo{person}{Dillon Sharlet}, {and} \bibinfo{person}{Jonathan~T. Barron}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{title}{Unprocessing Images for Learned Raw Denoising}.
+\newblock
+\newblock
+\showeprint[arxiv]{1811.11127}~[cs.CV]
 
 
 \bibitem[Denninger et~al\mbox{.}(2023)]%
@@ -97,6 +106,14 @@
 \newblock
 \newblock
 \showeprint[arxiv]{1803.04189}~[cs.CV]
+
+
+\bibitem[Mildenhall et~al\mbox{.}(2022)]%
+        {mildenhall2022rawnerf}
+\bibfield{author}{\bibinfo{person}{Ben Mildenhall}, \bibinfo{person}{Peter Hedman}, \bibinfo{person}{Ricardo Martin-Brualla}, \bibinfo{person}{Pratul~P. Srinivasan}, {and} \bibinfo{person}{Jonathan~T. Barron}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{{NeRF} in the Dark: High Dynamic Range View Synthesis from Noisy Raw Images}.
+\newblock \bibinfo{journal}{\emph{CVPR}} (\bibinfo{year}{2022}).
+\newblock
 
 
 \bibitem[Mildenhall et~al\mbox{.}(2020)]%
