@@ -17,8 +17,9 @@ Below is the list of all simplifications that have been made compared to the ori
     \item We discard environment map (e.g. our background is black).
     \item We generate photorealistic renders of synthetic meshes instead of using real photos. 
     \item Camera poses are perfectly known.
+    \item We do not refine the camera poses (no need to be approximately differentiable with regard to camera geometry parameters).
     \item Using meshes allows us sampling point clouds with normals without estimation errors such as the one we'd face with COLMAP.
-    \item We can easily control the number of points to be able to tests on limited capacity GPU.
+    \item We can easily control the number of points to be able to test on a limited capacity GPU with only 4Gb of RAM.
 \end{itemize}
 
 \begin{figure}[H]
@@ -28,16 +29,6 @@ Below is the list of all simplifications that have been made compared to the ori
     The .obj and view .json files tie together the BlenderProc rendering and my Pytorch point rendering implementation: The point cloud is sampled from the mesh and the camera poses are known. A neural network is trained using \href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/scripts/optimize\_point\_based\_neural\_renderer.py}{\texttt{optimize\_point\_based\_neural\_renderer.py}} to predict colors of the points by trying to match the multiple photorealistic renderings. CNN weights, pointcloud, normals and pseudo-colors are all saved along in a \texttt{.pt} file which later allows performing live novel view synthesis \href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/scripts/novel\_views\_interactive.py}{\texttt{novel\_views\_interactive.py}} based on the self developped \href{https://github.com/balthazarneveu/interactive\_pipe}{interactive\_pipe} library}.
     \label{fig:data_and_train}
 \end{figure}
-
-
-
-% TODO: FINISH SIMPLIFICATIONS
-% Assumptions for simplification compared to the original ADOP paper. 
-% % TODO: FINISH
-% \begin{itemize}
-%     \item 
-% \end{itemize}
-
 
 
 \subsection{Generating synthetic calibrated scenes}
@@ -64,7 +55,7 @@ It is first possible to generate a set of viewpoints configurations to orbit aro
     \label{fig:multiview}
 \end{figure}
 
-The environment map does not appear as a backround (although it is possible in the current code) as it would allow to simplify and remove one of the extra components of the ADOP paper (e.g. it allows rendering the point cloud without using the neural environment map trick).
+Using the environment map as a background has been disabled in BlenderProc as it allows to simplify and remove one of the extra components of the ADOP paper (e.g. it allows rendering the point cloud without using the neural environment map trick and we use black uniform color instead).
 
 We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. We build the extrinsic camera matrix from the 3 angles and use a pinhole camera model to project 3D points onto the image plane as we'll see in ~\cref{sec:projecting_the_point_cloud_onto_the_image_plane}. There's a perfect equivalence between the camera parameters used in Blender and the ones used in my Pytorch renderer.
 
@@ -170,3 +161,8 @@ Finally, we average the colors of the points that satisfy the soft depth test, a
    For instance, point 4 is considered too far away and discared e.g. $k[4]=0$. \\Finally, colors are averaged $I_{u, v} \propto \sum_{j \texttt{ s.t  } k'[j]=1+u.W+v}{I(j)}$. For instance $I_{(u, v)} = \frac{I(0) + I(5) + I(6)}{3}$ and $I_{(u', v')} = I(7)$.}
     \label{fig:soft_depth_test}
 \end{figure*}
+
+
+\subsubsection{Pixel rendering.}
+\label{sec:pixel rendering}
+The last operation is to render the final pixel colors.

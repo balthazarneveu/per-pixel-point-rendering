@@ -38,32 +38,25 @@ Please refer to ~\cref*{fig:ISP}
     \label{fig:ISP}
 \end{figure*}
 
-Ablation study from the authors (table 3 and figure 6 of \cite{ruckert2022adop}) shows that ADOP results get better when including the camera module in the pipeline. problem is that we don't really know the exact impact of compensating the camera photo pipeline on the final result, at least compared to a scene imaged with perfect ideal linear HDR camera. 
+Ablation study from the authors (table 3 and figure 6 of \cite{ruckert2022adop}) shows that ADOP results get better when including the camera module in the pipeline. problem is that we don't really know the exact impact of compensating the camera photo pipeline on the final result, at least compared to a scene imaged with perfect ideal linear HDR camera.
 
-If we carefully look at the Tanks and Temples dataset \cite{Knapitsch2017TanksAndTemples}, pictures are frames extracted from a mp4 video from 2 different high end cameras, sometimes using auto-exposure. Although it's a good initiative for researchers to keep on using fixed established benchmarks, Tanks and Temples was initially designed for 3D reconstructions (e.g. evaluate performances of Structure from motion like COLMAP estimation compared to a groundtruth lidar captured point cloud) rather than novel view synthesis. The idea is interesting but it will most probably fail with a modern smartphone camera which use local tone mappers and sometimes adapt colors locally. For instance, they're able to get a sky with cyan shift which looks like the camera picture (they fit the tone mapper correctly). Modern smartphone ISPs manufacturers have worked on this "cyan cast" problem (compress blue highlights instead of clipping when applying white balance) so compensating these algorithms will become harder and harder as they get more and more sophisticated.
+If we carefully look at the Tanks and Temples dataset \cite{Knapitsch2017TanksAndTemples}, pictures are frames extracted from a mp4 video from 2 different high end cameras, sometimes using auto-exposure (see ~\href{fig:tank_and_temples}). Although it's a good initiative for researchers to keep on using fixed established benchmarks, Tanks and Temples was initially designed for 3D reconstructions (e.g. evaluate performances of Structure from motion like COLMAP estimation compared to a groundtruth lidar captured point cloud) rather than novel view synthesis. The idea is interesting but it will most probably fail with a modern smartphone camera which use local tone mappers and sometimes adapt colors locally. For instance, they're able to get a sky with cyan shift which looks like the camera picture (they fit the tone mapper correctly). Modern smartphone ISPs manufacturers have worked on this "cyan cast" problem (compress blue highlights instead of clipping when applying white balance) so compensating these algorithms will become harder and harder as they get more and more sophisticated.
 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/tanks_and_temples.png}
-    \caption{Information on the scenes captured for the Tanks and Temples dataset with high end video cameras in addition to a Lidar point cloud. On the left, the "train" scene shows clear signs of overexposure. The playground scene on the right has an overall correct and steady exposure}
+    \caption{Information on the scenes captured for the Tanks and Temples dataset with high end video cameras in addition to a Lidar point cloud. On the left, the "train" scene shows clear signs of overexposure. The playground scene on the right has an overall correct and steady exposure.}
     \label{fig:tank_and_temples}
 \end{figure}
 
 
-\noindent Regarding my simplified implementation, I did not try to include the camera pipeline module not only because of limited time but also because simulating a realistic camera pipeline is a very difficult task.
-For calibrated scenes, to mimick a realistic camera pipeline, one would have to:
-\begin{itemize}
-    \item output HDR linear images out of Blender (\textit{BlenderProc does not even offer EXR outputs at the moment}).
-    \item mimick RAW files: inverse the blue "linear" blocks of figure ~\cref*{fig:ISP}. The idea of reversing the ISP has been proposed in \cite{brooks2018unprocessing}: apply inverse white balance and color matrices from typical values, mosaick, add realistic poisson+gaussian noise depending on sensor characteristics and ISO value...
-    \item Mimick the ISP which goes from 12bit linear RAW bayer data to a 8 bit jpg (which is an extremely difficult task).
-\end{itemize}
-This is definitely \textbf{not a simplification} and I'll come to the conclusion that generally speaking, performing all evaluations in the linear domain is the best way to go and that novel view synthesis benchmarking would strongly benefit from an "upgrade":a sort of Linear Tanks and Temples carefully crafted by taking RAW shots with a high end DSLR.
+My recommendation is that all evaluations better be led in the linear domain. It is the best way to go make fair comparisons between novel view synthesis algorithms. Benchmarking would strongly benefit from an "upgrade":a sort of \textit{"Linear Tanks and Temples"} carefully crafted by taking RAW shots with a high end DSLR. This is proposed next.
 
 \noindent \textbf{Switching to RAW format?} 
 One of the potential way of creating a new benchmark would be to capture the scenes with a DSLR (like a full frame sensor) shot both in RAW and jpg (usually available on most cameras). RAW files would be post-processed by Adobe LightRoom or DxO Photolab with a neutral rendering: no tone mapping and neutral color rendering to get a Linear RGB set of images without any image compression. In case the sensor 12 or 14bits dynamic range is not sufficient, HDR captures could be achieved by bracketing. Intuitively, it sounds natural to use a tripod and merge the LDR linear images into a HDR linear image. But even handheld, all raw captures at various exposures could be used (let the alignment of bracketing images be implicitly done without any explicit need to merge exposures). These HDR images may serve as the ground truth for validation.
 
-The main caveat of using RAW images is that there'll always be noise present proper to the camera sensor in the raw files. Since you get multiple views of the same scene, we can use the key concept proposed in Noise2Noise \cite{lehtinen2018noise2noise} that a neural network can be trained to denoise images without a ground truth images (it requires noisy burst of the same image instead). Here we have access to the same scene under different angles. The engine to implicity align them and get the right supervision is the rendering of the point cloud itself! The idea of using NERF to work on RAW data has been proposed in "NERFs in the dark" \cite{mildenhall2022rawnerf}.
+The main caveat of using RAW images is that there'll always be \textbf{noise} present proper to the camera sensor in the raw files. Since you get multiple views of the same scene, we can use the key concept proposed in Noise2Noise \cite{lehtinen2018noise2noise} that a neural network can be trained to denoise images without a ground truth images (it requires noisy burst of the same image instead). Here we have access to the same scene under different angles. The engine to implicity align them and get the right supervision is the rendering of the point cloud itself! The idea of using NERF to work on RAW data has been proposed in "NERFs in the dark" \cite{mildenhall2022rawnerf}.
 
 
 RGB (raw demosaicked) linear format is the only space in which an evaluation of the rendering quality does not depend on the camera ISP.
@@ -75,3 +68,13 @@ If one would really like to check the effect Training images could be either the
 \subsection{Improvement ideas}
 \label{subsec:improvement_ideas}
 A lot of my implementation work has been based on applying the ADOP paper to synthetic scenes.
+
+\subsubsection*{Calibrated scenes + realistic simulated camera pipeline}.
+\noindent Regarding my simplified implementation, I did not try to include the camera pipeline module not only because of limited time but also because simulating a realistic camera pipeline is a very difficult task.
+For calibrated scenes, to mimick a realistic camera pipeline, one would have to:
+\begin{itemize}
+    \item output HDR linear images out of Blender (\textit{BlenderProc does not even offer EXR outputs at the moment}).
+    \item mimick RAW files: inverse the "blue linear" blocks of figure ~\cref*{fig:ISP}. The idea of reversing the ISP has been proposed in \cite{brooks2018unprocessing}: apply inverse white balance and color matrices from typical values, mosaick, add realistic poisson+gaussian noise depending on sensor characteristics and ISO value...
+    \item Mimick the ISP which goes from 12/14bits linear RAW bayer data to a 8 bit jpg (which is a difficult task). One could simply use a high end software raw converter by re-introducing a DNG as input to Darktable (open source) or Adobe LightRoom. Another way is to use a deep neural network proxy of a blackbox ISP (see the work \cite{ignatov2020replacing} which mimicks the Huawei P20 ISP)
+\end{itemize}
+This is definitely \textbf{not a simple task} but it would bring a lot of value if one wants to try to make a commercial product for novel view synthesis which can adapt to all sorts of cameras. 
