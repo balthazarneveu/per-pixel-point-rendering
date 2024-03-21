@@ -88,7 +88,6 @@ def presets_experiments(
     config[RATIO_TRAIN] = ratio_train
     config[PSEUDO_COLOR_DIMENSION] = pseudo_color_dimension
     config[SCALE_LIST] = scale_list
-    k_size: int = 3
     model_configurations(config, model_preset=model_preset, k_size=k_size, depth=depth, h_dim=h_dim)
     config[SCHEDULER] = REDUCELRONPLATEAU
     config[SCHEDULER_CONFIGURATION] = {
@@ -228,6 +227,12 @@ def get_experiment_from_id(exp: int):
         conf = presets_experiments(exp, b=8, n=600, model_preset="StackedConvolutions",
                                    scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
                                    depth=4, h_dim=8,
+                                   nb_points=100000)
+    elif exp == 56:
+        conf = presets_experiments(exp, b=8, n=100, model_preset="Bypass",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.01, 
+                                   k_size=1,
+                                   ratio_train=0.98,
                                    nb_points=100000)
     # if exp == 0:
     #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
