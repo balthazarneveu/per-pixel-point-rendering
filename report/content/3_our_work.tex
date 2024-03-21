@@ -7,16 +7,27 @@ I decided to code everything from scratch knowing since the start that I would a
     \item I used BlenderProc \cite{Denninger2023} to script and generate multiple synthetic scenes from the samples used in the NerF paper. All camera positions are known and share the same referential as my pytorch point renderer.
     \item A perfect point cloud is sampled at random from the mesh (through the .obj file).
     \item A pytorch function allows to project the points onto the image plane and includes soft depth test and normal culling.
+    \item A CNN is trained to predict the right dense color of the points in the image space.
 \end{itemize}
 
 Each element has been carefully tested by mostly visual tests.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/data_prep_and_training.png}
+    \caption{Workflow: A python script allows preparing camera multiviews positions saved as \texttt{.json} files in order to render photorealistic views of a \texttt{.blend} or  \texttt{.obj} files which come from internet resources or test scenes generated in python.
+    The .obj and view .json files tie together the BlenderProc rendering and my Pytorch point rendering implementation: The point cloud is sampled from the mesh and the camera poses are known. A neural network is trained to predict colors of the points by trying to match the multiple photorealistic renderings of BlenderProc.}
+    \label{fig:data_and_train}
+\end{figure}
 
-Assumptions for simplification compared to the original ADOP paper. 
-% TODO: FINISH
-\begin{itemize}
-    \item 
-\end{itemize}
+
+
+% TODO: FINISH SIMPLIFICATIONS
+% Assumptions for simplification compared to the original ADOP paper. 
+% % TODO: FINISH
+% \begin{itemize}
+%     \item 
+% \end{itemize}
 
 
 
