@@ -77,7 +77,7 @@ Disabling the environment map as a background in Blender allows to remove one of
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\textwidth]{figures/pinhole_camera_with_angles.png}
-    \caption{Pinhole camera model. The $j^\text{th}$ point of the 3D point cloud, located at $\vec{P_{\textrm{3D}}}^{(j)}$ expressed in world coordinates is projected onto the sensor plane for view $i$ at position $\vec{p_{\textrm{2D}}}^{(i,j)}$ expressed as pixel coordinates, rounded to the 2D nearest integer coordinates $(u,v)$}
+    \caption{Pinhole camera model. The $j^\text{th}$ point of the 3D point cloud, located at $\vec{P_{\textrm{3D}}}^{(j)}$ expressed in world coordinates is projected onto the sensor plane ($i^\text{th}$  viewpoint) at position $\vec{p_{\textrm{2D}}}^{(i,j)}$ expressed as pixel coordinates, rounded to the 2D nearest integer coordinates $(u,v)$}
     \label{fig:pinhole_camera}
 \end{figure}
 
@@ -95,9 +95,7 @@ where
     \item $\vec{p_{\textrm{2D}}}^{(i,j)} \in \mathbb{R}^{3}$ are the homogeneous 2D coordinates of point $j$ projected in the sensor frame $i$ (pixel coordinates).
 \end{itemize}
 
-This operation is performed in ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/forward_project.py}{\texttt{forward\_project.py}} in parallel over all points $j$ , using \texttt{torch.matmul} operation
-
-\noindent \textit{Points coordinates could probably be projected all at once for all camera views using \texttt{torch.bmm}.}
+This operation is performed in ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/forward_project.py}{\texttt{forward\_project.py}} in parallel over all points $j$ , using \texttt{torch.matmul} operation. \footnote{Points coordinates could probably be projected all at once for all camera views using \texttt{torch.bmm} or \texttt{torch.einsum}.}
 
 
 \noindent \textbf{Multiscale.} Pseudocolored projected point cloud will be rendered at multiple scales. For a given scale $l \in \{0, 1, 2, 3\}$, 
@@ -105,6 +103,7 @@ $(u,v)^{(l)}$ are the rounded coordinates version of $\frac{\vec{p_{\textrm{2D}}
 
 \subsubsection{Scatter operation.}
 \label{sec:scatter_op}
+
 
 Visible points's colors are copied into corresponding pixels on the 2D image. A point only leads to a single pixel color update by taking the nearest pixel coordinate of $\lceil\vec{p_{\textrm{2D}}}^{(j)}\rfloor$. There are conditions to satisfy for each point to be valid. 
 \begin{itemize}
@@ -122,10 +121,10 @@ Visible points's colors are copied into corresponding pixels on the 2D image. A 
 \end{figure}
 
 
-
+\pagebreak
 \noindent \textbf{Soft depth test.} 
-That last condition requires some work:
-Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing as several pixels may be located on the same suface. The authors rely on previous work \cite{schutz2021rendering} to average point colors in a tiny range of depths located behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
+That last condition $(C4)$ requires some work:
+Using a Z-buffer, it is possible to take the closest point to the camera. Since several points may fall into the same pixel cell, there will be aliasing (see ~\cref{fig:fuzzy_depth_test_AA}) as several pixels may be located on the same suface. The authors rely on previous work \cite{schutz2021rendering} to average point colors in a tiny range of depths located behind the closest point. This is called a soft depth test and we'll describe this part in details as it required a tricky implementation with Pytorch.
 
 \begin{figure}[H]
     \centering
@@ -134,11 +133,11 @@ Using a Z-buffer, it is possible to take the closest point to the camera. Since 
     \label{fig:fuzzy_depth_test_AA}
 \end{figure}
 
-Soft depth test $Z \leq (1 + \alpha) * \textrm{min}_{Z_{j}}$ requires two passes. First compute the closest point to the camera for each pixel. Then, for each pixel, average the colors of the points that are close enough to the closest point. As we'll perform the first pass, we'll keep track of conditions $(C1)$, $(C2)$ and $(C3)$ to avoid recomputing them during the second pass.
+\noindent Soft depth test $Z \leq (1 + \alpha) * \textrm{min}_{Z_{j}}$ requires two passes. First compute the closest point to the camera for each pixel. Then, for each pixel, average the colors of the points that are close enough to the closest point. As we'll perform the first pass, we'll keep track of conditions $(C1)$, $(C2)$ and $(C3)$ to avoid recomputing them during the second pass.
 
 \noindent \textbf{First pass: Hard depth test.}
 
-\noindent ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/zbuffer\_pass.py#L5}{\texttt{zbuffer\_pass.py}} is the first pass. It allows to find the closest point to the camera for each pixel. Depth values are initialized at $\inf$ and will remain $\inf$ when a pixel has not been filled. A first implementation trick is for each point of index $j$ to keep a linear index $k$ of its coordinate position in the image $k[j] = 1+ u*W+v$ if the point is valid regarding conditions $(C1)$, $(C2)$ and $(C3)$ and set this index to $k[j]=0$ otherwise. This allows to avoid recomputing the same test conditions during the second pass.
+\noindent ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/zbuffer\_pass.py#L5}{\texttt{zbuffer\_pass.py}} is the first pass. It allows to find the closest point to the camera for each pixel. Depth values are initialized at $\infty$ and will remain $\infty$ when a pixel has not been filled. A first implementation trick is for each point of index $j$ to keep a linear index $k$ of its coordinate position in the image $k[j] = 1+ u*W+v$ if the point is valid regarding conditions $(C1)$, $(C2)$ and $(C3)$ and set this index to $k[j]=0$ otherwise. This allows to avoid recomputing the same test conditions during the second pass.
 
 We then obtain the closest depth image for each pixel. $\forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$:
 $$Z^{\texttt{min}}_{(u,v)} = min_{\left\{j  \text{ s.t. } k[j]=1+u*W+v\right\}} \left(Z[j]\right)$$
