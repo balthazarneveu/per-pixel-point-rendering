@@ -15,13 +15,13 @@ In section ~\ref{subsec:improvement_ideas}, I will discuss some improvement idea
 \subsection{Limitation: Benchmarking only on real scenes}
 \label{subsec:limits_real_scenes}
 \noindent \textbf{Focusing only on real scenes.}
-Suprisingly, the authors do not mention any attempts to apply their method to synthetic scenes, like the NERF paper initially did and they mention that training a new scene requires a large amount of compute. This could mean they developped their method progressively on a few toy examples and didn't bother releasing results of these tiny examples. Or their method may simply not perform too well on synthetic scenes... which may include a lot of specular materials. Classical NERF test samples scenes usually contain a lot of specular materials where the rendering would most probably fail. I still think it would be beneficial to have a few synthetic scenes to test on including to make quick tests without the need of A100 40Gb trained for several hours.
-On the other hand, since the main method's contribution are refining pose estimation (requiring the approximate differentiable aspect of the renderer) and the camera photo simulator, it's not surprising that they'd work on natural photos rather than simulation. 
+Suprisingly, the authors do not mention any attempts to apply their method to synthetic scenes, like the NERF paper initially did and they mention that training a new scene requires a large amount of compute. This could mean they developped their method progressively on a few toy examples and didn't bother releasing results of these tiny examples. Or their method may simply not perform too well on synthetic scenes... which may include a lot of specular materials \footnote{Classical NERF test samples scenes usually contain a lot of specular materials where the rendering would most probably fail}. I still think it would be beneficial to have a few synthetic scenes to test on including to make quick tests without the need of A100 40Gb trained for several hours.
+On the other hand, since the main contribution are refining pose estimation (requiring the approximate differentiable aspect of the renderer), handling large scenes and their camera simulator, it's not surprising that the authors showcase their work on natural photos rather than simulation. 
 
 \noindent \textbf{Camera pipeline module.}
 The attempt of the authors to model the camera pipeline comes from a good intention. By including the camera pipeline as part of their rendering, they are able to: 
 \begin{itemize}
-    \item work in a linear color space where... performing additions or convolutions is equivalent to the real world.
+    \item work in a linear color space where... performing additions or convolutions is physically grounded.
     \item compensate exposure and colors shifts per scene.
     \item get a better accuracy on the Tanks and Temple benchmark which has a lot of exposure changes.
 \end{itemize}.

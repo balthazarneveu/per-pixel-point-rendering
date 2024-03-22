@@ -192,12 +192,14 @@ On the \texttt{old chair} scene we obtain a validation PSNR of 16.7dB and releva
 
 \subsection{Neural pixel rendering.}
 \label{sec:pixel rendering}
+\subsubsection{UNET.}
+\label{sec:UNET}
 The last operation is to render the final pixel colors by decoding the pseudo color images.
 ADOP \cite{Aruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \cite{ronneberger2015unet} which is a widely used multi-scale image processing architecture. Two modifications are made to the UNET architecture:
-\begin{itemize}
-    \item Convolution operator is a gated convolution proposed in a 2019 NVidia paper dedicated to image inpainting \cite{yu2019freeform}. This operator requires knowing the mask (e.g. which pixels are valid).
-    \item At each scale, the UNET encoder takes pseudo-colored renders of the point cloud. Note that, at low resolution (higher levels of the pyramid), many points end up being averaged in the same pixel as described in the soft depth test. We end up with thumbnails with not much holes which will intuitively simplify rendering (this is not equivalent to downsampling the full resolution images filled with holes). 
-\end{itemize}
+
+\noindent - Convolution operator is a gated convolution proposed in a 2019 NVidia paper dedicated to image inpainting \cite{yu2019freeform}. This operator requires knowing the mask (e.g. which pixels are valid).
+
+\noindent - At each scale, the UNET encoder takes pseudo-colored renders of the point cloud. Note that, at low resolution (higher levels of the pyramid), many points end up being averaged in the same pixel as described in the soft depth test. We end up with thumbnails with not much holes which will intuitively simplify rendering (this is not equivalent to downsampling the full resolution images filled with holes). 
 
 
 \subsubsection{Vanilla networks.}
@@ -210,7 +212,7 @@ I started implementing a Vanilla architecture shown in ~\cref{fig:decoders} to m
     \label{fig:decoders}
 \end{figure}
 
-We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene in ~\cref{tab:results}. By using the CNN rendering on a point cloud of 100.000 points, we're able to "fill the holes" and achieve a better PSNR than the bypass mode with 800.000 points. Qualitively, ~\cref{fig:results_vanilla}, shows blurry results when using the Vanilla architecture. More work is needed to improve the results and implement the UNET architecture with the right parameters.
+\noindent We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene in ~\cref{tab:results}. By using the CNN rendering on a point cloud of 100.000 points, we're able to "fill the holes" and achieve a better PSNR than the bypass mode with 800.000 points. Qualitively, ~\cref{fig:results_vanilla}, shows blurry results when using the Vanilla architecture despite better PSNR. More work is needed to improve the results and implement the UNET architecture with the right parameters.
 
 \noindent \textit{Please note that all trainings were performed on a laptop with a Nvidia T500 GPU with only 4Gb of RAM. We decrease the batch size to 8 images when increasing the size of the architecture}.
 
