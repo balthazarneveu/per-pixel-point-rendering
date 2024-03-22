@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{20}
+\begin{thebibliography}{21}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -90,6 +90,18 @@
 \newblock \showarticletitle{Digital video stabilization and rolling shutter correction using gyroscopes}.
 \newblock \bibinfo{journal}{\emph{CSTR}} \bibinfo{volume}{1}, \bibinfo{number}{2} (\bibinfo{year}{2011}), \bibinfo{pages}{13}.
 \newblock
+
+
+\bibitem[Kerbl et~al\mbox{.}(2023)]%
+        {kerbl3Dgaussians}
+\bibfield{author}{\bibinfo{person}{Bernhard Kerbl}, \bibinfo{person}{Georgios Kopanas}, \bibinfo{person}{Thomas Leimk{\"u}hler}, {and} \bibinfo{person}{George Drettakis}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{3D Gaussian Splatting for Real-Time Radiance Field Rendering}.
+\newblock
+\newblock
+\urldef\tempurl%
+\url{https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/}
+\showURL{%
+\tempurl}
 
 
 \bibitem[Knapitsch et~al\mbox{.}(2017)]%

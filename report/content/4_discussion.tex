@@ -1,16 +1,16 @@
 \section{Discussion on the original paper}
 \label{sec:discussion}
 ADOP\cite{ruckert2022adop} is overall an excellent paper. It does not bring so much novel ideas but makes a considerable engineering effort to apply the core idea of NPBG \cite{Aliev2020} to large real scenes.
-We'll discuss two main limitations of the paper in the next section.\\
+We'll discuss a point of criticism in the next section.\\
 \noindent \textbf{~\ref{subsec:limits_real_scenes}{: Real scenes $\approx$ biased evaluation}}. Evaluation on real scenes from the Tanks and Temple dataset \cite{Knapitsch2017TanksAndTemples} mixes two things:
 \begin{itemize}
     \item the inherent neural rendering method (point based rendering) quality assesment.
     \item all improvements made by taking into account the camera pipeline.
 \end{itemize}
 Despite ablation studies to see the effect taking the camera photo pipline into account, the comparison to other methods is unfair and I'll propose a few ideas for a new benchmark to evaluate neural rendering quality in a more controlled environment for research purpose.\\
-\noindent \textbf{~\ref{subsec:view_dependant_materials}{ : Inherent limitations to model view dependant material appearance}}. By construction, the ADOP pipeline does not have the ability to model view dependent effects such as specularities or reflections.
+In section ~\ref{subsec:improvement_ideas}, I will discuss some improvement ideas I had while working on the re-implementation of the ADOP paper.
 
-Finally, in section ~\ref{subsec:improvement_ideas}, I will discuss some improvement ideas I had while working on the re-implementation of the ADOP paper.
+
 
 \subsection{Limitation: Benchmarking only on real scenes}
 \label{subsec:limits_real_scenes}
@@ -62,8 +62,7 @@ The main caveat of using RAW images is that there'll always be \textbf{noise} pr
 RGB (raw demosaicked) linear format is the only space in which an evaluation of the rendering quality does not depend on the camera ISP.
 If one would really like to check the effect Training images could be either the jpgs or the reprocessed RAW files using a more scenic rendering: vibrancy to make some colors slightly more saturated (e.g. blue for skies but avoid saturating red too much for skin tones), tone mapping (global or local), sharpening / micro contrast.
 
-\subsection{Inherent limitations to model view dependant material appearance}
-\label{subsec:view_dependant_materials}
+
 
 \subsection{Improvement ideas}
 \label{subsec:improvement_ideas}
@@ -82,6 +81,10 @@ This is definitely \textbf{a large chunk of work} but it could bring a lot of va
 \subsubsection*{Pseudo colors intialization}.
 Instead of initializing the pseudo colors of each point randomly, a trick could be to pre-train an auto-encoder on the reference images. For each point in the point cloud projected onto a given view, we have a target patch in the reference view. This patch could simply be encoded into a latent vector which could be aggreagated in the pseudo-color vector. Pushing the idea further, the pretrained decoder (from the auto-encoder) coud be used as the decoder in the neural rendering network. Here's the intuition: the neural render encoder is the identity, this is kind of equivalent to copy pasting the decoded patches at the right locations.
 
-\subsubsection*{View dependent materials}.
-We could provide extra inputs to the neural network to model view dependent materials. By providing the angle between the point normal and the view direction (these 2 vectors are computed during the normal culling test). These 2 angles could be concatenated to the projected pseudo colors vectors (and we'd probalby need to map these to sine positional embeddings as proposed in NERF  \cite{mildenhall2020nerf}). 
-\textit{I eventually found out about NPBG++ \cite{rakhimov2022npbg} where the authors propose to fit the coefficients of spherical harmonics function .}
+
+\subsubsection*{Inherent limitations to model view dependant material appearance}.
+By construction, the ADOP pipeline does not have a natural ability to model view dependent effects such as specularities or reflections. We have observed this in ~\cref{fig:material_changes} and there's no  
+We could provide extra inputs to the neural network to model view dependent materials. By providing the angle between the point normal and the view direction (these 2 vectors are computed during the normal culling test). These 2 angles could be concatenated to the projected pseudo colors vectors (and we'd probably need to map these to sine positional embeddings as proposed in NERF  \cite{mildenhall2020nerf}). \textit{I eventually found out about NPBG++ \cite{rakhimov2022npbg}}. The authors of NPBG++ propose to fit the coefficients of spherical harmonics function which model color variation of each point with regard to relative camera operation.
+
+\subsubsection*{Limitation when zooming too much}.
+The inherent limitation of point appears when you zoom in too close. A continuous parametric representation \cite{kerbl3Dgaussians} such as an anisotropic 2D Gaussian Kernel would allow mixing the advantage of point clouds (scale and speed) while trying to remove their discrete nature... 
