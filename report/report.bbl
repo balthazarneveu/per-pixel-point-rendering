@@ -165,7 +165,7 @@
 
 
 \bibitem[Rückert et~al\mbox{.}(2022)]%
-        {ruckert2022adop}
+        {Aruckert2022adop}
 \bibfield{author}{\bibinfo{person}{Darius Rückert}, \bibinfo{person}{Linus Franke}, {and} \bibinfo{person}{Marc Stamminger}.} \bibinfo{year}{2022}\natexlab{}.
 \newblock \showarticletitle{ADOP: Approximate Differentiable One-Pixel Point Rendering}.
 \newblock  (\bibinfo{year}{2022}).

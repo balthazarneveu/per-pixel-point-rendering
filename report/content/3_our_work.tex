@@ -208,7 +208,7 @@ It is not trivial to find a scene with lighting and materials which do not exhib
 \subsubsection{Pixel rendering.}
 \label{sec:pixel rendering}
 The last operation is to render the final pixel colors by decoding the pseudo color images.
-ADOP \cite{ruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \cite{ronneberger2015unet} which is a widely used multi-scale image processing architecture. Two modifications are made to the UNET architecture:
+ADOP \cite{Aruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \cite{ronneberger2015unet} which is a widely used multi-scale image processing architecture. Two modifications are made to the UNET architecture:
 \begin{itemize}
     \item Convolution operator is a gated convolution proposed in a 2019 NVidia paper dedicated to image inpainting \cite{yu2019freeform}. This operator requires knowing the mask (e.g. which pixels are valid).
     \item At each scale, the UNET encoder takes pseudo-colored renders of the point cloud. Note that, at low resolution (higher levels of the pyramid), many points end up being averaged in the same pixel as described in the soft depth test. We end up with thumbnails with not much holes which will intuitively simplify rendering (this is not equivalent to downsampling the full resolution images filled with holes). 
