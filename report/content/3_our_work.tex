@@ -1,26 +1,34 @@
 \section{Reimplementation Strategy}
 \label{sec:remplementation}
 
-The main purpose of my implementation work was to be able to code by myself some of the core ideas of the ADOP differentiable point based neural renderer.
-I decided to code everything from scratch knowing since the start that I would at no point be able to fully reproduce the results from the authors but I learnt a large amount of things by doing so.
-\begin{itemize}
-    \item I used BlenderProc \cite{Denninger2023} to script and generate multiple synthetic scenes from the samples used in the NerF paper. All camera positions are known and share the same referential as my pytorch point renderer.
-    \item A perfect point cloud is sampled at random from the mesh (through the .obj file).
-    \item A few pytorch based function allows to project the points onto the image plane and include soft depth test and normal culling.
-    \item A CNN is trained to predict the right dense color of the points in the image space.
-\end{itemize}
+My goal was to be able to train a minimalistic version of ADOP's differentiable point based neural renderer on calibrated scenes (to avoid the burden of large real scenes) \footnote{I decided to code everything from scratch knowing since the start that I would at no point be able to fully reproduce the results from the authors but I learnt a large amount of things by doing so.}. 
 
-Each element has been carefully tested by mostly visual tests.
-Below is the list of all simplifications that have been made compared to the original ADOP paper.
-\begin{itemize}
-    \item We assume linear RGB cameras without tone mappings.
-    \item We discard environment map (e.g. our background is black).
-    \item We generate photorealistic renders of synthetic meshes instead of using real photos. 
-    \item Camera poses are perfectly known.
-    \item We do not refine the camera poses (no need to be approximately differentiable with regard to camera geometry parameters).
-    \item Using meshes allows us sampling point clouds with normals without estimation errors such as the one we'd face with COLMAP.
-    \item We can easily control the number of points to be able to test on a limited capacity GPU with only 4Gb of RAM.
-\end{itemize}
+\noindent \textbf{Simplifications.} Below is the list of all simplifications that have been made compared to the original ADOP paper.
+
+\noindent -  We assume linear RGB cameras with frozen exposure and without tone mapping.
+
+\noindent -  We discard environment map (e.g. our background is black).
+
+\noindent -  We generate photorealistic renders of synthetic meshes instead of using real photos. 
+
+\noindent -  Camera poses are perfectly known.
+
+\noindent -  We do not refine the camera poses (no need to be approximately differentiable with regard to camera geometry parameters).
+
+\noindent -  Using meshes allows us sampling point clouds with normals without estimation errors such as the one we'd get with COLMAP.
+
+\noindent -  We can easily control the number of points to be able to test on a limited T500 GPU with 4Gb of RAM.
+
+\noindent \textbf{Implementation steps.} \footnote{Each element has been carefully validated, mostly by visual tests or pytests.}
+
+\noindent -  I used BlenderProc \cite{Denninger2023} to script and generate multiple synthetic scenes from the samples used in the NerF paper. All camera positions are known and share the same referential as my pytorch point renderer.
+
+\noindent -  A perfect point cloud is sampled at random from the mesh (through the .obj file).
+
+\noindent -  Several pytorch based function allow to project the points onto the image plane and include soft depth test and normal culling.
+
+\noindent -  A CNN is trained to predict the right dense color of the points in the image space.
+
 
 \subsection{Generating synthetic calibrated scenes}
 \label{sec:synthetic_calibrated_scenes}
