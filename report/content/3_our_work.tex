@@ -141,16 +141,14 @@ Using a Z-buffer, it is possible to take the closest point to the camera. Since 
 
 We then obtain the closest depth image for each pixel. $\forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$:
 $$Z^{\texttt{min}}_{(u,v)} = min_{\left\{j  \text{ s.t. } k[j]=1+u*W+v\right\}} \left(Z[j]\right)$$
-\noindent Although this index mapping looks unnatural, it allows to use the ~\href{https://pytorch.org/docs/stable/generated/torch.Tensor.scatter\_reduce\_.html#torch.Tensor.scatter\_reduce\_}{\texttt{torch.scatter\_reduce\_}} operation to take the minimum of depth values for each pixel in a 1D tensor of size $1+W*H$.
-
-My first ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/legacy\_splatting.py}{\texttt{legacy\_splatting.py} implementation with a for loop} was way too slow and using native torch operators allowed me to get fast point cloud rendering (and save some development time to avoid rewriting a custom CUDA kernel).
+\noindent Although this index mapping looks unnatural, it allows to use th native ~\href{https://pytorch.org/docs/stable/generated/torch.Tensor.scatter\_reduce\_.html#torch.Tensor.scatter\_reduce\_}{\texttt{torch.scatter\_reduce\_}} operation to take the minimum of depth values for each pixel in a 1D tensor of size $1+W*H$. \footnote{My first ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/legacy\_splatting.py}{\texttt{legacy\_splatting.py}} implementation with a for loop was way too slow and using native torch operators allowed me to get fast point cloud rendering (and save some development time to avoid rewriting a custom CUDA kernel).}
 
 \noindent \textbf{Second pass. Soft depth test and color aggregation}
 
-In the second pass  ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/colors\_aggregation.py}{rendering/colors\_aggregation.py}, we are now capable to apply the soft depth test as we have already computed the closest distance of the point cloud to the camera for each pixel. We'll modify the point index mapping $k[i]$ to only keep indices which satisfy the soft depth test: 
+In the second pass  ~\href{https://github.com/balthazarneveu/per-pixel-point-rendering/blob/main/src/pixr/rendering/colors\_aggregation.py}{rendering/colors\_aggregation.py}, we are now capable to apply the soft depth test as we have already computed the closest distance of the point cloud to the camera for each pixel. We'll modify the point index mapping $k[i]$ to only keep indices which satisfy the soft depth test $(C4)$: 
 $$ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$$
 
-\noindent Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the invalid pixel and will be discarded.
+\noindent Multiplying by the boolean tensor gracefully sets to 0 the indices which do not satisfy the condition and keeps the others unchanged. Keep in mind that the $k=0$ index is the index for invalid pixels which will be discarded.
 Finally, we average the colors of the points that satisfy the soft depth test, at each pixel location, using \texttt{torch.scatter\_reduce\_} operator with the \texttt{reduce=`mean`}. It is possible to keep a background
 
 \begin{figure*}[h]
@@ -158,20 +156,20 @@ Finally, we average the colors of the points that satisfy the soft depth test, a
     \includegraphics[width=0.9\textwidth]{figures/soft_depth_test_two_pixels.png}
     \caption{Soft depth test illustration: 
     $P^{(0)}$ is the closest point to the camera for pixel $(u,v)$. We will average the colors of the points $(P^{(0)}, P^{(5)}, P^{(6)})$. During the first pass, we'll keep track of the mapping between point indices and projected coordinates (in a 1D fashion). $k[0]=k[4]=k[5]=k[6]=1+u*W+v$ and $k[1]=k[2]=k[3]=0$, $k[7] = 1+u'*W+v'$. First pass will find the minimum of depths for each pixel $Z^{\texttt{min}}_{(u,v)} = min_{\left\{j  \text{ s.t. } k[j]=1+u*W+v\right\}} \left(Z[j]\right), \forall (u,v) \in \left[0, H-1\right] \times \left[0, W-1\right]$. For instance $Z^{\texttt{min}}_{(u,v)} = Z^{(0)}$ and $Z^{\texttt{min}}_{(u',v')} = Z^{(7)}$. \\ During the second pass, we'll only keep indices which satisfy the soft depth test: $ k'[j] = k[j] * \left(Z[j] \leq (1+\alpha) *Z^{\texttt{min}}_{(u,v) \equiv k[j]}\right)$.
-   For instance, point 4 is considered too far away and discared e.g. $k[4]=0$. \\Finally, colors are averaged $I_{u, v} \propto \sum_{j \texttt{ s.t  } k'[j]=1+u.W+v}{I(j)}$. For instance $I_{(u, v)} = \frac{I(0) + I(5) + I(6)}{3}$ and $I_{(u', v')} = I(7)$.}
+   For instance, point 4 is considered too far away and discared e.g. $k'[4]=0$. \\Finally, colors are averaged $I_{u, v} \propto \sum_{j \texttt{ s.t  } k'[j]=1+u.W+v}{I(j)}$. For instance $I_{(u, v)} = \frac{I(0) + I(5) + I(6)}{3}$ and $I_{(u', v')} = I(7)$.}
     \label{fig:soft_depth_test}
 \end{figure*}
 
-Since this rendering pipeline is fully differentiable with regard to the point cloud colors, we refer as the "bypass" mode a minimalistic training process: 
+\noindent This rendering pipeline is fully differentiable with regard to the point cloud colors. We define the \textbf{"bypass" mode} as the following minimalistic training process: 
 \begin{itemize}
     \item initialize the point cloud pseudo colors with random values.
     \item at each scale, compute a linear combination (conv1x1) of the pseudo colors to get the RGB rendered colors.
-    \item the bias allows to fix a uniform background color.
-    \item minimize the MSE loss between the rendered image and the target image at all scales using the ADAM optimizer with a learning rate of $0.3$ for 100 epochs using a 55 views for training and 5 views for validation.
+    \item the bias allows to fit a uniform background color.
+    \item minimize the MSE loss between the rendered image and the target image at all scales using the ADAM optimizer with a learning rate of $0.01$ for 100 epochs using a 55 views for training and 5 views for validation.
 \end{itemize}
 
-This simple use case already revealed some issues that I couldn't properly render the \texttt{ficus} scene due to the double sided triangles issue. The \texttt{material balls} scene cannot be properly with the reflective materials as shown in ~\cref{fig:view_dependancy_issue}.
-On the \texttt{old chair} scene we obtain a validation PSNR of 16.7dB and relevant colors when visualizing reconstructions (see ~\cref{fig:results_vanilla}). If we replace the 1x1 convolution by a 5x5 convolution to allow the points to have a larger spread than 1 pixel, we immediately see an improvement up to 21.2dB. Adding more points obviously improves the PSNR.
+\noindent This simple sanity check revealed some issues: I couldn't properly render the \texttt{ficus} scene due to the double sided triangles issue mentioned previously. The \texttt{material balls} scene cannot be properly fit with the reflective materials as shown in ~\cref{fig:view_dependancy_issue}.
+On the \texttt{old chair} scene we obtain a validation PSNR of 16.7dB and relevant colors when visualizing reconstructions (see ~\cref{fig:results_vanilla}). If we replace the 1x1 convolution by a 5x5 convolution to allow the points to have a larger spread than 1 pixel, we immediately see an improvement up to 21.2dB. Adding more samples to the point cloud obviously improves PSNR.
 
 
 \begin{figure*}[htpb]
@@ -182,25 +180,17 @@ On the \texttt{old chair} scene we obtain a validation PSNR of 16.7dB and releva
 \end{figure*}
 
 
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.45\textwidth]{figures/view_dependancy_issue.png}
-%     \caption{View dependant appearance: If we take a careful look at the \texttt{Old chair} scene, we nottice that the foam is slightly shiny in the groundtruth with a red glow on view 1 and a green glow on view 2. No matter how much point we add, we cannot recover this effect with the bypass mode for obvious reasons. It looks like we simply retrieve the diffuse component.}
-%     \label{fig:view_dependancy_issue}
-% \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/view_dependancy_issue_mat_balls_arrow.png}
-    \caption{View dependant appearance: If we take a careful look at the \texttt{material balls} scene, no matter how much point we add, we cannot recover the view dependancy effect with the bypass mode for obvious reasons. It looks like we simply retrieve the diffuse component. }
+    \caption{View dependant appearance: If we take a careful look at the \texttt{material balls} scene, no matter how much point we add, we cannot recover the view dependancy effect with the "bypass mode". It looks like we simply retrieve the average diffuse component.}
     \label{fig:view_dependancy_issue}
 \end{figure}
 
-It is not trivial to find a scene with lighting and materials which do not exhibit view dependant appearance, especially it seems like the sample scenes used in the NERF paper were carefully chosen to test the inherent ability of the neural renderer to learn something similar to a BRDF (which models in computer graphics the law of light reflecion for each material, including mirrors)..
+\noindent It is not trivial to find a scene with lighting and materials which do not exhibit view dependant appearance, especially it seems like the sample scenes used in the NERF paper were carefully chosen to test the inherent ability of the neural renderer to learn something similar to a BRDF (which models in computer graphics the law of light reflecion for each material, including mirrors)..
 
-
-
-\subsubsection{Pixel rendering.}
+\subsection{Neural pixel rendering.}
 \label{sec:pixel rendering}
 The last operation is to render the final pixel colors by decoding the pseudo color images.
 ADOP \cite{Aruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \cite{ronneberger2015unet} which is a widely used multi-scale image processing architecture. Two modifications are made to the UNET architecture:
@@ -216,13 +206,13 @@ I started implementing a Vanilla architecture shown in ~\cref{fig:decoders} to m
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/multiscale_decoders_only.png}
-    \caption{Vanilla architecture: Multiscale CNN with decoders only. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. On the right side: an auxiliary decoder at each scale allows to add a potential multiscale supervision loss (not mentioned in the original ADOP paper)}
+    \caption{Vanilla architecture: Multiscale CNN with decoders only. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled (bilinear interpolation) and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. On the right side: an auxiliary decoder at each scale allows to add a potential multiscale supervision loss (not mentioned in the original ADOP paper)}
     \label{fig:decoders}
 \end{figure}
 
 We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene in ~\cref{tab:results}. By using the CNN rendering on a point cloud of 100.000 points, we're able to "fill the holes" and achieve a better PSNR than the bypass mode with 800.000 points. Qualitively, ~\cref{fig:results_vanilla}, shows blurry results when using the Vanilla architecture. More work is needed to improve the results and implement the UNET architecture with the right parameters.
 
-\textit{Please note that all trainings were performed on a laptop with a Nvidia T500 GPU with only 4Gb of RAM. We decrease the batch size to 8 images when increasing the size of the architecture}.
+\noindent \textit{Please note that all trainings were performed on a laptop with a Nvidia T500 GPU with only 4Gb of RAM. We decrease the batch size to 8 images when increasing the size of the architecture}.
 
 \subsubsection{Results visualization.}
 It is possible to render novel views interactively and live. Please refer to ~\cref{fig:live_inference}.
