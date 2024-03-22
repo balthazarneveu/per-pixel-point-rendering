@@ -57,25 +57,40 @@ This is where rendering a scene start to get difficult.
 
 \noindent\textbf{Meshes.} Creating a mesh from the point cloud will lead to a nice geometric representation which can be rendered using classic rasterization techniques. But shading these triangles is still needed. If all materials are perfect diffusers, applying the textures extracted from the photos to the triangles shall be enough. Unfortunately, this will not work for specular materials as illustrated in figure \ref{fig:material_changes}. Neural deferred shading has been proposed \cite{worchel2022nds} to jointly fit a mesh while optimizing the pixel shader (mimicked by a neural network) of a classic mesh rendering pipeline (geometry processing $\rightarrow$ rasterization $\rightarrow$ \textit{(neural)} shader). Although mesh representations sounds flexible, the shading is baked into the scene representation and cannot be changed afterwards (for instance, lighting or materials cannot be changed).
 
-\noindent\textbf{Neural radiance fields.} NERF \cite{mildenhall2020nerf} represents the scene RGB colors and density as a function of the 3D position and viewing angle. By shooting rays at the scene and sampling along them, one can integrate the estimated colors to render the final color in the image\footnote{In this volumetric rendering, a density=0 means that the space is empty}. A MLP (Multi Layer Perceptron) is used to represent the radiance field. Having the dependance on the viewing angle allows to model complex materials and lighting effects. Main drawback is that NERF are computationally expensive as they require evaluating a MLP all along the rays for each pixel...
+\noindent\textbf{Neural radiance fields.} NERF \cite{mildenhall2020nerf} represents the scene RGB colors and density as a function of the 3D position and viewing angle. By shooting rays at the scene and sampling along them, one can integrate the estimated colors to render the final image\footnote{In this volumetric rendering, a density=0 means that the space is empty}. A MLP (Multi Layer Perceptron) is used to represent the radiance field. Having the dependance on the viewing angles allows to model complex materials and lighting effects. Main drawback is that NERF are computationally expensive as they require evaluating a MLP all along the rays for each pixel...
+
 % A MLP can approximate basically any function as long as it has enough neurons...
-\noindent\textbf{Point clouds.} Although point clouds are not continuous, they are a good representation of the scene and kind of easy to manipulate. The introduction of an additional inpainting method (e.g. neural rendering component) in the image space allows to overcome the limitations of the sparseness. These will be discussed in more details the next section on neural point based graphics \ref{subsec:npbg}.
+\noindent\textbf{Point clouds.} Although point clouds are not continuous, they are a versatile representation of the scene and kind of easy to manipulate. The introduction of an additional inpainting method (e.g. neural rendering component) in the image space allows to overcome the limitations of the sparseness (see ~\cref{sec:methodology_paper}) while being able to render fast.
 
+\subsection{Fast point based Rendering}
+\label{subsec:Point based Rendering}
+One of the major advantage of point based methods is that this technology is backed by years of prior industy work. Rendering point clouds can be hardware accelerated and is available to the mainstream public on basically any computer (without NVidia GPU). Libraries such as OpenGL offer the option to render points \texttt{GL\_Points} (and even specify the size of the splat \texttt{glPointSize(1);})... Point clouds can even be rendered in a web browser as shown in figure \ref{fig:potree}.
 
+% https://github.com/rougier/python-opengl/blob/master/07-points.rst
+% https://glumpy.github.io/
 
-\section{Methodology of the Original Paper}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/potree_rendering_and_splat.png}
+    \caption{Potree \cite{potree} allows point cloud rendering in the browser, points being rendered as tiny circles splatted on the screen.}
+    \label{fig:potree}
+\end{figure}
+
+\section{Original Paper overview}
 \label{sec:methodology_paper}
 
-\subsection{Paper overview}
-\label{subsec:paper_overview}
-ADOP \cite{Aruckert2022adop} is a novel view synthesis method based on point cloud representation. 
+NPBG \cite{Aliev2020} (Neural Point-Based Graphics) is a novel view synthesis method based on point cloud representation and introduced several important concepts (1. and 3. below).
+ADOP \cite{Aruckert2022adop} adds a few components  (2. and 4.). to adapt to real scenes with high dynamic ranges and model complex camera pipelines.
 
-\noindent\textbf{Geometry.} Pseudo-colors  \footnote{Pseudo-colors means a generic "feature" vector representation which can be more generic than three dimensional RGB components. A dimension 4 for instance.} assigned to each point are projected onto the camera screen at several scales. An environment map is used to model the scene background.
+\noindent\textbf{1. Geometry.} Learnable Pseudo-colors  \footnote{Pseudo-colors means a generic "feature" vector representation which can be more generic than three dimensional RGB components. A dimension 4 for instance.} assigned to each point are projected onto the camera screen at several scales. 
 
-\noindent\textbf{Neural rendering.} The multi-scale pyramid of pseudo images will be jointly decoded and inpainted into a RGB HDR \footnote{We define HDR as high dynamic range linear RGB images - as if they'd been retrieve from a RAW 12 or 14bit sensor with sole operations black point correction, demosaicing and potentially while balance/color matrix transforms.} image at full resolution, using a U-Net architecture.
+\noindent\textbf{2. Environment map.} A learnable 360° image is used to model the scene background.
 
-\noindent\textbf{Camera simulation.} A camera simulation module will transform the image into a LDR image \footnote{LDR stands for low dynamic range images, the ones we see on our screens after tone mapping, color adjustments like vibrancy, vigetting correction etc...}. 
+\noindent\textbf{3. Neural rendering.} The multi-scale pyramid of pseudo images will be jointly decoded and inpainted into a RGB HDR \footnote{We define HDR as high dynamic range linear RGB images - as if they'd been retrieve from a RAW 12 or 14bit sensor with sole operations black point correction, demosaicing and potentially while balance/color matrix transforms.} image at full resolution, using a U-Net architecture.
 
+\noindent\textbf{4. Camera simulation.} A camera simulation module will transform the image into a RGB LDR image \footnote{LDR stands for low dynamic range images, the ones we see on our screens after tone mapping, color adjustments like vibrancy, vigetting correction etc...}. 
+
+\noindent An overview of the pipeline is shown in ~\cref{fig:original_pipeline}.
 % TODO: ENVIRONMENT MAP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 \noindent The whole rendering pipeline is differentiable with regard to:
 \begin{itemize}
@@ -85,40 +100,8 @@ ADOP \cite{Aruckert2022adop} is a novel view synthesis method based on point clo
     \item the camera pose and intrinsics \textit{This is an approximation, but it may be useful in order to refine camera pose estimation}. 
 \end{itemize}
 
-Using several photos of the scene for supervision, all parameters (network weights, pseudo-colors, environment map and camera photo pipeline) are optimized to minimize a loss function (MSE $\mathcal{L}^{2}$ or perceptual loss\footnote{Perceptual loss \cite{johnson2016perceptual} optimizes the distance between two images in a latent space rather than in the RGB colors space. We usually minimize the $\mathcal{L}^{2}$ distance between the feature maps in the middle of a frozen VGG network}) between predicted LDR rendered images and the real ones. 
+\noindent \textbf{Optimization} Using several photos of the scene for supervision, all parameters (network weights, pseudo-colors, environment map and camera photo pipeline) are optimized to minimize a loss function (MSE $\mathcal{L}^{2}$ or perceptual loss\footnote{Perceptual loss \cite{johnson2016perceptual} optimizes the distance between two images in a latent space rather than in the RGB colors space. We usually minimize the $\mathcal{L}^{2}$ distance between the feature maps in the middle of a frozen VGG network}) between predicted LDR rendered images and the real ones. 
 
+\noindent\textbf{Implementation.} The authors wrote a C++ library (hybrid compiled code: lib Torch with cuda kernels and fast point rendering OpenGL code) to get fast trainings and reach impressive inference speeds: on scenes from Tanks and Temples \cite{Knapitsch2017TanksAndTemples} with 10 millions of points, they render the scenes at 37fps on a RTX3080 - 6 times faster than a NERF based method.
 
-
-\subsection{Neural Point Based Graphics}
-\label{subsec:npbg}
-NPBG \cite{Aliev2020} (Neural Point-Based Graphics) introduced several important concepts which will be discussed in the next section.
-The idea of filling the holes between projected points by using multi-scale convolutional neural networks.  
-
-\subsection{Point based Rendering}
-\label{subsec:Point based Rendering}
-One of the major advantage of point based methods is that this technology is backed by years of prior industy work. Rendering point clouds can be hardware accelerated and is available to the mainstream public on basically any computer (without NVidia GPU). Libraries such as OpenGL offer the option to render points \texttt{GL\_Points} (and even specify the size of the splat \texttt{glPointSize(1);})... Point clouds can even be rendered in a web browser as shown in figure \ref{fig:potree}.
-
-% https://github.com/rougier/python-opengl/blob/master/07-points.rst
-% https://glumpy.github.io/
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figures/potree_rendering_and_splat.png}
-    \caption{Potree \cite{potree} allows point cloud rendering in the browser, points being rendered as tiny circles splatted on the screen.}
-    \label{fig:potree}
-\end{figure}
-
-
-
-\subsection{Novel view}
-\label{subsec:Projecting points}
-
-
-
-\noindent\textbf{Implementation.} The authors used lib Torch to compile the code. 
-
-
-
-
-\subsection{Limitations}
-\label{subsec:Projecting points}
+More details and limitations will be provided in the next sections.
