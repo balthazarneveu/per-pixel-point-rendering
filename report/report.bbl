@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{19}
+\begin{thebibliography}{20}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -132,6 +132,15 @@
 \newblock  (\bibinfo{year}{2020}).
 \newblock
 \showeprint[arxiv]{2003.08934}~[cs.CV]
+
+
+\bibitem[Rakhimov et~al\mbox{.}(2022)]%
+        {rakhimov2022npbg}
+\bibfield{author}{\bibinfo{person}{Ruslan Rakhimov}, \bibinfo{person}{Andrei-Timotei Ardelean}, \bibinfo{person}{Victor Lempitsky}, {and} \bibinfo{person}{Evgeny Burnaev}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{NPBG++: Accelerating Neural Point-Based Graphics}.
+\newblock
+\newblock
+\showeprint[arxiv]{2203.13318}~[cs.CV]
 
 
 \bibitem[Ronneberger et~al\mbox{.}(2015)]%

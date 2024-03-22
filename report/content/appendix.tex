@@ -1,12 +1,16 @@
 \section{Appendix}
-\subsection{BlenderProc}
-\label{app:blender_proc}
 
 
-\subsection*{Quantitative evaluation results}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/inference_live.png}
+    \caption{Live inference, the user can move the camera around the scene and see the novel view rendered in real time. On the right side we visualize the projected pseudo colored point cloud of dimension 8 using a Principal Component Analyzis.}
+    \label{fig:live_inference}
+\end{figure}
 
 
-\begin{table*}[]
+
+\begin{table*}[htpb]
     \begin{tabular}{|l|l|l|l|l|l|}
     \hline
     Number of points & PSNR   & Mode     & Convolutions size & Pseudo color dimension & Multi-scale supervision \\ \hline

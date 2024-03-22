@@ -226,3 +226,8 @@ I started implementing a Vanilla architecture shown in ~\cref{fig:decoders} to m
 \end{figure}
 
 We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene in ~\cref{tab:results}. By using the CNN rendering on a point cloud of 100.000 points, we're able to "fill the holes" and achieve a better PSNR than the bypass mode with 800.000 points. Qualitively, ~\cref{fig:results_vanilla}, shows blurry results when using the Vanilla architecture. More work is needed to improve the results and implement the UNET architecture with the right parameters.
+
+\textit{Please note that all trainings were performed on a laptop with a Nvidia T500 GPU with only 4Gb of RAM. We decrease the batch size to 8 images when increasing the size of the architecture}.
+
+\subsubsection{Results visualization.}
+It is possible to render novel views interactively and live. Please refer to ~\cref{fig:live_inference}.

@@ -115,6 +115,7 @@ def main_interactive_version(exp, training_dir):
 
     define_default_sliders(orbit_mode=True, multiscale=model.n_scales)
     if model_path is not None:
+        print(model.count_parameters())
         model.load_state_dict(model_state_dict)
         model.to(DEVICE)
         model.eval()
