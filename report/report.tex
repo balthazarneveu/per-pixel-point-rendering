@@ -36,9 +36,9 @@
   \begin{teaserfigure}
     \includegraphics[width=1.\textwidth]{figures/teaser_figure_2.png}
     \centering
-    \caption{Overview of our partial re-implementation to study the ADOP \cite{Aruckert2022adop} paper in ideal conditions with calibrated scenes. \\
-      \textit{Left}: Point based neural rendering reconstructs novel view from a point cloud. Original paper implementation in ADOP  works on real photos of large scale scenes. It therefore tries to model camera exposure and non linear tone mapping to adapt to each camera rendering. \\
-      \textit{Right}: We approximate real world photo captures by using calibrated scenes and cameras to be in the most simple conditions to review point based rendering. Point cloud is sampled randomly from the mesh with perfect normals, camera poses are perfectly known (these would usually be estimated using COLMAP \cite{schoenberger2016sfm}). We do not let exposure vary or perform tone mapping.
+    \caption{Overview of our partial re-implementation to study the ADOP \cite{Aruckert2022adop} paper, in ideal conditions with calibrated scenes. \\
+      \textit{Left}: Point based neural rendering reconstructs novel views from a point cloud. Original paper implementation in ADOP  works on real photos of large scale scenes. It therefore tries to model camera exposure and non linear tone mapping to adapt to each camera rendering. \\
+      \textit{Right}: We mimick real world photo captures by rendering calibrated scenes and cameras (to place ourselves in the most simple conditions to review point based rendering). Point cloud is sampled randomly from the mesh with perfect normals and perfect camera poses (these would usually be estimated using COLMAP \cite{schoenberger2016sfm}). We do not let exposure vary or perform tone mapping.
     }
     \label{fig:original_pipeline}
   \end{teaserfigure}
