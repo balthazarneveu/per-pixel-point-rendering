@@ -1,16 +1,13 @@
 \section{Discussion on the original paper}
 \label{sec:discussion}
 ADOP\cite{Aruckert2022adop} is overall an excellent paper. It does not bring so much novel ideas but makes a considerable engineering effort to apply the core idea of NPBG \cite{Aliev2020} to large real scenes.
-We'll discuss a point of criticism in the next section.\\
+In section ~\ref{subsec:improvement_ideas}, I will discuss some improvement ideas I had while working on the re-implementation of the ADOP paper. But we'll discuss a point of criticism in the next section.\\
 \noindent \textbf{~\ref{subsec:limits_real_scenes}{: Real scenes $\approx$ biased evaluation}}. Evaluation on real scenes from the Tanks and Temple dataset \cite{Knapitsch2017TanksAndTemples} mixes two things:
 \begin{itemize}
     \item the inherent neural rendering method (point based rendering) quality assesment.
     \item all improvements made by taking into account the camera pipeline.
 \end{itemize}
-Despite ablation studies to see the effect taking the camera photo pipline into account, the comparison to other methods is unfair and I'll propose a few ideas for a new benchmark to evaluate neural rendering quality in a more controlled environment for research purpose.\\
-In section ~\ref{subsec:improvement_ideas}, I will discuss some improvement ideas I had while working on the re-implementation of the ADOP paper.
-
-
+Despite ablation studies to see the effect taking the camera photo pipline into account, the comparison to other methods is unfair and I'll propose a few ideas for a new benchmark to evaluate neural rendering quality in a more controlled environment for research purpose.
 
 \subsection{Limitation: Benchmarking only on real scenes}
 \label{subsec:limits_real_scenes}
@@ -20,16 +17,21 @@ On the other hand, since the main contribution are refining pose estimation (req
 
 \noindent \textbf{Camera pipeline module.}
 The attempt of the authors to model the camera pipeline comes from a good intention. By including the camera pipeline as part of their rendering, they are able to: 
-\begin{itemize}
-    \item work in a linear color space where... performing additions or convolutions is physically grounded.
-    \item compensate exposure and colors shifts per scene.
-    \item get a better accuracy on the Tanks and Temple benchmark which has a lot of exposure changes.
-\end{itemize}.
-I think they picked the low hanging fruits here: take care of most exposure changes to end up improving the metrics on the available benchmark: Table 4. from their paper shows that ADOP is better by a large margin than all other algorithms (except the M60 tanks scene which has been shot in manual frozen exposure). 
+
+\noindent - work in a linear color space where... performing additions or convolutions is physically grounded.
+
+\noindent - compensate exposure and colors shifts per scene.
+
+\noindent - get a better accuracy on the Tanks and Temple benchmark which has a lot of exposure changes.
+
+\noindent I think the authors picked the low hanging fruits here: take care of most exposure changes to end up improving the metrics on the available benchmark: Table 4. from their paper shows that ADOP is better by a large margin than all other algorithms (except the M60 tanks scene which has been shot in manual frozen exposure). 
 They didn't backport their idea to the comcurrent methods they compare to so I don't think the comparison is really fair (the point based method may simply not be the key element leading to good results).
 
-Anyway, their claim to handle the camera imaging pipeline properly and adapt to it is legitimate, well crafted and justified in the paper. But it has a major caveat: results may crumble in case of a more complex or different camera ISP \footnote{Image Signal Processor} than the one from Sony A7SII or DJI X5R.
-Please refer to ~\cref*{fig:ISP}
+\noindent  Anyway, their claim to handle the camera imaging pipeline properly is legitimate, extremely well crafted and justified in the paper. But it has a major caveat: results may crumble in case of a more complex or different camera ISP \footnote{Image Signal Processor} than the one from Sony A7SII or DJI X5R.
+Please refer to ~\cref{fig:ISP} to compare a standard ISP pipeline against the ADOP rendering.
+
+\noindent The idea is interesting but it will most probably fail with a modern smartphone camera which use sophisticated local correction. Other kind of photo finish effects such as vibrancy make some colors slightly more saturated (e.g. blue for skies but avoid saturating red too much for skin tones), tone mapping may act locally \cite{aubry2014fast} and sharpening may be region dependent. The authors show that they're able to get a sky with cyan shift which looks like the camera picture (they fit the tone mapper correctly). Modern smartphone ISPs manufacturers have worked on this "cyan cast" problem (compress blue highlights instead of clipping when applying white balance) so \textbf{modeling these algorithms will become harder and harder as they get more and more sophisticated.}
+
 
 \begin{figure*}[h]
     \centering
@@ -38,9 +40,9 @@ Please refer to ~\cref*{fig:ISP}
     \label{fig:ISP}
 \end{figure*}
 
-Ablation study from the authors (table 3 and figure 6 of \cite{Aruckert2022adop}) shows that ADOP results get better when including the camera module in the pipeline. problem is that we don't really know the exact impact of compensating the camera photo pipeline on the final result, at least compared to a scene imaged with perfect ideal linear HDR camera.
+\noindent Ablation study from the authors (table 3 and figure 6 of \cite{Aruckert2022adop}) shows that ADOP results get better when including the camera module in the pipeline.
 
-If we carefully look at the Tanks and Temples dataset \cite{Knapitsch2017TanksAndTemples}, pictures are frames extracted from a mp4 video from 2 different high end cameras, sometimes using auto-exposure (see ~\href{fig:tank_and_temples}). Although it's a good initiative for researchers to keep on using fixed established benchmarks, Tanks and Temples was initially designed for 3D reconstructions (e.g. evaluate performances of Structure from motion like COLMAP estimation compared to a groundtruth lidar captured point cloud) rather than novel view synthesis. The idea is interesting but it will most probably fail with a modern smartphone camera which use local tone mappers and sometimes adapt colors locally. For instance, they're able to get a sky with cyan shift which looks like the camera picture (they fit the tone mapper correctly). Modern smartphone ISPs manufacturers have worked on this "cyan cast" problem (compress blue highlights instead of clipping when applying white balance) so compensating these algorithms will become harder and harder as they get more and more sophisticated.
+\noindent If we carefully look at the Tanks and Temples dataset \cite{Knapitsch2017TanksAndTemples}, pictures are frames extracted from a mp4 video from 2 different high end cameras, sometimes using auto-exposure (see ~\cref{fig:tank_and_temples}). Although it's a good initiative for researchers to keep on using fixed established benchmarks, Tanks and Temples was initially designed for 3D reconstructions (e.g. evaluate performances of Structure from motion like COLMAP estimation compared to a groundtruth lidar captured point cloud) rather than novel view synthesis. 
 
 
 \begin{figure}[H]
@@ -51,17 +53,16 @@ If we carefully look at the Tanks and Temples dataset \cite{Knapitsch2017TanksAn
 \end{figure}
 
 
-My recommendation is that all evaluations better be led in the linear domain. It is the best way to go make fair comparisons between novel view synthesis algorithms. Benchmarking would strongly benefit from an "upgrade":a sort of \textit{"Linear Tanks and Temples"} carefully crafted by taking RAW shots with a high end DSLR. This is proposed next.
+\noindent My recommendation is that all evaluations better be led in the linear domain. It is the best way to make fair comparisons between novel view synthesis algorithms. Benchmarking would strongly benefit from a dataset "upgrade": a sort of \textit{"Linear Tanks and Temples"} carefully crafted by taking RAW shots with a high end DSLR. This is proposed next.
 
 \noindent \textbf{Switching to RAW format?} 
-One of the potential way of creating a new benchmark would be to capture the scenes with a DSLR (like a full frame sensor) shot both in RAW and jpg (usually available on most cameras). RAW files would be post-processed by Adobe LightRoom or DxO Photolab with a neutral rendering: no tone mapping and neutral color rendering to get a Linear RGB set of images without any image compression. In case the sensor 12 or 14bits dynamic range is not sufficient, HDR captures could be achieved by bracketing. Intuitively, it sounds natural to use a tripod and merge the LDR linear images into a HDR linear image. But even handheld, all raw captures at various exposures could be used (let the alignment of bracketing images be implicitly done without any explicit need to merge exposures). These HDR images may serve as the ground truth for validation.
+One of the potential way of creating a new benchmark would be to capture the scenes with a DSLR (like a full frame sensor) shot both in RAW and jpg (usually available on most cameras). RAW files would be post-processed by Adobe LightRoom or DxO Photolab with a neutral rendering: no tone mapping and neutral color rendering to get a Linear RGB set of images without any image compression. In case the sensor 12 or 14bits dynamic range is not sufficient, HDR captures could be achieved by bracketing. Intuitively, it sounds natural to use a tripod and merge the LDR linear images into a HDR linear image. These HDR images may serve as the ground truth for validation.
+\noindent But even handheld, all raw captures with bracketing / at various exposures could be used (let the alignment of bracketing images be implicitly done by the 3D rendering engine, without any explicit need to merge exposures).
 
-The main caveat of using RAW images is that there'll always be \textbf{noise} present proper to the camera sensor in the raw files. Since you get multiple views of the same scene, we can use the key concept proposed in Noise2Noise \cite{lehtinen2018noise2noise} that a neural network can be trained to denoise images without a ground truth images (it requires noisy burst of the same image instead). Here we have access to the same scene under different angles. The engine to implicity align them and get the right supervision is the rendering of the point cloud itself! The idea of using NERF to work on RAW data has been proposed in "NERFs in the dark" \cite{mildenhall2022rawnerf}.
+The main caveat of using RAW images is that there'll always be noise present (proper to the camera sensor) in the raw files. Since you get multiple views of the same scene, we can use the key concept proposed in Noise2Noise \cite{lehtinen2018noise2noise} that a neural network can be trained to denoise images on noisy images directly (without clean ground truth images - it requires noisy burst of the same image instead). Here we have access to the same scene under different angles. The engine to implicity align them and get the right supervision is the rendering of the point cloud itself. The idea of using NERF to work on RAW data has been proposed in "NERFs in the dark" \cite{mildenhall2022rawnerf}.
 
 
-RGB (raw demosaicked) linear format is the only space in which an evaluation of the rendering quality does not depend on the camera ISP.
-If one would really like to check the effect Training images could be either the jpgs or the reprocessed RAW files using a more scenic rendering: vibrancy to make some colors slightly more saturated (e.g. blue for skies but avoid saturating red too much for skin tones), tone mapping (global or local), sharpening / micro contrast.
-
+\noindent RGB linear format is the only space in which an evaluation of the rendering quality does not depend on the camera ISP. Supervision could be linear RGB (denoised and demosaicked RAW files)... or simply RAW files (see the pioneer idea in Mosaic2Mosaic \cite{ehret2019joint}).
 
 
 \subsection{Improvement ideas}

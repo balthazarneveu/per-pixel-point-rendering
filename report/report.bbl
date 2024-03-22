@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{22}
+\begin{thebibliography}{24}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -46,6 +46,14 @@
 \showeprint[arxiv]{1906.08240v3}~[cs.CV]
 
 
+\bibitem[Aubry et~al\mbox{.}(2014)]%
+        {aubry2014fast}
+\bibfield{author}{\bibinfo{person}{Mathieu Aubry}, \bibinfo{person}{Sylvain Paris}, \bibinfo{person}{Samuel~W Hasinoff}, \bibinfo{person}{Jan Kautz}, {and} \bibinfo{person}{Fr{\'e}do Durand}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Fast local laplacian filters: Theory and applications}.
+\newblock \bibinfo{journal}{\emph{ACM Transactions on Graphics (TOG)}} \bibinfo{volume}{33}, \bibinfo{number}{5} (\bibinfo{year}{2014}), \bibinfo{pages}{1--14}.
+\newblock
+
+
 \bibitem[Brooks et~al\mbox{.}(2018)]%
         {brooks2018unprocessing}
 \bibfield{author}{\bibinfo{person}{Tim Brooks}, \bibinfo{person}{Ben Mildenhall}, \bibinfo{person}{Tianfan Xue}, \bibinfo{person}{Jiawen Chen}, \bibinfo{person}{Dillon Sharlet}, {and} \bibinfo{person}{Jonathan~T. Barron}.} \bibinfo{year}{2018}\natexlab{}.
@@ -64,6 +72,15 @@
 \urldef\tempurl%
 \url{https://doi.org/10.21105/joss.04901}
 \showDOI{\tempurl}
+
+
+\bibitem[Ehret et~al\mbox{.}(2019)]%
+        {ehret2019joint}
+\bibfield{author}{\bibinfo{person}{Thibaud Ehret}, \bibinfo{person}{Axel Davy}, \bibinfo{person}{Pablo Arias}, {and} \bibinfo{person}{Gabriele Facciolo}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{title}{Joint Demosaicking and Denoising by Fine-Tuning of Bursts of Raw Images}.
+\newblock
+\newblock
+\showeprint[arxiv]{1905.05092}~[cs.CV]
 
 
 \bibitem[Ignatov et~al\mbox{.}(2020)]%
