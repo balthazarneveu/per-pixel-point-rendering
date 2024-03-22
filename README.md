@@ -3,14 +3,37 @@
 - Author of this code: [Balthazar Neveu](https://www.linkedin.com/in/balthazarneveu/)
 - Study of [ADOP: Approximate Differentiable One-Pixel Point Rendering](https://arxiv.org/pdf/2110.06635.pdf)
 
+# :scroll: [Report](/report/report.pdf)
+
+This is a point cloud rendering (one pixel rendering) + CNN image processin (=deferred rendering to inpaint the holes between projected points).
+
+| Live inference |
+| :---: |
+| ![](/report/figures/demo.gif) |
+| using a very tiny CNN (a.k.a Vanilla decoder) 100k points only |
+
+
 
 ### Setup
+
 Local install of `pixr`
+
 ```bash
+git clone https://github.com/balthazarneveu/per-pixel-point-rendering.git
+cd per-pixel-point-rendering
+pip install -r requirements.txt
 pip install -e .
 ```
 
+
+Run the demo on pre-trained scene,
+```bash
+python scripts/novel_views_interactive.py -e 55 -t pretrained_scene
+```
 #### Generating calibrated scenes
+
+![](/report/figures/material_64.png)
+
 - 1/ download and put [NERF's Blender scenes on Google Drive](https://drive.google.com/file/d/1RjwxZCUoPlUgEWIUiuCmMmG0AhuV8A2Q/view?usp=drive_link) in the `__data` folder.
 - 2/ get Blender Proc `pip install blenderproc`
 - 3/ optional: get a few environment maps textures (e.g. from [PolyHaven](https://polyhaven.com/hdris) ).
@@ -26,21 +49,28 @@ if args.scene == "material_balls":
 ```
 
 #### Code structure
-- rendering:
-  - [per pixel splatting](src/pixr/rendering/splatting.py)
+- rendering library:
+  - [Per pixel splatting](src/pixr/rendering/splatting.py)
+  - [1st pass](src/pixr/rendering/zbuffer_pass.py) (Closest point retrieval = Z-buffer)
+  - [2nd pass](src/pixr/rendering/colors_aggregation.py) (Aggregate colors)
   
 
 - synthesis / rasterizer:
   - world definition [with triangle primitives](src/pixr/synthesis/world_simulation.py) or [meshes](src/pixr/synthesis/world_from_mesh.py)
   - [view synthesis of a scene rasterizer](src/pixr/rasterizer/rasterizer_sequential.py)
 
-- studies: 
+- learning:
+  - [Architectures zoo](src/pixr/learning/architecture.py)
+  - Define [experiments](scripts/experiments_definition.py) = scene name, architecture, hyper parameters.
+  - `python scripts/optimize_point_based_neural_renderer.py -e 70` after defininng experiment 
+- studies:
   - [interactive visualization](studies/interactive_projections.py)
   - [rasterizer check](studies/interactive_rasterizer.py)
   - [differentiability check of splatting](studies/differentiate_forward_project.py) . :warning: so far splatting is not differentiable with regard to camera.
 
 
 
+------
 
 #### Tensor convention
 ##### Images

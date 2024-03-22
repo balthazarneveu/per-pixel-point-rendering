@@ -132,14 +132,7 @@ def main_interactive_version(exp, training_dir):
 if __name__ == '__main__':
     parser = get_shared_parser()
     args = parser.parse_args()
-    # splat_scene_path = Path(
-    #     # "/Data/code/per-pixel-point-rendering/__output/staircase_splat_differentiate_points/checkpoint_00200.pt",
-    #     "/Data/code/per-pixel-point-rendering/__training/__0001/point_cloud_checkpoint_00199.pt",
-    # )
-    # assert splat_scene_path.exists()
-    # model_path = splat_scene_path.parent / "last_model.pt"
-    # if not model_path.exists():
-    # model_path = None
+    training_dir = Path(args.training_dir)
     exp = args.experiment[0]
 
-    main_interactive_version(exp, training_dir=args.training_dir)
+    main_interactive_version(exp, training_dir=training_dir)
