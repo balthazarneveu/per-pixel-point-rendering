@@ -32,38 +32,34 @@ My goal was to be able to train a minimalistic version of ADOP's differentiable 
 
 \subsection{Generating synthetic calibrated scenes}
 \label{sec:synthetic_calibrated_scenes}
-In order to avoid dealing with large real scenes with millions of points and having to deal with heavy COLMAP processing, I decided to use a recent library named BlenderProc  \cite{Denninger2023} which simplifies the use of Blender as it allows running renders in the background (launched through terminal without the need of a graphical user interface).
-The description of the script I wrote is shown in ~\cref{fig:data_and_train}.
-
-It is first possible to generate a set of viewpoints configurations to orbit around the scene. It is also possible to generate an environment map (e.g. a skybox). We render with the background transparency option so the rendering results is a RGB PNG. 
+In order to avoid dealing with large real scenes with millions of points and having to deal with heavy COLMAP processing, I decided to use a recent library named BlenderProc  \cite{Denninger2023} which wraps the Blender engine. \footnote{pip installed and launch without popping the graphical user interface}.
+The description of the data workflow is shown in appendix in ~\cref{fig:data_and_train}. It is first possible to generate a set of viewpoints configurations to orbit around the scene. It is also possible to provide an environment map (e.g. a skybox). 
+Disabling the environment map as a background in Blender allows to remove one of the components of the ADOP paper. \footnote{It allows rendering the point cloud without using the neural environment map trick and we use black uniform color instead.}, as shown in ~\cref{fig:blenderproc_renders}. 
 % 1532.9s for 60 views of the \texttt{material balls}.
 % 753.869 ficus
 
 % Rendering is peformed using GPU and requires 25 seconds per view with a resolution 640x480 for the \texttt{material balls}. scene on a laptop Nvidia T500.
 % 27 minutes are needed to generate 64 viewpoints
-\begin{figure}[H]
+\begin{figure}[htpb]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/blenderproc_renders.png}
-    \caption{Mask and RGB render BlenderProc renders with an environment map.}
+    \includegraphics[width=0.45\textwidth]{figures/blenderproc_renders.png}
+    \caption{BlenderProc renders with an environment map.}
     \label{fig:blenderproc_renders}
 \end{figure}
 
+\noindent We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions to build the extrinsic camera matrix and use a pinhole camera model to project 3D points onto the image plane as we'll see in ~\cref{sec:projecting_the_point_cloud_onto_the_image_plane}. There's a perfect equivalence between the camera parameters used in Blender (~\cref{fig:multiview}) and the ones used in my Pytorch renderer.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/ficus_and_matballs.png}
-    \caption{60 views of resolution 640x480 of the \texttt{Ficus} scene rendered in 12 minutes On the right, \texttt{material balls} scene rendered in a total of 25 minutes on a laptop equipped with a Nvidia T500.}
+    \includegraphics[width=0.45\textwidth]{figures/ficus_and_matballs.png}
+    \caption{60 views of resolution 640x480 of the \texttt{Ficus} scene rendered in 12 minutes. On the right, \texttt{material balls} scene rendered in a total of 25 minutes on a laptop equipped with a Nvidia T500.}
     \label{fig:multiview}
 \end{figure}
 
-Using the environment map as a background has been disabled in BlenderProc as it allows to simplify and remove one of the extra components of the ADOP paper (e.g. it allows rendering the point cloud without using the neural environment map trick and we use black uniform color instead).
+\noindent One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. In my implementation, points are sampled randomly from the mesh and associated with the normal of the single sided triangles to which the point belongs. Since our rendering pipeline uses normal culling, we end up with an issue. On the \texttt{ficus} scene for instance, "the green leaves" seen from the bottom will become invisible, so the renderer will face an impossible reconstruction task. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. This is illustrated in ~\cref{fig:ficus_culling_issue}.
 
-We parameterize camera orientation using 3 Euler Angles (yaw pitch roll) and 3 positions. We build the extrinsic camera matrix from the 3 angles and use a pinhole camera model to project 3D points onto the image plane as we'll see in ~\cref{sec:projecting_the_point_cloud_onto_the_image_plane}. There's a perfect equivalence between the camera parameters used in Blender and the ones used in my Pytorch renderer.
+\noindent When working on natural photos, the points will most probably be placed on both sides of the surface by COLMAP with the normals in both ways. 
 
-One of the difficulties of using synthetic rendering from meshes is that sometimes thin surfaces are modeled with double sided triangles. Since our rendering pipeline is using normal culling, we end up with an issue: points with normals not pointing towards the camera are not rendered. So on the ficus scene for instance, if we look "at the green leafs" from the bottom, the green leaves will become transparent so the renderer will have a hard time during reconstruction. We may therefore stick to objects with easy geometry such as the \texttt{old chair} scene. This is illustrated in \cref{fig:ficus_culling_issue}.
-
-When working on natural scenes, the points will most probably be duplicated on both sides of the surface by COLMAP with the normals in both ways. In my case, I sampling points randomly from the mesh and I simply take the normal of the triangle to which the point belongs without considering it double sided.
-
-I first notticed this effect on my synthetic \texttt{stair case} scene which was only made of planes and that could not be optimized in the trivial "Bypass" case.
+% I first notticed this effect on my synthetic \texttt{stair case} scene which was only made of planes and that could not be optimized in the trivial "Bypass" case.
 
 \begin{figure*}
     \centering
@@ -218,7 +214,7 @@ ADOP \cite{Aruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET 
 \subsubsection{Vanilla networks.}
 \label{sec:vanilla rendering}
 I started implementing a Vanilla architecture shown in ~\cref{fig:decoders} to make sure I could improve the point cloud rendering right. Due to time constraints, I did not have enough time to implement and train the UNET described in the previous section ~\cref{sec:pixel rendering}.
-\begin{figure}[H]
+\begin{figure}[htpb]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/multiscale_decoders_only.png}
     \caption{Vanilla architecture: Multiscale CNN with decoders only. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. On the right side: an auxiliary decoder at each scale allows to add a potential multiscale supervision loss (not mentioned in the original ADOP paper)}
