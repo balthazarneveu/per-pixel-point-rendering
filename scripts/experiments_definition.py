@@ -202,6 +202,11 @@ def get_experiment_from_id(exp: int):
                                    depth=8, h_dim=8,
                                    nb_points=100000)
 
+    elif exp == 500:  # 16.7db
+        conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
+                                   scene="old_chair", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98,
+                                   nb_points=100000,
+                                   ms_supervision=False)
     elif exp == 50:  # 16.7db
         conf = presets_experiments(exp, b=32, n=100, model_preset="TrueBypass",
                                    scene="old_chair", pseudo_color_dimension=3, lr=0.3, k_size=1, ratio_train=0.98,
@@ -276,49 +281,19 @@ def get_experiment_from_id(exp: int):
                                    ratio_train=0.98,
                                    nb_points=100000,
                                    ms_supervision=False)
-    # if exp == 0:
-    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
-    # if exp == 13:
-    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3, k_size=1)
-    # elif exp == 1:
-    #     conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE)
-    # elif exp == 2:
-    #     conf = presets_experiments(exp, b=4, n=200, model_preset="UNet", scene=STAIRCASE, pseudo_color_dimension=8)
-    # elif exp == 3:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3)
-    # elif exp == 4:
-    #     conf = presets_experiments(exp, b=4, n=200, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.3)
-    # elif exp == 5:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="UNet",
-    #                                scene=STAIRCASE, pseudo_color_dimension=3, lr=0.01)
-    # elif exp == 6:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions",
-    #                                scene=STAIRCASE, pseudo_color_dimension=8, lr=0.001)
-    # elif exp == 7:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", scene=STAIRCASE,
-    #                                pseudo_color_dimension=3, k_size=9, lr=0.3)
-    # elif exp == 8:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=1)
-    # elif exp == 9:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.3, k_size=3)
-    # elif exp == 10:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=3)
 
-    # elif exp == 11:
-    #     conf = presets_experiments(exp, b=4, n=100, model_preset="Bypass",
-    #                                scene=STAIRCASE, pseudo_color_dimension=5, lr=0.01, k_size=1)
-
-    # elif exp == 12:
-    #     conf = presets_experiments(exp, b=4, n=50, model_preset="StackedConvolutions", k_size=3,
-    #                                scene=STAIRCASE, pseudo_color_dimension=6, lr=0.01)
-    # else:
-    #     raise NameError(f"Experiment {exp} not found!")
+    elif exp == 63:  # 19.6??
+        conf = presets_experiments(exp, b=8, n=100, model_preset="StackedConvolutions",
+                                   scene="old_chair", pseudo_color_dimension=8, lr=0.001, k_size=3, ratio_train=0.98,
+                                   depth=2, h_dim=8,
+                                   nb_points=100000,
+                                   ms_supervision=False)
+    elif exp == 70:  # 26.5dB
+        conf = presets_experiments(exp, b=8, n=100, model_preset="TrueBypass",
+                                   scene="material_balls", pseudo_color_dimension=3, lr=0.01,
+                                   k_size=1,
+                                   ratio_train=0.98,
+                                   nb_points=800000,
+                                   ms_supervision=False)
     print(conf)
     return conf

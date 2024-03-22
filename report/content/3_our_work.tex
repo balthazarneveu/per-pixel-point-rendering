@@ -173,17 +173,35 @@ Since this rendering pipeline is fully differentiable with regard to the point c
     \item at each scale, compute a linear combination (conv1x1) of the pseudo colors to get the RGB rendered colors.
     \item the bias allows to fix a uniform background color.
     \item minimize the MSE loss between the rendered image and the target image at all scales using the ADAM optimizer with a learning rate of $0.3$ for 100 epochs using a 55 views for training and 5 views for validation.
-\end{itemize} 
+\end{itemize}
 
-This simple use case already revealed some issues that I couldn't properly render the \texttt{ficus} scene due to the double sided triangles issue. The \texttt{material balls} scene cannot be properly with the reflective materials.
-On the \texttt{old chair} scene we obtain a PSNR of 16.7dB and correct colors when visualizing reconstructions (see ~\href{fig:results_vanilla}) If we replace the 1x1 convolution by a 5x5 convolution to allow a bit of hole filling, we immediately see an improvement up to 21.2dB.
+This simple use case already revealed some issues that I couldn't properly render the \texttt{ficus} scene due to the double sided triangles issue. The \texttt{material balls} scene cannot be properly with the reflective materials as shown in ~\cref{fig:view_dependancy_issue}.
+On the \texttt{old chair} scene we obtain a validation PSNR of 16.7dB and relevant colors when visualizing reconstructions (see ~\cref{fig:results_vanilla}). If we replace the 1x1 convolution by a 5x5 convolution to allow the points to have a larger spread than 1 pixel, we immediately see an improvement up to 21.2dB. Adding more points obviously improves the PSNR.
+
+
+\begin{figure*}[htpb]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/qualitive_results_chair.png}
+    \caption{Two validation novel views using various training options (including the "bypass" mode and vanilla multiscale decoders (at each scale, we're stacking several stages of  Conv5x5+Relu)).}
+    \label{fig:results_vanilla}
+\end{figure*}
+
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.45\textwidth]{figures/view_dependancy_issue.png}
+%     \caption{View dependant appearance: If we take a careful look at the \texttt{Old chair} scene, we nottice that the foam is slightly shiny in the groundtruth with a red glow on view 1 and a green glow on view 2. No matter how much point we add, we cannot recover this effect with the bypass mode for obvious reasons. It looks like we simply retrieve the diffuse component.}
+%     \label{fig:view_dependancy_issue}
+% \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.45\textwidth]{figures/vanilla_architectures.png}
-    \caption{Two validation novel views using various training options (including the "bypass" mode and vanilla multiscale decoders by stacking Conv5x5+Relu).}
-    \label{fig:results_vanilla}
+    \includegraphics[width=0.45\textwidth]{figures/view_dependancy_issue_mat_balls_arrow.png}
+    \caption{View dependant appearance: If we take a careful look at the \texttt{material balls} scene, no matter how much point we add, we cannot recover the view dependancy effect with the bypass mode for obvious reasons. It looks like we simply retrieve the diffuse component. }
+    \label{fig:view_dependancy_issue}
 \end{figure}
+
+It is not trivial to find a scene with lighting and materials which do not exhibit view dependant appearance, especially it seems like the sample scenes used in the NERF paper were carefully chosen to test the inherent ability of the neural renderer to learn something similar to a BRDF (which models in computer graphics the law of light reflecion for each material, including mirrors)..
 
 
 
@@ -196,10 +214,15 @@ ADOP \cite{ruckert2022adop} and NBPG \cite{Aliev2020} both use a modified UNET \
     \item At each scale, the UNET encoder takes pseudo-colored renders of the point cloud. Note that, at low resolution (higher levels of the pyramid), many points end up being averaged in the same pixel as described in the soft depth test. We end up with thumbnails with not much holes which will intuitively simplify rendering (this is not equivalent to downsampling the full resolution images filled with holes). 
 \end{itemize}
 
-I started implementing a Vanilla architecture shown in ~\href{fig:decoders} to make sure I could improve the point cloud rendering right.architecture in the next section. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. We can see on the right side that I have added an auxiliary decoder at each scale to be able to add a multiscale supervision loss (not mentioned in the original ADOP paper).
+
+\subsubsection{Vanilla networks.}
+\label{sec:vanilla rendering}
+I started implementing a Vanilla architecture shown in ~\cref{fig:decoders} to make sure I could improve the point cloud rendering right. Due to time constraints, I did not have enough time to implement and train the UNET described in the previous section ~\cref{sec:pixel rendering}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.45\textwidth]{figures/multiscale_decoders_only.png}
-    \caption{Vanilla architecture: Multiscale CNN with decoders only.}
+    \caption{Vanilla architecture: Multiscale CNN with decoders only. Pseudo colors have more than 3 channels (4 or 8). At the top of the pyramid ($l=3$), the projected point clould pseudo colors tensor is decoded to a tensor with 8 channels (still not a RGB thumbnail but a feature map). The lower scale $l=2$ will be processed by another decoder - but in a residual fashion (meaning that the decoded feature vector from scale $l=3$ will be upsampled and added to the feature vector of the decoder at scale $l=2$). Finally at scale $l=0$, the high resolution decoded feature map is processed by another Conv+Relu layers to end up with 3 channels. On the right side: an auxiliary decoder at each scale allows to add a potential multiscale supervision loss (not mentioned in the original ADOP paper)}
     \label{fig:decoders}
 \end{figure}
+
+We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene in ~\cref{tab:results}. By using the CNN rendering on a point cloud of 100.000 points, we're able to "fill the holes" and achieve a better PSNR than the bypass mode with 800.000 points. Qualitively, ~\cref{fig:results_vanilla}, shows blurry results when using the Vanilla architecture. More work is needed to improve the results and implement the UNET architecture with the right parameters.

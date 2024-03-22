@@ -1,3 +1,22 @@
 \section{Appendix}
 \subsection{BlenderProc}
 \label{app:blender_proc}
+
+
+\subsection*{Quantitative evaluation results}
+
+
+\begin{table*}[]
+    \begin{tabular}{|l|l|l|l|l|l|}
+    \hline
+    Number of points & PSNR   & Mode     & Convolutions size & Pseudo color dimension & Multi-scale supervision \\ \hline
+    100k             & 16.7dB & Bypass   & 1x1               & 3                      & Yes                     \\ \hline
+    100k             & 21.2dB & Conv 5x5 & 5x5               & 3                      & Yes                     \\ \hline
+    100k             & 26.3dB & Vanilla  & 5x5               & 8                      & No                      \\ \hline
+    100k             & \textbf{29dB}   & Vanilla  & 5x5               & 8                      & Yes                     \\ \hline
+    400k             & 23dB   & Bypass   & 1x1               & 3                      & No                      \\ \hline
+    800k             & 25db   & Bypass   & 1x1               & 3                      & No                      \\ \hline
+\end{tabular}
+\caption{We report quantitative performances (PSNR on validation set) of various training configurations on the \texttt{Old chair} scene.}
+\label{tab:results}
+\end{table*}
