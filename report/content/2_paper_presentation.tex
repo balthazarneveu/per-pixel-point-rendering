@@ -1,62 +1,64 @@
 \section{Context}
 \label{sec:Context}
 
-\textit{ECCV 2020 : The NERF \cite{mildenhall2020nerf} paper triggers an increasing interest in the field of novel views synthesis}. Can you render novel viewpoints from a given scene using a neural network instead of running a complex ray tracing engine (in a software such as Blender)? The answer is roughly yes and... it also works on real scenes where there's no knowledge of the underlying scene. Many works try to improve the quality/speed of the rendering. We'll see how, suprisingly, point clouds can be used to render novel views of a scene.
+\textit{ECCV 2020 : The NERF \cite{mildenhall2020nerf} paper triggers an increasing interest in the field of novel views synthesis}. Can you render novel viewpoints from a given calibrated scene using a neural network and a data driven approach? Can it look as good as running a complex rendering engine (such as raytracing)? The answer is yes and... and it also generalize on real scenes where there's no knowledge of the underlying scene. Many works try to improve the quality/speed of the rendering. We'll see how, suprisingly, point clouds can be used to render novel views of a scene.
 
 
 \subsection{What is novel view synthesis?}
 \label{sec:novel_view_synthesis}
 
 
-\subsubsection*{Real scenes}
+\subsubsection{Real scenes}
 \label{sec:real_scenes}
 Novel view synthesis is a standard computer vision task which consists in generating new viewpoints of a scene after capturing a set of images.
-The concept is simple, take photographs or video of a scene by walking around it or by flying a drone.
+The concept is simple, take photographs or a video of a scene by walking around (or flying a drone).
 
 \noindent \textbf{Camera pose estimation.} The first step is to get the camera parameters which are not necessarily known: 
 
 \begin{itemize}
-    \item pose for each capture= 6 degrees of freedom - 3 rotations and 3 translations
-    \item camera intrinsics : focal length, principal point (projection of the lens optical center onto the sensor), lens distortion.
+    \item extrinsics: pose for each capture \footnote{6 degrees of freedom = 3 rotations and 3 translations}
+    \item camera intrinsics : focal length, principal point\footnote{projection of the lens optical center onto the sensor which is not always located perfectly at the center of the image sensor}, distortion
+    % \footnote{To model fisheyes: a radial model can describe the relationship between incident light angle and distorted direction.}.
 \end{itemize}
 
-\noindent \textbf{External intialization.} Some of these variables can be pre-estimated, for instance intrinsic camera parameters can usually be pre-calibrated using the Zhang method \cite{Zhang00calib} and are assumed to be constant for the whole sequence of images \footnote{Fixed calibration is not possible when the camera has a zoom-in capabilities or auto-focus. Variable focus may also affect the focal length.}.
+\noindent \textbf{External initialization.} Some of these variables can be pre-estimated, for instance intrinsic camera parameters can usually be pre-calibrated using the Zhang "checkerboard" method \cite{Zhang00calib} and are assumed to be constant for the whole sequence of images \footnote{Fixed calibration is not possible when the camera has a zoom-in capabilities or auto-focus. Variable focus may also affect the focal length.}.
 
 \noindent An IMU (inertial measurement unit) can be attached to the camera which allows later to have an estimation of the camera pose after running a sensor fusion algorithm.
 
-\noindent But there will always be measurement errors (sensor noise, calibration error, sensor fusion errors) \footnote{Please note that efforts can be made, such as calibrating camera/IMU misalignment \cite{karpenko2011gyrostab}}.
+\noindent But there will always be measurement errors (sensor noise, calibration error, sensor fusion errors) \footnote{Please note that efforts can be made, such as calibrating camera/IMU alignment \cite{karpenko2011gyrostab}}. So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation initialization.
 
-So there's a need for an algorithm to estimate the camera poses from images, regardless of having an external pose estimation intialization.
-
-\noindent \textbf{Structure from motion.} The traditional approach consists in using the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory and sparse point cloud. A side product of running this algorithm is getting a densor colored 3D point cloud of the scene (\textit{multi-view stereo being the seconde part of the COLMAP software}). 
+\noindent \textbf{Structure from motion.} The traditional approach consists in using the popular COLMAP software \cite{schoenberger2016sfm} to jointly estimate camera trajectory and sparse point cloud. A side product of running this algorithm is getting a dense colored 3D point cloud of the scene \footnote{multi-view stereo being the second part of the COLMAP software}. 
 The second step is to reconstruct a flexible representation of the scene so it can be rendered from new viewpoints. One of the technical challenge is to find the most suited data structure to represent the 3D scene subject to constraints such as: 
 \begin{itemize}
     \item image / 3D structure quality: for cultural heritage or industrial monitoring applications for instance. 
     \item reconstruction time and memory consumption. Real time for AR/VR applications is a constraint. \textit{For instance, ADOP seems to take advantage of point cloud rendering hardware acceleration available in any computer using OpenGL (not necessarily with the need of a massive NVidia GPU)}. 
-    \item preprocessing time: in case users want to recreate their own scenes, they may not have access to powerful GPU 
+    \item preprocessing resources: in case users want to recreate their own scenes, they may not have access to powerful GPU 
 \end{itemize}
 
-\subsubsection*{Calibrated scenes}
+\subsubsection{Calibrated scenes}
 \label{sec:calibrated_scenes}
-There's another usecase where the camera poses and scenes are perfectly known and controlled by using 3D scene synthesis. This is an easier setup to study novel view synthesis as you can truly evaluate the rendering quality of the algorithm without doubts on the quality of pose estimation (or camera photometry). This setup is sometimes refered as "calibrated scenes". One could say that representing scenes with sophisticated neural rendering is useless when you have the underlying 3D model and Blender available. Nevertheless, novel view synthesis on calibrated scenes is a good framework to test a method before deploying on real scenes.
+Camera poses and scenes are perfectly known and controlled by using 3D scene synthesis. This is an easier setup to study novel view synthesis as you can truly evaluate the rendering quality of the algorithm without doubts on the quality of pose estimation (or camera imperfections). This setup is sometimes refered as "calibrated scenes".\footnote{One could argue that representing scenes with sophisticated neural rendering is useless when you have the underlying 3D model and Blender available. Nevertheless, novel view synthesis on calibrated scenes is a good framework to test a method before deploying on real scenes.}
 
 \subsection{Representations of the scene}
 \label{sec:representations}
 
 If we solely use the colored point cloud, we'll end up with images filled with holes (when we zoom in for instance).
-This is where rendering a scene start to get difficult. 
-\noindent\textbf{Surface reconstruction.}It is possible to get continuous representations (without holes) by wrapping a surface around the point cloud of an object. For instance assuming we have pre-computed normals, a Signed Distance Function (SDF) defined from point cloud can be evaluated anywhere. The surface of the object is where the SDF is equal to zero. Evaluating IMLS (Implicit Moving Least Square \cite{kolluri2008IMLS}) on a fixed grid followed by the marching cube algorithm allows to recreate a mesh. All topologies may not be represented correctly (e.g. a hole in the cheese may end up being filled).
+This is where rendering a scene start to get difficult.
+
+\noindent\textbf{Surface reconstruction.}It is possible to get continuous representations (without holes) by wrapping a surface around the point cloud of an object. For instance assuming we have pre-computed normals, a Signed Distance Function (SDF) defined from point cloud can be evaluated anywhere. The surface of the object is where the SDF is equal to zero. Evaluating IMLS (Implicit Moving Least Square \cite{kolluri2008IMLS}) on a fixed grid followed by the marching cube algorithm allows to very simply recreate a mesh.\footnote{Limitations: All topologies may not be represented correctly (e.g. a hole in the cheese may end up being filled) and meshes can appear very smooth. More advanced alternative: Poisson Surface reconstuction \cite{kazhdan2006poisson}}.
 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/material_appearance_commented.png}
+    \includegraphics[width=0.4\textwidth]{figures/material_appearance_commented.png}
     \caption{Colors change with camera orientation, specular materials reflect the light and amplify this effect, the extreme use-case being mirrors.}
     \label{fig:material_changes}
 \end{figure}
 
-\noindent\textbf{Meshes.} Creating a mesh from the point cloud will lead to a nice geometric representation which can be rendered using classic rasterization techniques. But shading these triangles is still needed. If all materials are perfect diffusers, applying the textures extracted from the photos to the triangles shall be enough. Unfortunately, this will not work for specular materials as illustrated in figure \ref{fig:material_changes}. Neural deferred shading has been proposed \cite{worchel2022nds} to jointly fit a mesh while optimizing a pixel shader (mimicked by a neural network) of a classic mesh rendering pipeline (geometry processing $\rightarrow$ rasterization $\rightarrow$ \textit{(neural)} shader). Please note that the shading is baked into the scene representation and cannot be changed afterwards (for instance, lighting or materials cannot be changed).
-\noindent\textbf{Neural radiance fields.} NERF \cite{mildenhall2020nerf} represents the scene colors RGB and density as a function of the 3D position and viewing angle. By shooting rays at the scene, one can integrate the estimated colors to render the final color in the image (density=0 means that the space is empty). A MLP (Multi Layer Perceptron) can approximate basically any function as long as it has enough neurons... here the MLP is used to represent the radiance field. Having the dependance on the viewing angle allows to model complex materials and lighting effects. Main drawback is that NERF are computationally expensive as they require evaluating a MLP all along the rays for each pixel...
+\noindent\textbf{Meshes.} Creating a mesh from the point cloud will lead to a nice geometric representation which can be rendered using classic rasterization techniques. But shading these triangles is still needed. If all materials are perfect diffusers, applying the textures extracted from the photos to the triangles shall be enough. Unfortunately, this will not work for specular materials as illustrated in figure \ref{fig:material_changes}. Neural deferred shading has been proposed \cite{worchel2022nds} to jointly fit a mesh while optimizing the pixel shader (mimicked by a neural network) of a classic mesh rendering pipeline (geometry processing $\rightarrow$ rasterization $\rightarrow$ \textit{(neural)} shader). Although mesh representations sounds flexible, the shading is baked into the scene representation and cannot be changed afterwards (for instance, lighting or materials cannot be changed).
+
+\noindent\textbf{Neural radiance fields.} NERF \cite{mildenhall2020nerf} represents the scene RGB colors and density as a function of the 3D position and viewing angle. By shooting rays at the scene and sampling along them, one can integrate the estimated colors to render the final color in the image\footnote{In this volumetric rendering, a density=0 means that the space is empty}. A MLP (Multi Layer Perceptron) is used to represent the radiance field. Having the dependance on the viewing angle allows to model complex materials and lighting effects. Main drawback is that NERF are computationally expensive as they require evaluating a MLP all along the rays for each pixel...
+% A MLP can approximate basically any function as long as it has enough neurons...
 \noindent\textbf{Point clouds.} Although point clouds are not continuous, they are a good representation of the scene and kind of easy to manipulate. The introduction of an additional inpainting method (e.g. neural rendering component) in the image space allows to overcome the limitations of the sparseness. These will be discussed in more details the next section on neural point based graphics \ref{subsec:npbg}.
 
 
